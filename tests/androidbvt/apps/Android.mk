@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+ifeq (0,1)
 LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
@@ -29,3 +29,4 @@ LOCAL_PACKAGE_NAME := AndroidAppsBvtTests
 LOCAL_CERTIFICATE := platform
 
 include $(BUILD_PACKAGE)
+endif
