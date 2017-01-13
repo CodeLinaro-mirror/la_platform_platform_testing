@@ -16,25 +16,25 @@
 
 package android.platform.test.helpers;
 
+
 import android.app.Instrumentation;
 
-public abstract class AbstractFlightDemoHelper extends AbstractStandardAppHelper {
+/**
+ * AbstractAutoUiProviderHelper used to open menu in different applications like Dial,
+ * Bluetooth Media and Local Media player.
+ */
 
-    public AbstractFlightDemoHelper(Instrumentation instr) {
-        super(instr);
-    }
+public abstract class AbstractAutoUiProviderHelper extends AbstractStandardAppHelper {
 
-    /**
-     * Setup expectation: On the opening screen.
-     *
-     * Best effort attempt to start the flight simulator demo
-     */
-    public abstract void startDemo();
+    public AbstractAutoUiProviderHelper(Instrumentation instr) {
+    super(instr);
+  }
 
     /**
-     * Setup expectation: Currently running the flight simulator demo
+     * Setup expectations: The applications like dial,Media should be open.
      *
-     * Best effort attempt to stop the flight simulator demo
+     * This method is used to open menu in different applications like Dial and Media.
      */
-    public abstract void stopDemo();
+    public abstract void openMenu();
+
 }

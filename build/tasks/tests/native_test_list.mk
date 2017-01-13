@@ -14,6 +14,7 @@
 
 native_tests := \
     adbd_test \
+    async_io_test \
     bionic-unit-tests \
     bionic-unit-tests-static \
     bluetoothtbd_test \
@@ -48,6 +49,7 @@ native_tests := \
     memory_replay_tests \
     minadbd_test \
     minikin_tests \
+    mtp_ffs_handle_test \
     net_test_bluetooth \
     net_test_btcore \
     net_test_device \
@@ -59,6 +61,7 @@ native_tests := \
     perfprofd_test \
     recovery_component_test \
     recovery_unit_test \
+    scrape_mmap_addr \
     simpleperf_cpu_hotplug_test \
     simpleperf_unit_test \
     syscall_filter_unittest_gtest \
