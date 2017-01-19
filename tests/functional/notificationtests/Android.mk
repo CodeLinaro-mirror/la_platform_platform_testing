@@ -21,6 +21,7 @@ LOCAL_MODULE_TAGS := tests
 LOCAL_STATIC_JAVA_LIBRARIES := \
     android-support-test \
     launcher-helper-lib \
+    metrics-helper-lib \
     ub-uiautomator \
     services.core
 
