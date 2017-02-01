@@ -15,8 +15,8 @@
  */
 package android.support.test.metricshelper;
 
-import com.android.internal.logging.LogBuilder;
-import com.android.internal.logging.MetricsReader;
+import android.metrics.LogMaker;
+import android.metrics.MetricsReader;
 import com.android.internal.logging.nano.MetricsProto.MetricsEvent;
 
 import android.test.suitebuilder.annotation.SmallTest;
@@ -39,28 +39,31 @@ import static org.junit.Assert.fail;
 public class MetricsAssertsTest {
     @Mock MetricsReader mReader;
 
-    private LogBuilder a;
-    private LogBuilder b;
-    private LogBuilder c;
-    private LogBuilder d;
+    private LogMaker a;
+    private LogMaker b;
+    private LogMaker c;
+    private LogMaker d;
 
     private int mActionView = MetricsEvent.ACTION_WIFI_ON;
     private int mOpenView = MetricsEvent.MAIN_SETTINGS;
+    private int mCloseView = MetricsEvent.NOTIFICATION_PANEL;
+    private int mSubtype = 4;
 
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
 
-        a = new LogBuilder(MetricsEvent.SCREEN)
+        a = new LogMaker(MetricsEvent.SCREEN)
                 .setType(MetricsEvent.TYPE_OPEN)
                 .setTimestamp(1000);
-        b = new LogBuilder(mOpenView)
+        b = new LogMaker(mOpenView)
                 .setType(MetricsEvent.TYPE_OPEN)
                 .setTimestamp(2000);
-        c = new LogBuilder(mActionView)
+        c = new LogMaker(mActionView)
                 .setType(MetricsEvent.TYPE_ACTION)
+                .setSubtype(mSubtype)
                 .setTimestamp(3000);
-        d = new LogBuilder(MetricsEvent.SCREEN)
+        d = new LogMaker(mCloseView)
                 .setType(MetricsEvent.TYPE_CLOSE)
                 .setTimestamp(4000);
 
@@ -94,4 +97,71 @@ public class MetricsAssertsTest {
         }
     }
 
+    @Test
+    public void testHasVisibileLogTrue() {
+        MetricsAsserts.assertHasVisibilityLog("foo", mReader, mOpenView, true);
+    }
+
+    @Test
+    public void testHasVisibleLogFalse() {
+        final String message = "foo";
+        try {
+            MetricsAsserts.assertHasVisibilityLog(message, mReader, mActionView, true);
+        } catch (AssertionError e) {
+            assertEquals(message, e.getMessage());
+            return; // success!
+        }
+    }
+
+    @Test
+    public void testHasHiddenLogTrue() {
+        MetricsAsserts.assertHasVisibilityLog("foo", mReader, mCloseView, false);
+    }
+
+    @Test
+    public void testHasHiddenLogFalse() {
+        final String message = "foo";
+        try {
+            MetricsAsserts.assertHasVisibilityLog(message, mReader, mOpenView, false);
+        } catch (AssertionError e) {
+            assertEquals(message, e.getMessage());
+            return; // success!
+        }
+    }
+
+    @Test
+    public void testHasTemplateLogCategoryOnly() {
+        MetricsAsserts.assertHasLog("didn't find existing log", mReader,
+                new LogMaker(mActionView));
+    }
+
+    @Test
+    public void testHasTemplateLogCategoryAndType() {
+        MetricsAsserts.assertHasLog("didn't find existing log", mReader,
+                new LogMaker(mActionView)
+                        .setType(MetricsEvent.TYPE_ACTION));
+    }
+
+    @Test
+    public void testHasTemplateLogCategoryTypeAndSubtype() {
+        MetricsAsserts.assertHasLog("didn't find existing log", mReader,
+                new LogMaker(mActionView)
+                        .setType(MetricsEvent.TYPE_ACTION)
+                        .setSubtype(mSubtype));
+    }
+
+    @Test
+    public void testDoesNotHaveTemplateLog() {
+        final String message = "foo";
+        try {
+            MetricsAsserts.assertHasLog(message, mReader,
+                    new LogMaker(mActionView)
+                            .setType(MetricsEvent.TYPE_ACTION)
+                            .setSubtype(mSubtype));
+        } catch (AssertionError e) {
+            assertEquals(message, e.getMessage());
+            return; // success!
+        }
+
+    }
 }

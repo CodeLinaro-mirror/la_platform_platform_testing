@@ -16,6 +16,7 @@
 
 package android.system.helpers;
 
+import android.content.ComponentName;
 import android.system.helpers.ActivityHelper;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothManager;
@@ -507,7 +508,7 @@ public class SettingsHelper {
         if (flashLight != null && flashLight.getText().equals(lightOn)) {
             verifyOn = true;
         }
-        mDevice.wait(Until.findObject(By.textContains(FLASHLIGHT)),
+        mDevice.wait(Until.findObject(By.desc(FLASHLIGHT)),
                 TIMEOUT * 3).click();
         Thread.sleep(TIMEOUT * 3);
         flashLight = mDevice.wait(
@@ -543,5 +544,14 @@ public class SettingsHelper {
     public void launchQuickSettingsAndWait() throws Exception {
         mDevice.openQuickSettings();
         Thread.sleep(TIMEOUT * 2);
+    }
+
+    public void launchSettingsPageByComponentName(Context ctx, String name) {
+        Intent intent = new Intent(Intent.ACTION_MAIN);
+        ComponentName settingComponent = new ComponentName(SETTINGS_PACKAGE,
+                String.format("%s.%s$%s", SETTINGS_PACKAGE, SETTINGS_APP, name));
+        intent.setComponent(settingComponent);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        ctx.startActivity(intent);
     }
 }
