@@ -27,7 +27,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := account-helper \
     settings-helper \
     sysui-helper \
     user-helper \
-    package-helper
+    package-helper \
+    accessibility-helper
 LOCAL_SDK_VERSION := current
 
 include $(BUILD_STATIC_JAVA_LIBRARY)
