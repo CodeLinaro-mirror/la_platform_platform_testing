@@ -57,7 +57,7 @@ import java.util.Map;
 public class NotificationHelper {
 
     private static final String LOG_TAG = NotificationHelper.class.getSimpleName();
-    private static final int LONG_TIMEOUT = 2000;
+    private static final int LONG_TIMEOUT = 2500;
     private static final int SHORT_TIMEOUT = 200;
     private static final String KEY_QUICK_REPLY_TEXT = "quick_reply";
     private static final UiSelector LIST_VIEW = new UiSelector().className(ListView.class);
@@ -107,7 +107,11 @@ public class NotificationHelper {
                 mDevice.pressEnter();
             }
             new UiObject(new UiSelector().text("PIN")).click();
-            clickText("No thanks");
+            // If there's an option to set 'require PIN to start device'
+            // choose 'No thanks', otherwise just skip ahead.
+            if (new UiObject(new UiSelector().text("No thanks")).exists()) {
+                clickText("No thanks");
+            }
             UiObject pinField = new UiObject(new UiSelector().className(EditText.class.getName()));
             pinField.setText(String.format("%04d", pin));
             mDevice.pressEnter();
@@ -299,15 +303,11 @@ public class NotificationHelper {
         }
     }
 
-    public void showInstalledAppDetails(Context context, String packageName) throws Exception {
-        Intent intent = new Intent();
+    public void showAppNotificationSettings(Context context) throws Exception {
+        Intent intent = new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        Uri uri = Uri.fromParts("package", packageName, null);
-        intent.setData(uri);
-        intent.setClassName("com.android.settings",
-                "com.android.settings.Settings$AppNotificationSettingsActivity");
-        intent.putExtra("app_package", mContext.getPackageName());
-        intent.putExtra("app_uid", mContext.getApplicationInfo().uid);
+        intent.putExtra(Settings.EXTRA_APP_PACKAGE, mContext.getPackageName());
+        intent.putExtra(Settings.EXTRA_APP_UID, mContext.getApplicationInfo().uid);
         context.startActivity(intent);
         Thread.sleep(LONG_TIMEOUT * 2);
     }
