@@ -15,41 +15,36 @@
  */
 package com.android.devicehealth.tests;
 
-import android.content.Context;
-import android.os.DropBoxManager;
-import android.support.test.InstrumentationRegistry;
-
-import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
-/**
- * Tests used for basic device health validation (ex: system app crash or system app
- * native crash) after the device boot is completed. This test class can be used to
- * add more tests in the future for additional basic device health validation
- * after the device boot is completed.
- */
-@RunWith(Parameterized.class)
-public class BasicHealthCheck {
+import android.platform.test.annotations.GlobalPresubmit;
 
-    private Context mContext;
+/**
+ * Tests used for basic device health validation after the device boot is completed. This test class
+ * can be used to add more tests in the future for additional basic device health validation after
+ * the device boot is completed. This test is used for global presubmit, any dropbox label checked
+ * showing failures must be resolved immediately, or have flaky ones moved into
+ * {@link BasicHealthCheckPostSubmit} instead.
+ */
+@GlobalPresubmit
+@RunWith(Parameterized.class)
+public class BasicHealthCheck extends HealthCheckBase {
 
     @Parameter
     public String mDropboxLabel;
 
     @Parameters(name = "{0}")
     public static String[] dropboxLabels() {
-        return new String[] {"system_app_crash", "system_app_native_crash",
-                "system_server_crash", "system_server_native_crash", "system_server_anr"};
-    }
-
-    @Before
-    public void setUp() throws Exception {
-        mContext = InstrumentationRegistry.getInstrumentation().getContext();
+        return new String[] {
+                "system_server_crash",
+                "system_server_native_crash",
+                "system_server_anr",
+                "system_app_native_crash",
+                };
     }
 
     /**
@@ -58,29 +53,7 @@ public class BasicHealthCheck {
      */
     @Test
     public void checkCrash() {
-        DropBoxManager dropbox = (DropBoxManager) mContext
-                .getSystemService(Context.DROPBOX_SERVICE);
-        Assert.assertNotNull("Unable access the DropBoxManager service", dropbox);
-
-        long timestamp = 0;
-        DropBoxManager.Entry entry = null;
-        int crashCount = 0;
-        StringBuilder errorDetails = new StringBuilder("Error details:\n");
-        while (null != (entry = dropbox.getNextEntry(null, timestamp))) {
-            try {
-                if (mDropboxLabel.equals(entry.getTag())) {
-                    crashCount++;
-                    errorDetails.append(mDropboxLabel);
-                    errorDetails.append(": ");
-                    errorDetails.append(entry.getText(70));
-                    errorDetails.append("    ...\n");
-                }
-            } finally {
-                entry.close();
-            }
-            timestamp = entry.getTimeMillis();
-        }
-        Assert.assertEquals(errorDetails.toString(), 0, crashCount);
+        checkCrash(mDropboxLabel);
     }
 
 }

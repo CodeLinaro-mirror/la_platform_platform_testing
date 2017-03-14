@@ -26,7 +26,6 @@ import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
 import android.support.test.uiautomator.UiObjectNotFoundException;
 import android.support.test.uiautomator.Until;
-
 import android.util.Log;
 
 import java.util.List;
@@ -75,16 +74,32 @@ public class AccessibilityScannerHelper {
     /**
      * Click scanner check button and parse and log results.
      *
+     * @param resultPrefix
      * @throws Exception
      */
-    public void runScanner(String pageName) throws Exception {
+    public void runScanner(String resultPrefix) throws Exception {
         clickScannerCheck();
         if (testPass() == true) {
-            Log.i(RESULT_TAG, String.format("%s: PASS", pageName));
+            Log.i(RESULT_TAG, String.format("%s: PASS", resultPrefix));
         } else {
-            logScannerResult(pageName);
+            logScannerResult(resultPrefix);
         }
-        mDevice.pressBack();
+    }
+
+    /**
+     * Click scanner check button and open share app in the share menu.
+     *
+     * @param resultPrefix
+     * @param shareAppTag
+     * @throws Exception
+     */
+    public void runScannerAndOpenShareApp(String resultPrefix, String shareAppTag)
+            throws Exception {
+        runScanner(resultPrefix);
+        UiObject2 shareApp = getShareApp(shareAppTag);
+        if (shareApp != null) {
+            shareApp.click();
+        }
     }
 
     /**
@@ -100,7 +115,8 @@ public class AccessibilityScannerHelper {
         mAccessibilityHelper.launchSpecificAccessibilitySetting("Accessibility Scanner");
         for (int tries = 0; tries < 2; tries++) {
             UiObject2 swt = mDevice.wait(Until.findObject(
-                    By.res(AccessibilityHelper.SETTINGS_PACKAGE, "switch_widget")), SHORT_TIMEOUT*2);
+                    By.res(AccessibilityHelper.SETTINGS_PACKAGE, "switch_widget")),
+                    SHORT_TIMEOUT * 2);
             if (swt.getText().equals(value.toString())) {
                 break;
             } else if (tries == 1) {
@@ -114,12 +130,35 @@ public class AccessibilityScannerHelper {
                 if (initialSetups()) {
                     mDevice.pressBack();
                 }
-                UiObject2 tapOk = mDevice.wait(Until.findObject(
-                        By.pkg(ACCESSIBILITY_SCANNER_PACKAGE).text("OK")), SHORT_TIMEOUT);
-                if (tapOk != null) {
-                    tapOk.click();
-                }
+                grantPermissions();
             }
+        }
+    }
+
+    /**
+     * Click through all permission pop ups for scanner. Grant all necessary permissions.
+     */
+    private void grantPermissions() {
+        UiObject2 auth1 = mDevice.wait(Until.findObject(
+                By.text("BEGIN AUTHORIZATION")), SHORT_TIMEOUT);
+        if (auth1 != null) {
+            auth1.click();
+        }
+        UiObject2 chk = mDevice.wait(Until.findObject(
+                By.clazz(AccessibilityHelper.CHECK_BOX)), SHORT_TIMEOUT);
+        if (chk != null) {
+            chk.click();
+            mDevice.findObject(By.text("START NOW")).click();
+        }
+        UiObject2 auth2 = mDevice.wait(Until.findObject(
+                By.text("BEGIN AUTHORIZATION")), SHORT_TIMEOUT);
+        if (auth2 != null) {
+            auth2.click();
+        }
+        UiObject2 tapOk = mDevice.wait(Until.findObject(
+                By.pkg(ACCESSIBILITY_SCANNER_PACKAGE).text("OK")), SHORT_TIMEOUT);
+        if (tapOk != null) {
+            tapOk.click();
         }
     }
 
@@ -190,7 +229,6 @@ public class AccessibilityScannerHelper {
      * @param pageName
      * @throws Exception
      */
-    // TODO: parsing detail results information not only number of suggestions.
     public void logScannerResult(String pageName) throws Exception {
         Log.i(RESULT_TAG, String.format("%s: %s suggestions!", pageName, getNumberOfSuggestions()));
     }
@@ -200,7 +238,8 @@ public class AccessibilityScannerHelper {
      *
      * @param avoidObj object to move the check button away from
      */
-    public void adjustScannerButton(UiObject2 avoidObj) throws UiObjectNotFoundException {
+    public void adjustScannerButton(UiObject2 avoidObj)
+            throws UiObjectNotFoundException, InterruptedException {
         Rect origBounds = getScannerCheckBtn().getVisibleBounds();
         Rect avoidBounds = avoidObj.getVisibleBounds();
         if (origBounds.intersect(avoidBounds)) {
@@ -210,19 +249,40 @@ public class AccessibilityScannerHelper {
     }
 
     /**
+     * Move scanner check button back to the middle of the screen.
+     */
+    public void resetScannerCheckButton() throws UiObjectNotFoundException, InterruptedException {
+        int midY = (int) Math.ceil(mDevice.getDisplayHeight() * 0.5);
+        int midX = (int) Math.ceil(mDevice.getDisplayWidth() * 0.5);
+        moveScannerCheckButton(midX, midY);
+    }
+
+    /**
      * Move scanner check button to a target location.
      *
      * @param locX target location x-axis
      * @param locY target location y-axis
      * @throws UiObjectNotFoundException
      */
-    private void moveScannerCheckButton(int locX, int locY) throws UiObjectNotFoundException {
-        UiObject2 btn = getScannerCheckBtn();
-        Rect bounds = btn.getVisibleBounds();
-        int origX = bounds.centerX();
-        int origY = bounds.centerY();
-        if (locX != origX || locY != origY) {
-            btn.drag(new Point(locX, locY));
+    private void moveScannerCheckButton(int locX, int locY)
+            throws UiObjectNotFoundException, InterruptedException {
+        int tries = 2;
+        while (tries-- > 0) {
+            UiObject2 btn = getScannerCheckBtn();
+            Rect bounds = btn.getVisibleBounds();
+            int origX = bounds.centerX();
+            int origY = bounds.centerY();
+            if (locX != origX || locY != origY) {
+                btn.drag(new Point(locX, locY));
+            }
+            Thread.sleep(SCANNER_WAIT_TIME);
+            // drag cause a click on the scanner button, bring the UI into scanner app
+            if (getScannerCheckBtn() == null
+                    && mDevice.findObject(By.pkg(ACCESSIBILITY_SCANNER_PACKAGE)) != null) {
+                mDevice.pressBack();
+            } else {
+                break;
+            }
         }
     }
 
@@ -257,6 +317,7 @@ public class AccessibilityScannerHelper {
         if (accessibilityScannerButton != null) {
             accessibilityScannerButton.click();
         } else {
+            // TODO: check if app crash error, restart scanner service
             Log.i(LOG_TAG, "Fail to find accessibility scanner check button.");
             throw new UiObjectNotFoundException(
                     "Fail to find accessibility scanner check button.");
@@ -319,5 +380,22 @@ public class AccessibilityScannerHelper {
         } else {
             throw new UiObjectNotFoundException("Fail to find toolbar text view");
         }
+    }
+
+    /**
+     * Return share app UiObject2
+     *
+     * @param appName
+     * @return
+     */
+    private UiObject2 getShareApp(String appName) {
+        UiObject2 shareBtn = mDevice.wait(Until.findObject(By.res(ACCESSIBILITY_SCANNER_PACKAGE,
+                "action_share_results")), SHORT_TIMEOUT);
+        if (shareBtn != null) {
+            shareBtn.click();
+            mDevice.wait(Until.hasObject(By.res("android:id/resolver_list")), SHORT_TIMEOUT * 3);
+            return mDevice.findObject(By.text(appName));
+        }
+        return null;
     }
 }
