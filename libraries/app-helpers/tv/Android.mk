@@ -17,8 +17,8 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := tv-app-helper-base
-LOCAL_STATIC_JAVA_LIBRARIES := base-app-helpers
-LOCAL_JAVA_LIBRARIES := launcher-helper-lib ub-uiautomator
+LOCAL_STATIC_JAVA_LIBRARIES := app-helpers-common dpad-util
+LOCAL_JAVA_LIBRARIES := ub-uiautomator launcher-helper-lib
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 include $(BUILD_STATIC_JAVA_LIBRARY)
