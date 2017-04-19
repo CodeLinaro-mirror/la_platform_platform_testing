@@ -20,6 +20,26 @@ import android.app.Instrumentation;
 import android.support.test.uiautomator.Direction;
 
 public abstract class AbstractGoogleCameraHelper extends AbstractStandardAppHelper {
+    public static final int HDR_MODE_AUTO = -1;
+    public static final int HDR_MODE_OFF  =  0;
+    public static final int HDR_MODE_ON   =  1;
+
+    public static final int VIDEO_SD_480     = -2;
+    public static final int VIDEO_HD_720     = -1;
+    public static final int VIDEO_HD_1080    =  0;
+    public static final int VIDEO_4K_MODE_ON =  1;
+
+    public static final int VIDEO_30FPS = 0;
+    public static final int VIDEO_60FPS = 1;
+
+    public static final int HFR_MODE_OFF     = 0;
+    public static final int HFR_MODE_120_FPS = 1;
+    public static final int HFR_MODE_240_FPS = 2;
+
+    public static final int FLASH_AUTO = -1;
+    public static final int FLASH_OFF = 0;
+    public static final int FLASH_ON = 1;
+    public static final int NUM_FLASH_MODES = 3;
 
     public AbstractGoogleCameraHelper(Instrumentation instr) {
         super(instr);
@@ -156,6 +176,17 @@ public abstract class AbstractGoogleCameraHelper extends AbstractStandardAppHelp
      * @param mode the integer value of the mode denoted above.
      */
     public abstract void setFrameRate(int mode);
+
+    /**
+     * Setup expectation: GoogleCamera is open and idle in camera or video mode.
+     *
+     * This method will set flash to one of the following:
+     * - on   (mode == FLASH_ON)
+     * - auto (mode == FLASH_AUTO)
+     * - off  (mode == FLASH_OFF)
+     * @param mode the integer value of the mode denoted above.
+     */
+    public abstract void setFlashMode(int mode);
 
     /**
      * Setup expectation: in Camera mode with the capture button present.
