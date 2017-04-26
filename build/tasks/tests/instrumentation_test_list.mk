@@ -51,5 +51,5 @@ instrumentation_tests := \
     TelephonyProviderTests \
     CarrierConfigTests \
     TeleServiceTests \
-    NetworkRecommendationTests \
-    SettingsProviderTest
+    SettingsProviderTest \
+    StorageManagerUnitTests
