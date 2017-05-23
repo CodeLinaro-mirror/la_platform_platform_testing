@@ -1,5 +1,4 @@
 /*
-
  * Copyright (C) 2016 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,10 +14,12 @@
  * limitations under the License.
  */
 
-package com.google.android.wearable.support;
+package android.platform.test.helpers;
 
-import android.app.Activity;
+import android.app.Instrumentation;
 
-public class CustomNotificationRemoteInputActivity extends Activity{
-
+public abstract class AbstractQuickSearchBoxHelper extends AbstractStandardAppHelper {
+    public AbstractQuickSearchBoxHelper(Instrumentation instr) {
+        super(instr);
+    }
 }
