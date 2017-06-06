@@ -14,22 +14,22 @@
  * limitations under the License.
  */
 
-package android.platform.test.helpers;
+package android.platform.test.helpers.tests;
 
-import android.app.Instrumentation;
-import android.support.test.uiautomator.Direction;
+import android.os.RemoteException;
+import android.platform.test.helpers.common.test.HelperTest;
+import android.platform.test.helpers.IStandardAppHelper;
 
-public abstract class AbstractRecentsHelper extends AbstractStandardAppHelper {
-
-    public AbstractRecentsHelper(Instrumentation instr) {
-        super(instr);
+public abstract class HandheldHelperTest<T extends IStandardAppHelper> extends HelperTest<T> {
+    @Override
+    public void initialize() {
+        try {
+            if (!getDevice().isNaturalOrientation()) {
+                getDevice().setOrientationNatural();
+            }
+        } catch (RemoteException e) {
+            throw new RuntimeException("Could not set orientation.", e);
+        }
+        super.initialize();
     }
-
-    /**
-     * Setup expectations: "Recents" is open.
-     *
-     * Flings the recent apps in the specified direction.
-     * @param dir the direction for the apps to move
-     */
-    public abstract void flingRecents(Direction dir);
 }
