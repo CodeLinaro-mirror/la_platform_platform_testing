@@ -25,6 +25,7 @@ instrumentation_tests := \
     DocumentsUITests \
     ShellTests \
     SystemUITests \
+    TestablesTests \
     RecyclerViewTests \
     FrameworksWifiApiTests \
     FrameworksWifiTests \
@@ -52,4 +53,15 @@ instrumentation_tests := \
     CarrierConfigTests \
     TeleServiceTests \
     SettingsProviderTest \
-    StorageManagerUnitTests
+    StorageManagerUnitTests \
+    SettingsTests
+
+# Android Things specific tests
+ifeq ($(PRODUCT_IOT),true)
+
+instrumentation_tests += \
+    AndroidThingsTests \
+    IoTLauncherTests \
+    WifiSetupUnitTests
+
+endif  # PRODUCT_IOT == true
