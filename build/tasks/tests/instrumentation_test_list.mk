@@ -45,7 +45,6 @@ instrumentation_tests := \
     EmergencyInfoTests \
     CalendarProviderTests \
     SettingsLibTests \
-    RetailDemoTests \
     RSTest \
     PrintSpoolerOutOfProcessTests \
     CellBroadcastReceiverUnitTests \
@@ -53,7 +52,6 @@ instrumentation_tests := \
     CarrierConfigTests \
     TeleServiceTests \
     SettingsProviderTest \
-    StorageManagerUnitTests \
     SettingsTests
 
 # Android Things specific tests
@@ -65,3 +63,10 @@ instrumentation_tests += \
     WifiSetupUnitTests
 
 endif  # PRODUCT_IOT == true
+
+# Storage Manager may not exist on device
+ifneq ($(filter StorageManager, $(PRODUCT_PACKAGES)),)
+
+instrumentation_tests += StorageManagerUnitTests
+
+endif
