@@ -18,6 +18,8 @@ package android.platform.systemui.tests.jank;
 
 import static android.system.helpers.OverviewHelper.isRecentsInLauncher;
 
+import static org.junit.Assert.assertNotNull;
+
 import android.app.Notification.Action;
 import android.app.Notification.Builder;
 import android.app.NotificationManager;
@@ -83,7 +85,7 @@ public class SystemUiJankTests extends JankTestBase {
             android.R.drawable.stat_notify_voicemail,
     };
     private static final String NOTIFICATION_TEXT = "Lorem ipsum dolor sit amet";
-    private static final String REPLY_TEXT = "REPLY";
+    private static final String REPLY_TEXT = "Reply";
     private static final File TIMESTAMP_FILE = new File(Environment.getExternalStorageDirectory()
             .getAbsolutePath(), "autotester.log");
     private static final File RESULTS_FILE = new File(Environment.getExternalStorageDirectory()
@@ -155,7 +157,7 @@ public class SystemUiJankTests extends JankTestBase {
         super.afterTest(metrics);
     }
 
-    private static BySelector getLauncherOverviewSelector(UiDevice device) {
+    public static BySelector getLauncherOverviewSelector(UiDevice device) {
         return By.res(device.getLauncherPackageName(), "overview_panel");
     }
 
@@ -164,7 +166,7 @@ public class SystemUiJankTests extends JankTestBase {
     }
 
     public static void openRecents(Context context, UiDevice device) {
-        if (isRecentsInLauncher()) {
+        if (device.findObject(By.res(SYSTEMUI_PACKAGE, "recent_apps")) == null) {
             // Swipe from the Home button to approximately center of the screen.
             UiObject2 homeButton = device.findObject(By.res(SYSTEMUI_PACKAGE, "home_button"));
             homeButton.setGestureMargins(0, -homeButton.getVisibleBounds().bottom / 2, 0, 1);
@@ -825,6 +827,7 @@ public class SystemUiJankTests extends JankTestBase {
     @GfxMonitor(processName = SYSTEMUI_PACKAGE)
     public void testInlineReply() throws Exception {
         UiObject2 replyButton = mDevice.findObject(By.clazz(Button.class).text(REPLY_TEXT));
+        assertNotNull("Could not find button with text '" + REPLY_TEXT + "'.", replyButton);
         for (int i = 0; i < INNER_LOOP; i++) {
             replyButton.click();
             mDevice.waitForIdle();
