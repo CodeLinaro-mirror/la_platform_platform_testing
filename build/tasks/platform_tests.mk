@@ -12,19 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-LOCAL_PATH := $(call my-dir)
+# Rules to generate a zip file that included test modules
+# based on the configuration.
+#
 
-include $(CLEAR_VARS)
+include $(call my-dir)/tests/platform_test_list.mk
+-include $(wildcard vendor/*/build/tasks/tests/platform_test_list.mk)
 
-LOCAL_SRC_FILES := \
-  HelloWorldTest.cpp
+my_modules := $(platform_tests)
 
-LOCAL_CFLAGS := -Wall -Werror
+my_package_name := platform_tests
 
-LOCAL_MODULE := hello_world_test
-LOCAL_MODULE_TAGS := tests
+include $(BUILD_SYSTEM)/tasks/tools/package-modules.mk
 
-LOCAL_COMPATIBILITY_SUITE := device-tests
+.PHONY: platform_tests
+platform_tests : $(my_package_zip)
 
-include $(BUILD_NATIVE_TEST)
-
+name := $(TARGET_PRODUCT)-tests-$(FILE_NAME_TAG)
+$(call dist-for-goals, platform_tests, $(my_package_zip):$(name).zip)
