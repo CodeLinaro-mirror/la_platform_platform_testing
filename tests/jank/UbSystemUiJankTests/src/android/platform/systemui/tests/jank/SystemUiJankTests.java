@@ -112,6 +112,9 @@ public class SystemUiJankTests extends JankTestBase {
      */
     private static final int GROUP_MODE_UNGROUPED = 2;
 
+    private final UiSelector clearAllSelector =
+                        new UiSelector().className(Button.class).descriptionContains("CLEAR ALL");
+
     private UiDevice mDevice;
     private ArrayList<String> mLaunchedPackages;
     private NotificationManager mNotificationManager;
@@ -166,17 +169,18 @@ public class SystemUiJankTests extends JankTestBase {
     }
 
     public static void openRecents(Context context, UiDevice device) {
-        if (device.findObject(By.res(SYSTEMUI_PACKAGE, "recent_apps")) == null) {
-            // Swipe from the Home button to approximately center of the screen.
-            UiObject2 homeButton = device.findObject(By.res(SYSTEMUI_PACKAGE, "home_button"));
-            homeButton.setGestureMargins(0, -homeButton.getVisibleBounds().bottom / 2, 0, 1);
-            homeButton.swipe(Direction.UP, 1);
+        final UiObject2 recentsButton = device.findObject(By.res(SYSTEMUI_PACKAGE, "recent_apps"));
+        if (recentsButton == null) {
+            int height = device.getDisplayHeight();
+            UiObject2 navBar = device.findObject(By.res(SYSTEMUI_PACKAGE, "navigation_bar_frame"));
+
+            // Swipe from nav bar to 2/3rd down the screen.
+            device.swipe(
+                    navBar.getVisibleBounds().centerX(), navBar.getVisibleBounds().centerY(),
+                    navBar.getVisibleBounds().centerX(), height * 2 / 3,
+                    (navBar.getVisibleBounds().centerY() - height * 2 / 3) / 100); // 100 px/step
         } else {
-            try {
-                device.pressRecentApps();
-            } catch (RemoteException e) {
-                throw new RuntimeException(e);
-            }
+            recentsButton.click();
         }
 
         // use a long timeout to wait until recents populated
@@ -189,7 +193,8 @@ public class SystemUiJankTests extends JankTestBase {
         device.waitForIdle();
     }
 
-    public void resetRecentsToBottom() {
+    public void resetRecentsToBottom() throws RemoteException {
+        mDevice.wakeUp();
         // Rather than trying to scroll back to the bottom, just re-open the recents list
         mDevice.pressHome();
         mDevice.waitForIdle();
@@ -203,8 +208,7 @@ public class SystemUiJankTests extends JankTestBase {
         mDevice.waitForIdle();
 
         // CLEAR ALL might not be visible in case we don't have any clearable notifications.
-        UiObject clearAll =
-                mDevice.findObject(new UiSelector().className(Button.class).text("CLEAR ALL"));
+        UiObject clearAll = mDevice.findObject(clearAllSelector);
         if (clearAll.exists()) {
             clearAll.click();
         }
@@ -373,6 +377,20 @@ public class SystemUiJankTests extends JankTestBase {
         }
     }
 
+    private void scrollListUp() {
+        mDevice.swipe(mDevice.getDisplayWidth() / 2,
+                mDevice.getDisplayHeight() / 2, mDevice.getDisplayWidth() / 2,
+                0,
+                DEFAULT_SCROLL_STEPS);
+    }
+
+    private void scrollListDown() {
+        mDevice.swipe(mDevice.getDisplayWidth() / 2,
+                mDevice.getDisplayHeight() / 2, mDevice.getDisplayWidth() / 2,
+                mDevice.getDisplayHeight(),
+                DEFAULT_SCROLL_STEPS);
+    }
+
     private void swipeDown() {
         mDevice.swipe(mDevice.getDisplayWidth() / 2,
                 SWIPE_MARGIN, mDevice.getDisplayWidth() / 2,
@@ -413,6 +431,41 @@ public class SystemUiJankTests extends JankTestBase {
             swipeDown();
             mDevice.waitForIdle();
             swipeUp();
+            mDevice.waitForIdle();
+        }
+    }
+
+    public void beforeNotificationListScroll() throws Exception {
+        prepareNotifications(GROUP_MODE_UNGROUPED);
+        mDevice.waitForIdle();
+        TimeResultLogger.writeTimeStampLogStart(String.format("%s-%s",
+                getClass().getSimpleName(), getName()), TIMESTAMP_FILE);
+        swipeDown();
+        mDevice.waitForIdle();
+    }
+
+    public void afterNotificationListScroll(Bundle metrics) throws Exception {
+        TimeResultLogger.writeTimeStampLogEnd(String.format("%s-%s",
+                getClass().getSimpleName(), getName()), TIMESTAMP_FILE);
+        cancelNotifications();
+        mDevice.waitForIdle();
+        swipeUp();
+        mDevice.waitForIdle();
+        TimeResultLogger.writeResultToFile(String.format("%s-%s",
+                getClass().getSimpleName(), getName()), RESULTS_FILE, metrics);
+        super.afterTest(metrics);
+    }
+
+    /** Measures jank while scrolling notification list */
+    @JankTest(expectedFrames = 100,
+            defaultIterationCount = 5,
+            beforeTest = "beforeNotificationListScroll", afterTest = "afterNotificationListScroll")
+    @GfxMonitor(processName = SYSTEMUI_PACKAGE)
+    public void testNotificationListScroll() {
+        for (int i = 0; i < INNER_LOOP; i++) {
+            scrollListUp();
+            mDevice.waitForIdle();
+            scrollListDown();
             mDevice.waitForIdle();
         }
     }
@@ -587,8 +640,7 @@ public class SystemUiJankTests extends JankTestBase {
             afterTest = "afterClearAll")
     @GfxMonitor(processName = SYSTEMUI_PACKAGE)
     public void testClearAll() throws Exception {
-        UiObject clearAll =
-                mDevice.findObject(new UiSelector().className(Button.class).text("CLEAR ALL"));
+        UiObject clearAll = mDevice.findObject(clearAllSelector);
         while (!clearAll.exists()) {
             scrollDown();
         }
@@ -826,7 +878,11 @@ public class SystemUiJankTests extends JankTestBase {
             afterTest = "afterInlineReply")
     @GfxMonitor(processName = SYSTEMUI_PACKAGE)
     public void testInlineReply() throws Exception {
-        UiObject2 replyButton = mDevice.findObject(By.clazz(Button.class).text(REPLY_TEXT));
+
+        UiSelector replySelector = new UiSelector().className(ImageView.class)
+                .descriptionContains(REPLY_TEXT);
+        UiObject replyButton = mDevice.findObject(replySelector);
+
         assertNotNull("Could not find button with text '" + REPLY_TEXT + "'.", replyButton);
         for (int i = 0; i < INNER_LOOP; i++) {
             replyButton.click();
