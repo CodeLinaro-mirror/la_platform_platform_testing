@@ -18,6 +18,7 @@ platform_tests += \
     BandwidthTests \
     BluetoothTests \
     BootHelperApp \
+    BusinessCard \
     CalculatorFunctionalTests \
     CalendarTests \
     camera_client_test \
@@ -28,6 +29,7 @@ platform_tests += \
     CtsCameraTestCases \
     CtsHardwareTestCases \
     DataIdleTest \
+    Development \
     DeviceHealthChecks \
     DeviceHealthTests \
     DexLoggerIntegrationTests \
@@ -94,6 +96,7 @@ platform_tests += \
     PermissionFunctionalTests \
     PermissionTestAppMV1 \
     PermissionUtils \
+    PlatformScenarioTests \
     PowerPerfTest \
     SettingsUITests \
     SimpleTestApp \

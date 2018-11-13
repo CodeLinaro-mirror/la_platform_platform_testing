@@ -19,12 +19,14 @@ java_library {
     libs: [
         "ub-uiautomator",
         "android-support-test",
+        "androidx-test",
         "activity-helper",
     ],
     static_libs: [
         "dpad-util",
         "commands-helper",
         "activity-helper",
+        "launcher-aosp-tapl",
     ],
     sdk_version: "test_current",
     srcs: ["src/**/*.java"],
