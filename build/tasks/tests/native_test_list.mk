@@ -113,6 +113,8 @@ native_tests := \
     puffin_unittest \
     recovery_component_test \
     recovery_unit_test \
+    resolv_integration_test \
+    resolv_unit_test \
     scrape_mmap_addr \
     simpleperf_cpu_hotplug_test \
     simpleperf_unit_test \
@@ -124,8 +126,8 @@ native_tests := \
     wificond_unit_test \
     wifilogd_unit_test \
     ziparchive-tests \
-    BufferHubBuffer_test \
-    BufferHubMetadata_test \
+    BufferHub_test \
+    BufferHubServer_test \
     GraphicBuffer_test \
     NeuralNetworksTest_mt_static \
     NeuralNetworksTest_operations \
