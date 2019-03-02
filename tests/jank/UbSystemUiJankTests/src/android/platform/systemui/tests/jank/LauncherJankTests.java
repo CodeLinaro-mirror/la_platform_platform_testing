@@ -57,6 +57,7 @@ public class LauncherJankTests extends JankTestBase {
 
     @Override
     public void setUp() throws Exception {
+        androidx.test.InstrumentationRegistry.registerInstance(getInstrumentation(), new Bundle());
         mDevice = UiDevice.getInstance(getInstrumentation());
         try {
             mDevice.setOrientationNatural();
@@ -85,8 +86,7 @@ public class LauncherJankTests extends JankTestBase {
     }
 
     public void resetAndOpenRecents() throws UiObjectNotFoundException, RemoteException {
-        mDevice.pressHome();
-        mLauncher.getWorkspace().switchToOverview();
+        mLauncher.pressHome().switchToOverview();
     }
 
     public void prepareOpenAllAppsContainer() throws IOException {

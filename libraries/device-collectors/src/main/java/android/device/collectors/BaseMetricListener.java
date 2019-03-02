@@ -93,7 +93,7 @@ public class BaseMetricListener extends InstrumentationRunListener {
      * for testing.
      */
     @VisibleForTesting
-    BaseMetricListener(Bundle argsBundle) {
+    protected BaseMetricListener(Bundle argsBundle) {
         this();
         mArgsBundle = argsBundle;
     }
@@ -281,6 +281,25 @@ public class BaseMetricListener extends InstrumentationRunListener {
             return null;
         }
         return destDir;
+    }
+
+    /**
+     * Delete a directory and all the file inside.
+     *
+     * @param rootDir the {@link File} directory to delete.
+     */
+    public void recursiveDelete(File rootDir) {
+        if (rootDir != null) {
+            if (rootDir.isDirectory()) {
+                File[] childFiles = rootDir.listFiles();
+                if (childFiles != null) {
+                    for (File child : childFiles) {
+                        recursiveDelete(child);
+                    }
+                }
+            }
+            rootDir.delete();
+        }
     }
 
     /**

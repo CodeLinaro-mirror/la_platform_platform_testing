@@ -13,7 +13,7 @@
 // limitations under the License.
 
 java_library {
-    name: "collectors-helper-test",
+    name: "statsd-helper-test",
     defaults: ["tradefed_errorprone_defaults"],
 
     srcs: ["src/**/*.java"],
@@ -21,7 +21,7 @@ java_library {
     static_libs: [
         "androidx.test.runner",
         "android-support-test",
-        "collectors-helper",
+        "statsd-helper",
         "app-helpers-handheld-interfaces",
         "junit",
         "ub-uiautomator",

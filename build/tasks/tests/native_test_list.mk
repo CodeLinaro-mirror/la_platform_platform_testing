@@ -31,6 +31,7 @@ native_tests := \
     bugreportz_test \
     bsdiff_unittest \
     camera_client_test \
+    clatd_test \
     crashcollector \
     debuggerd_test \
     dumpstate_test \
@@ -55,6 +56,7 @@ native_tests := \
     libandroidfw_tests \
     libappfuse_test \
     libbase_test \
+    libbpf_android_test \
     libcutils_test \
     libcutils_test_static \
     libdemangle_test \
@@ -64,6 +66,7 @@ native_tests := \
     libjavacore-unit-tests \
     liblog-unit-tests \
     libminijail_unittest_gtest \
+    libnetdbpf_test \
     libperfmgr_test \
     libprocinfo_test \
     libtextclassifier_tests \
@@ -105,7 +108,6 @@ native_tests := \
     netd_unit_test \
     netdutils_test \
     nfc_test_utils \
-    pagemap_test \
     perfetto_integrationtests \
     perfprofd_test \
     posix_async_io_test \
@@ -113,6 +115,8 @@ native_tests := \
     puffin_unittest \
     recovery_component_test \
     recovery_unit_test \
+    resolv_integration_test \
+    resolv_unit_test \
     scrape_mmap_addr \
     simpleperf_cpu_hotplug_test \
     simpleperf_unit_test \
@@ -122,10 +126,9 @@ native_tests := \
     update_engine_unittests \
     vintf_object_test \
     wificond_unit_test \
-    wifilogd_unit_test \
     ziparchive-tests \
-    BufferHubBuffer_test \
-    BufferHubMetadata_test \
+    BufferHub_test \
+    BufferHubServer_test \
     GraphicBuffer_test \
     NeuralNetworksTest_mt_static \
     NeuralNetworksTest_operations \
