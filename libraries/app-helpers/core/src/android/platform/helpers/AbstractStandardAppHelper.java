@@ -19,11 +19,14 @@ package android.platform.helpers;
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.app.Instrumentation;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Environment;
+import android.os.RemoteException;
 import android.os.SystemClock;
 import android.platform.helpers.exceptions.AccountException;
 import android.platform.helpers.exceptions.UnknownUiException;
@@ -46,9 +49,10 @@ public abstract class AbstractStandardAppHelper implements IAppHelper {
     private static final String LOG_TAG = AbstractStandardAppHelper.class.getSimpleName();
     private static final String SCREENSHOT_DIR = "apphelper-screenshots";
     private static final String FAVOR_CMD = "favor-shell-commands";
+    private static final String USE_HOME_CMD = "press-home-to-exit";
     private static final String ERROR_NOT_FOUND =
         "Element %s %s is not found in the application %s";
-    private static final long APP_LAUNCH_WAIT_TIME_MS = 5000; // 5 seconds
+    private static final long APP_LAUNCH_WAIT_TIME_MS = 10000; // 10 seconds
 
     private static File sScreenshotDirectory;
 
@@ -58,6 +62,7 @@ public abstract class AbstractStandardAppHelper implements IAppHelper {
     private final KeyCharacterMap mKeyCharacterMap =
             KeyCharacterMap.load(KeyCharacterMap.VIRTUAL_KEYBOARD);
     private final boolean mFavorShellCommands;
+    private final boolean mPressHomeToExit;
 
     public AbstractStandardAppHelper(Instrumentation instr) {
         mInstrumentation = instr;
@@ -66,6 +71,9 @@ public abstract class AbstractStandardAppHelper implements IAppHelper {
         mFavorShellCommands =
                 Boolean.valueOf(
                         InstrumentationRegistry.getArguments().getString(FAVOR_CMD, "false"));
+        mPressHomeToExit =
+                Boolean.valueOf(
+                        InstrumentationRegistry.getArguments().getString(USE_HOME_CMD, "false"));
     }
 
     /**
@@ -73,18 +81,33 @@ public abstract class AbstractStandardAppHelper implements IAppHelper {
      */
     @Override
     public void open() {
+        // Turn on the screen if necessary.
+        try {
+            if (!mDevice.isScreenOn()) {
+                mDevice.wakeUp();
+            }
+        } catch (RemoteException e) {
+            throw new RuntimeException("Could not unlock the device.", e);
+        }
+        // Unlock the screen if necessary.
+        if (mDevice.hasObject(By.res("com.android.systemui", "keyguard_bottom_area"))) {
+            mDevice.pressMenu();
+            mDevice.waitForIdle();
+        }
+        // Launch the application as normal.
         String pkg = getPackage();
         if (mFavorShellCommands) {
             String output = null;
             try {
-                output = mDevice.executeShellCommand(String.format("am start %s", pkg));
+                Intent intent =
+                        mInstrumentation
+                                .getContext()
+                                .getPackageManager()
+                                .getLaunchIntentForPackage(pkg);
+                mInstrumentation.getContext().startActivity(intent);
                 Log.i(LOG_TAG, String.format("Sent command to launch: %s", pkg));
-            } catch (IOException e) {
-                throw new RuntimeException("Failed to execute start command", e);
-            }
-            if (output != null && output.contains("unable to resolve")) {
-                throw new IllegalArgumentException(
-                        String.format("Unable to find package, %s, to start.", pkg));
+            } catch (ActivityNotFoundException e) {
+                throw new RuntimeException(String.format("Failed to find package: %s", pkg), e);
             }
         } else {
             // Launch using the UI and launcher strategy.
@@ -106,15 +129,23 @@ public abstract class AbstractStandardAppHelper implements IAppHelper {
      */
     @Override
     public void exit() {
-        int maxBacks = 4;
-        while (!mDevice.hasObject(mLauncherStrategy.getWorkspaceSelector()) && maxBacks > 0) {
-            mDevice.pressBack();
-            mDevice.waitForIdle();
-            maxBacks--;
-        }
-
-        if (maxBacks == 0) {
+        if (mPressHomeToExit) {
             mDevice.pressHome();
+            mDevice.waitForIdle();
+            if (!mDevice.hasObject(mLauncherStrategy.getWorkspaceSelector())) {
+                throw new IllegalStateException("Pressing Home failed to exit the app.");
+            }
+        } else {
+            int maxBacks = 4;
+            while (!mDevice.hasObject(mLauncherStrategy.getWorkspaceSelector()) && maxBacks > 0) {
+                mDevice.pressBack();
+                mDevice.waitForIdle();
+                maxBacks--;
+            }
+
+            if (maxBacks == 0) {
+                mDevice.pressHome();
+            }
         }
     }
 
