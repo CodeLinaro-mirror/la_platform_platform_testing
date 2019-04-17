@@ -30,6 +30,7 @@ import android.os.RemoteException;
 import android.os.SystemClock;
 import android.platform.helpers.exceptions.AccountException;
 import android.platform.helpers.exceptions.UnknownUiException;
+import android.platform.helpers.watchers.AppIsNotRespondingWatcher;
 import android.support.test.launcherhelper.ILauncherStrategy;
 import android.support.test.launcherhelper.LauncherStrategyFactory;
 import android.support.test.uiautomator.By;
@@ -44,15 +45,16 @@ import android.view.KeyEvent;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 public abstract class AbstractStandardAppHelper implements IAppHelper {
     private static final String LOG_TAG = AbstractStandardAppHelper.class.getSimpleName();
     private static final String SCREENSHOT_DIR = "apphelper-screenshots";
     private static final String FAVOR_CMD = "favor-shell-commands";
     private static final String USE_HOME_CMD = "press-home-to-exit";
+    private static final String LAUNCH_TIMEOUT_OPTION = "app-launch-timeout_ms";
     private static final String ERROR_NOT_FOUND =
         "Element %s %s is not found in the application %s";
-    private static final long APP_LAUNCH_WAIT_TIME_MS = 10000; // 10 seconds
 
     private static File sScreenshotDirectory;
 
@@ -63,6 +65,7 @@ public abstract class AbstractStandardAppHelper implements IAppHelper {
             KeyCharacterMap.load(KeyCharacterMap.VIRTUAL_KEYBOARD);
     private final boolean mFavorShellCommands;
     private final boolean mPressHomeToExit;
+    private final long mLaunchTimeout;
 
     public AbstractStandardAppHelper(Instrumentation instr) {
         mInstrumentation = instr;
@@ -74,6 +77,13 @@ public abstract class AbstractStandardAppHelper implements IAppHelper {
         mPressHomeToExit =
                 Boolean.valueOf(
                         InstrumentationRegistry.getArguments().getString(USE_HOME_CMD, "false"));
+        //TODO(b/127356533): Choose a sensible default for app launch timeout after b/125356281.
+        mLaunchTimeout =
+                Long.valueOf(
+                        InstrumentationRegistry.getArguments()
+                                .getString(
+                                        LAUNCH_TIMEOUT_OPTION,
+                                        String.valueOf(TimeUnit.SECONDS.toMillis(30))));
     }
 
     /**
@@ -96,6 +106,9 @@ public abstract class AbstractStandardAppHelper implements IAppHelper {
         }
         // Launch the application as normal.
         String pkg = getPackage();
+        long launchInitiationTimeMs = System.currentTimeMillis();
+
+        registerDialogWatchers();
         if (mFavorShellCommands) {
             String output = null;
             try {
@@ -107,6 +120,7 @@ public abstract class AbstractStandardAppHelper implements IAppHelper {
                 mInstrumentation.getContext().startActivity(intent);
                 Log.i(LOG_TAG, String.format("Sent command to launch: %s", pkg));
             } catch (ActivityNotFoundException e) {
+                removeDialogWatchers();
                 throw new RuntimeException(String.format("Failed to find package: %s", pkg), e);
             }
         } else {
@@ -117,11 +131,16 @@ public abstract class AbstractStandardAppHelper implements IAppHelper {
                 Log.i(LOG_TAG, "Launched package: id=" + id + ", pkg=" + pkg);
             }
         }
+
         // Ensure the package is in the foreground for success.
-        if (!mDevice.wait(Until.hasObject(By.pkg(pkg).depth(0)), APP_LAUNCH_WAIT_TIME_MS)) {
+        if (!mDevice.wait(Until.hasObject(By.pkg(pkg).depth(0)), mLaunchTimeout)) {
+            removeDialogWatchers();
             throw new IllegalStateException(
-                    String.format("Did not find package, %s, in foreground.", pkg));
+                    String.format(
+                            "Did not find package, %s, in foreground after %d ms.",
+                            pkg, System.currentTimeMillis() - launchInitiationTimeMs));
         }
+        removeDialogWatchers();
     }
 
     /**
@@ -334,5 +353,15 @@ public abstract class AbstractStandardAppHelper implements IAppHelper {
     @Override
     public void removeWatcher(String name) {
       mDevice.removeWatcher(name);
+    }
+
+    private void registerDialogWatchers() {
+        registerWatcher(
+                AppIsNotRespondingWatcher.class.getSimpleName(),
+                new AppIsNotRespondingWatcher(InstrumentationRegistry.getInstrumentation()));
+    }
+
+    private void removeDialogWatchers() {
+        removeWatcher(AppIsNotRespondingWatcher.class.getSimpleName());
     }
 }
