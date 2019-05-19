@@ -19,6 +19,7 @@ instrumentation_tests := \
     LongevityPlatformLibTests \
     ManagedProvisioningTests \
     FrameworksCoreTests \
+    FrameworksMockingCoreTests \
     BinderProxyCountingTestApp \
     BinderProxyCountingTestService \
     FrameworksNetTests \
@@ -67,7 +68,12 @@ instrumentation_tests := \
     FrameworksLocationTests \
     FrameworksPrivacyLibraryTests \
     SettingsUITests \
-    ExtServicesUnitTests
+    ExtServicesUnitTests\
+    NexusLauncherOutOfProcTests\
+    NexusLauncherDebug\
+    NexusLauncherTests\
+    FrameworksNetSmokeTests\
+
 
 # Android Things specific tests
 ifeq ($(PRODUCT_IOT),true)
