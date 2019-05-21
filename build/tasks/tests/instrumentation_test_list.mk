@@ -19,6 +19,7 @@ instrumentation_tests := \
     LongevityPlatformLibTests \
     ManagedProvisioningTests \
     FrameworksCoreTests \
+    FrameworksMockingCoreTests \
     BinderProxyCountingTestApp \
     BinderProxyCountingTestService \
     FrameworksNetTests \
@@ -71,6 +72,7 @@ instrumentation_tests := \
     NexusLauncherOutOfProcTests\
     NexusLauncherDebug\
     NexusLauncherTests\
+    FrameworksNetSmokeTests\
 
 
 # Android Things specific tests
