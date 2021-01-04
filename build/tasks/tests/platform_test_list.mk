@@ -5,6 +5,7 @@ platform_tests += \
     ActivityManagerPerfTestsStubApp3 \
     ActivityManagerPerfTestsTestApp \
     AndroidTVJankTests \
+    AndroidXComposeStartupApp \
     ApiDemos \
     AppCompatibilityTest \
     AppLaunch \
@@ -37,7 +38,7 @@ platform_tests += \
     DynamicCodeLoggerIntegrationTests \
     DialerJankTests \
     DownloadManagerTestApp \
-    DummyIME \
+    StubIME \
     ExternalLocAllPermsTestApp \
     ExternalLocTestApp \
     ExternalLocVersionedTestApp_v1 \
@@ -55,6 +56,7 @@ platform_tests += \
     FrameworksUtilTests \
     InternalLocTestApp \
     JankMicroBenchmarkTests \
+    LauncherIconsApp \
     long_trace_config.textproto \
     MemoryUsage \
     MultiDexLegacyTestApp \
@@ -114,7 +116,7 @@ platform_tests += \
     WifiStrengthScannerUtil \
 
 ifneq ($(strip $(BOARD_PERFSETUP_SCRIPT)),)
-platform_tests += perf-setup.sh
+platform_tests += perf-setup
 endif
 
 ifneq ($(filter vsoc_arm vsoc_arm64 vsoc_x86 vsoc_x86_64, $(TARGET_BOARD_PLATFORM)),)

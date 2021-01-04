@@ -134,24 +134,6 @@ public interface IAutoSettingHelper extends IAppHelper, Scrollable {
     void openMenuWith(String... menuOptions);
 
     /**
-     * Setup expectations: settings app is open and settings menu is selected
-     *
-     * Checks if the toggle switch for the given index is checked.
-     * @param index of toggle switch.
-     * index should be passed as 0 if only one toggle switch is present on screen.
-     */
-    boolean isToggleSwitchChecked(int index);
-
-    /**
-     * Setup expectations: settings app is open and settings menu is selected
-     *
-     * Clicks the toggle switch for the given index
-     * @param index of toggle switch.
-     * index should be passed as 0 if only one toggle switch is present on screen.
-     */
-    void clickToggleSwitch(int index);
-
-    /**
      * Setup expectations: settings app is open.
      *
      * gets the value of the setting.
@@ -191,4 +173,41 @@ public interface IAutoSettingHelper extends IAppHelper, Scrollable {
      * <p>get day/night mode status.
      */
     DayNightMode getDayNightModeStatus();
+
+    /**
+     * Setup expectations: full settings facet is open.
+     *
+     * <p>search in settings app and select the first search result.
+     *
+     * @param item to be searched.
+     */
+    void searchAndSelect(String item);
+
+    /**
+     * Setup expectations: full settings facet is open.
+     *
+     * <p>search in settings app.
+     *
+     * @param item to be searched.
+     * @param selectedIndex determines which search result to select.
+     */
+    void searchAndSelect(String item, int selectedIndex);
+
+    /**
+     * Setup expectations: search result is open.
+     *
+     * <p>verify page title contains the searched item.
+     *
+     * @param item to be verified.
+     */
+    boolean isValidPageTitle(String item);
+
+    /**
+     * Setup expectations: Setting is open.
+     *
+     * <p>check whether a setting menu in Settings is enabled or not.
+     *
+     * @param name of the setting menu.
+     */
+    boolean isSettingMenuEnabled(String menu);
 }

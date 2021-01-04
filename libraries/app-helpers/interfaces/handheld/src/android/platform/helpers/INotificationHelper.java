@@ -18,6 +18,7 @@ package android.platform.helpers;
 
 import android.app.Notification;
 import android.support.test.uiautomator.BySelector;
+import android.support.test.uiautomator.Direction;
 import android.support.test.uiautomator.UiObject2;
 
 import androidx.annotation.Nullable;
@@ -36,6 +37,7 @@ public interface INotificationHelper extends IAppHelper {
             + "lorem ipsum dolor sit amet";
     String NOTIFICATION_CHANNEL_NAME = "Test Channel";
     String EXPAND_BUTTON_ID = "expand_button";
+    String BUBBLE_BUTTON = "bubble_button";
     String APP_ICON_ID = "icon";
 
     /**
@@ -92,6 +94,28 @@ public interface INotificationHelper extends IAppHelper {
      * @param pkg App to launch, when clicking on notification.
      */
     default UiObject2 postMessagingStyleNotification(String pkg) {
+        throw new UnsupportedOperationException("Not yet implemented.");
+    }
+
+    /**
+     * Setup Expectations: Shade is open
+     *
+     * <p>Posts a bubble notification. This notification is associated with a conversation
+     * shortcut, a BubbleMetadata,  and in {@link android.app.Notification.MessagingStyle}.
+     *
+     * @param senderName Name of notification sender.
+     * @param count How many bubble notifications to send.
+     */
+    default void postBubbleNotification(String senderName, int count) {
+        throw new UnsupportedOperationException("Not yet implemented.");
+    }
+
+    /**
+     * Return notification if found by text.
+     *
+     * @param text Text that notification contains.
+     */
+    default UiObject2 getNotificationByText(String text) {
         throw new UnsupportedOperationException("Not yet implemented.");
     }
 
@@ -208,6 +232,40 @@ public interface INotificationHelper extends IAppHelper {
      * the "share" button.
      */
     default void shareScreenshotFromNotification(BySelector pageSelector) {
+        throw new UnsupportedOperationException("Not yet implemented.");
+    }
+
+    /**
+     * Setup expectation: On the expanding notification screen.
+     *
+     * <p>Get the UiObject2 of expanding notification screen.
+     */
+    default UiObject2 getNotificationShadeScrollContainer() {
+        throw new UnsupportedOperationException("Not yet implemented.");
+    }
+
+    /**
+     * Scroll feeds on Notifications screen
+     *
+     * <p>Setup expectations: Notification is open with lots of notifications.
+     *
+     * @param container The container with scrollable elements.
+     * @param dir The direction of the fling, must be UP or DOWN.
+     */
+    default void flingFeed(UiObject2 container, Direction dir) {
+        throw new UnsupportedOperationException("Not yet implemented.");
+    }
+
+    /**
+     * Scroll feeds on Notifications screen
+     *
+     * <p>Setup expectations: Notification is open with lots of notifications.
+     *
+     * @param container The container with scrollable elements.
+     * @param dir The direction of the scroll, must be UP or DOWN.
+     * @param speed The speed of fling.
+     */
+    default void flingFeed(UiObject2 container, Direction dir, int speed) {
         throw new UnsupportedOperationException("Not yet implemented.");
     }
 }
