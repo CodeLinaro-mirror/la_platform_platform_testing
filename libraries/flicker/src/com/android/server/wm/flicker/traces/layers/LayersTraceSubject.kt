@@ -17,10 +17,14 @@
 package com.android.server.wm.flicker.traces.layers
 
 import com.android.server.wm.flicker.assertions.TraceAssertion
+import com.android.server.wm.traces.parser.layers.LayerTraceEntry
+import com.android.server.wm.traces.parser.layers.LayersTrace
 import com.android.server.wm.flicker.traces.SubjectBase
+import com.google.common.truth.Fact
 import com.google.common.truth.FailureMetadata
 import com.google.common.truth.Subject.Factory
 import com.google.common.truth.Truth
+import com.google.common.truth.Truth.assertWithMessage
 
 /** Truth subject for [LayersTrace] objects.  */
 class LayersTraceSubject private constructor(
@@ -71,9 +75,10 @@ class LayersTraceSubject private constructor(
         val layer = trace.entries.asSequence()
                 .flatMap { it.flattenedLayers }
                 .firstOrNull {
-                    it.name.contains(name) && it.proto.currFrame == frameNumber
+                    it.name.contains(name) && it.currFrame == frameNumber
                 }
-        return LayerSubject.assertThat(layer)
+        return assertWithMessage("Layer:$name frame#$frameNumber")
+                .about(LayerSubject.FACTORY).that(layer)
     }
 
     private fun test() {
@@ -112,7 +117,9 @@ class LayersTraceSubject private constructor(
         }
     }
 
-    /** Checks that all visible layers are shown for more than one consecutive entry */
+    /**
+     * Checks that all visible layers are shown for more than one consecutive entry
+     */
     fun visibleLayersShownMoreThanOneConsecutiveEntry() = apply {
         addAssertion("visibleLayersShownMoreThanOneConsecutiveEntry") {
             val visibleLayers = trace.entries.withIndex()
@@ -147,6 +154,33 @@ class LayersTraceSubject private constructor(
 
     operator fun invoke(name: String, assertion: TraceAssertion<LayerTraceEntry>) =
             apply { addAssertion(name, assertion) }
+
+    fun hasFrameSequence(name: String, frameNumbers: Iterable<Long>) {
+        val firstFrame = frameNumbers.first()
+        val entries = trace.entries.asSequence()
+                // map entry to buffer layers with name
+                .map { it.getLayerWithBuffer(name) }
+                // removing all entries without the layer
+                .filterNotNull()
+                // removing all entries with the same frame number
+                .distinctBy { it.currFrame }
+                // drop until the first frame we are interested in
+                .dropWhile { layer -> layer.currFrame != firstFrame }
+
+        var numFound = 0
+        val frameNumbersMatch = entries.zip(frameNumbers.asSequence()) {
+            layer, frameNumber ->
+                numFound++
+                layer.currFrame == frameNumber
+        }.all { it }
+        val allFramesFound = frameNumbers.count() == numFound
+        if (!allFramesFound || !frameNumbersMatch) {
+            val message = "Could not find Layer:" + name +
+                    " with frame sequence:" + frameNumbers.joinToString(",") +
+                    " Found:\n" + entries.joinToString("\n")
+            failWithoutActual(Fact.simpleFact(message))
+        }
+    }
 
     override val traceName: String
         get() = "LayersTrace"
