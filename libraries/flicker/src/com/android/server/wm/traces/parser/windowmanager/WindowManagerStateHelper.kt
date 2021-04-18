@@ -63,8 +63,6 @@ open class WindowManagerStateHelper @JvmOverloads constructor(
      */
     private val retryIntervalMs: Long = 500L
 ) {
-    private lateinit var homeActivity: ComponentName
-
     /**
      * Fetches the current device state
      */
@@ -92,10 +90,6 @@ open class WindowManagerStateHelper @JvmOverloads constructor(
             }
         }
 
-        val homeActivityName = newState.wmState.homeActivityName
-        if (homeActivityName != null) {
-            homeActivity = homeActivityName
-        }
         return newState
     }
 
@@ -142,13 +136,7 @@ open class WindowManagerStateHelper @JvmOverloads constructor(
                             .build())
 
     fun waitForHomeActivityVisible(): Boolean {
-        // Sometimes this function is called before we know what Home Activity is
-        if (!::homeActivity.isInitialized) {
-            Log.i(LOG_TAG, "Computing state to determine Home Activity")
-            computeState()
-            require(::homeActivity.isInitialized) { "Could not identify home activity in state" }
-        }
-        return waitForValidState(WaitForValidActivityState(homeActivity)) &&
+        return waitFor { it.wmState.homeActivity?.isVisible == true } &&
             waitForNavBarStatusBarVisible() &&
             waitForAppTransitionIdle()
     }
@@ -176,9 +164,18 @@ open class WindowManagerStateHelper @JvmOverloads constructor(
         waitFor("Rotation: $rotation") {
             val currRotation = it.wmState.getRotation(displayId)
             val rotationLayerExists = it.layerState.isVisible(ROTATION_LAYER_NAME)
+            val blackSurfaceLayerExists = it.layerState.isVisible(BLACK_SURFACE_LAYER_NAME)
+            val anyLayerAnimating = it.layerState.visibleLayers.any { layer ->
+                !layer.transform.isSimpleRotation
+            }
             Log.v(LOG_TAG, "currRotation($currRotation) " +
+                "anyLayerAnimating($anyLayerAnimating) " +
+                "blackSurfaceLayerExists($blackSurfaceLayerExists) " +
                 "rotationLayerExists($rotationLayerExists)")
-            currRotation == rotation
+            currRotation == rotation &&
+                !anyLayerAnimating &&
+                !rotationLayerExists &&
+                !blackSurfaceLayerExists
         }
 
     /**
@@ -287,6 +284,12 @@ open class WindowManagerStateHelper @JvmOverloads constructor(
         }
     }
 
+    fun waitForSurfaceAppeared(surfaceName: String): Boolean {
+        return waitFor("$surfaceName surface is appeared") {
+            it.wmState.isWindowSurfaceShown(surfaceName)
+        }
+    }
+
     fun waitWindowingModeTopFocus(
         windowingMode: Int,
         topFocus: Boolean,
@@ -315,7 +318,7 @@ open class WindowManagerStateHelper @JvmOverloads constructor(
             return true
         }
         if (!state.wmState.keyguardControllerState.isKeyguardShowing &&
-            !state.wmState.hasResumedActivitiesInStacks) {
+            state.wmState.resumedActivities.isEmpty()) {
             if (!state.wmState.keyguardControllerState.isKeyguardShowing) {
                 Log.i(LOG_TAG, "***resumedActivitiesCount=0")
             } else {
@@ -409,30 +412,34 @@ open class WindowManagerStateHelper @JvmOverloads constructor(
         return !state.wmState.isComplete()
     }
 
+    /**
+     * Waits until the IME window and layer are visible
+     */
     @JvmOverloads
     fun waitImeWindowShown(displayId: Int = Display.DEFAULT_DISPLAY): Boolean =
         waitFor("IME window shown") {
             val imeSurfaceShown = it.wmState.inputMethodWindowState?.isSurfaceShown == true
             val imeDisplay = it.wmState.inputMethodWindowState?.displayId
-            val result = imeSurfaceShown && imeDisplay == displayId
+            val imeLayerShown = it.layerState.isVisible(IME_LAYER_NAME)
+            val result = imeSurfaceShown && imeLayerShown && imeDisplay == displayId
 
             Log.v(LOG_TAG, "Current: $result " +
                 "imeSurfaceShown($imeSurfaceShown) " +
+                "imeLayerShown($imeLayerShown) " +
                 "imeDisplay($imeDisplay)")
             result
         }
 
+    /**
+     * Waits until the IME layer is no longer visible. Cannot wait for the window as
+     * its visibility information is updated at a later state and is not reliable in
+     * the trace
+     */
     fun waitImeWindowGone(): Boolean =
         waitFor("IME window gone") {
-            val imeSurfaceShown = it.wmState.inputMethodWindowState?.isSurfaceShown == true
             val imeLayerShown = it.layerState.isVisible(IME_LAYER_NAME)
-            val result = !imeSurfaceShown || !imeLayerShown
-
-            Log.v(LOG_TAG, "Current: $result " +
-                "imeSurfaceShown($imeSurfaceShown) " +
-                "imeLayerShown($imeLayerShown)")
-
-            result
+            Log.v(LOG_TAG, "imeLayerShown($imeLayerShown)")
+            !imeLayerShown
         }
 
     /**
@@ -468,7 +475,13 @@ open class WindowManagerStateHelper @JvmOverloads constructor(
         @VisibleForTesting
         const val ROTATION_LAYER_NAME = "RotationLayer#0"
         @VisibleForTesting
+        const val BLACK_SURFACE_LAYER_NAME = "BackColorSurface#0"
+        @VisibleForTesting
         const val IME_LAYER_NAME = "InputMethod#0"
+        @VisibleForTesting
+        const val SPLASH_SCREEN_NAME = "Splash Screen"
+        @VisibleForTesting
+        const val SNAPSHOT_WINDOW_NAME = "SnapshotStartingWindow"
     }
 
     data class Dump(

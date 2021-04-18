@@ -53,7 +53,6 @@ data class FlickerResult(
     /**
      * Run the assertions on the trace
      *
-     * @param block Moment where the assertion should run
      * @throws AssertionError If the assertions fail or the transition crashed
      */
     internal fun checkAssertions(
@@ -61,7 +60,7 @@ data class FlickerResult(
     ): List<FlickerAssertionError> {
         checkIsExecuted()
         val currFailures: List<FlickerAssertionError> = runs.flatMap { run ->
-            assertions.mapNotNull { assertion ->
+            assertions.filter { it.tag == run.assertionTag }.mapNotNull { assertion ->
                 try {
                     assertion.checkAssertion(run)
                     null
@@ -74,7 +73,16 @@ data class FlickerResult(
         return currFailures
     }
 
+    /**
+     * Remove from the device the trace files associated with passed runs.
+     *
+     * If an test fails, or if the transition crashes, retain all traces related to
+     * that run.
+     */
     fun cleanUp() {
+        if (error != null) {
+            return
+        }
         runs.forEach {
             if (it.canDelete(failures)) {
                 it.cleanUp()

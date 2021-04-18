@@ -98,7 +98,7 @@ class WindowManagerStateHelperTest {
         )
     }
 
-    private fun createImaginaryVisibleLayers(vararg names: String): List<Layer> {
+    private fun createImaginaryVisibleLayers(names: List<String>): List<Layer> {
         val root = createImaginaryLayer("root", -1, id = "root".hashCode(), parentId = -1)
         val layers = mutableListOf(root)
         names.forEachIndexed { index, name ->
@@ -113,15 +113,19 @@ class WindowManagerStateHelperTest {
         startingTimestamp: Long = 0
     ): () -> WindowManagerStateHelper.Dump {
         val iterator = this.dropWhile { it.timestamp < startingTimestamp }.iterator()
-        val layerTraceEntry = LayerTraceEntry.fromFlattenedLayers(0,
-            createImaginaryVisibleLayers(
-                WindowManagerStateHelper.STATUS_BAR_LAYER_NAME,
-                WindowManagerStateHelper.NAV_BAR_LAYER_NAME),
-            orphanLayerCallback = null)
         return {
             if (iterator.hasNext()) {
+                val wmState = iterator.next()
+                val layerList = mutableListOf(WindowManagerStateHelper.STATUS_BAR_LAYER_NAME,
+                    WindowManagerStateHelper.NAV_BAR_LAYER_NAME)
+
+                if (wmState.inputMethodWindowState?.isSurfaceShown == true) {
+                    layerList.add(WindowManagerStateHelper.IME_LAYER_NAME)
+                }
+                val layerTraceEntry = LayerTraceEntry.fromFlattenedLayers(0,
+                    createImaginaryVisibleLayers(layerList), orphanLayerCallback = null)
                 WindowManagerStateHelper.Dump(
-                    iterator.next(),
+                    wmState,
                     layerTraceEntry
                 )
             } else {
@@ -139,13 +143,13 @@ class WindowManagerStateHelperTest {
         try {
             WindowManagerStateSubject
                 .assertThat(helper.wmState)
-                .isImeWindowShown(Display.DEFAULT_DISPLAY)
+                .isImeWindowVisible(Display.DEFAULT_DISPLAY)
             error("IME state should not be available")
         } catch (e: AssertionError) {
             helper.waitImeWindowShown(Display.DEFAULT_DISPLAY)
             WindowManagerStateSubject
                 .assertThat(helper.wmState)
-                .isImeWindowShown(Display.DEFAULT_DISPLAY)
+                .isImeWindowVisible(Display.DEFAULT_DISPLAY)
         }
     }
 
@@ -156,13 +160,13 @@ class WindowManagerStateHelperTest {
         try {
             WindowManagerStateSubject
                 .assertThat(helper.wmState)
-                .isImeWindowShown()
+                .isImeWindowVisible()
             error("IME state should not be available")
         } catch (e: AssertionError) {
             helper.waitImeWindowShown()
             WindowManagerStateSubject
                 .assertThat(helper.wmState)
-                .isImeWindowNotShown()
+                .isImeWindowInvisible()
         }
     }
 
@@ -272,15 +276,15 @@ class WindowManagerStateHelperTest {
             retryIntervalMs = 1)
         WindowManagerStateSubject
             .assertThat(helper.wmState)
-            .isRotation(Surface.ROTATION_0)
+            .hasRotation(Surface.ROTATION_0)
         helper.waitForRotation(Surface.ROTATION_270)
         WindowManagerStateSubject
             .assertThat(helper.wmState)
-            .isRotation(Surface.ROTATION_270)
+            .hasRotation(Surface.ROTATION_270)
         helper.waitForRotation(Surface.ROTATION_0)
         WindowManagerStateSubject
             .assertThat(helper.wmState)
-            .isRotation(Surface.ROTATION_0)
+            .hasRotation(Surface.ROTATION_0)
     }
 
     @Test
@@ -291,7 +295,7 @@ class WindowManagerStateHelperTest {
             retryIntervalMs = 1)
         WindowManagerStateSubject
             .assertThat(helper.wmState)
-            .isRotation(Surface.ROTATION_0)
+            .hasRotation(Surface.ROTATION_0)
         try {
             helper.waitForRotation(Surface.ROTATION_90)
             error("Should not have reached orientation ${Surface.ROTATION_90}")
@@ -299,8 +303,18 @@ class WindowManagerStateHelperTest {
             WindowManagerStateSubject
                 .assertThat(helper.wmState)
                 .isNotRotation(Surface.ROTATION_90)
-                .isRotation(Surface.ROTATION_0)
+                .hasRotation(Surface.ROTATION_0)
         }
+    }
+
+    @Test
+    fun canDetectResumedActivitiesInStacks() {
+        val trace = readWmTraceFromDumpFile("wm_trace_resumed_activities_in_stack.pb")
+        val entry = trace.first()
+        Truth.assertWithMessage("Trace should have a resumed activity in stacks")
+            .that(entry.resumedActivities)
+            .asList()
+            .hasSize(1)
     }
 
     @FlakyTest

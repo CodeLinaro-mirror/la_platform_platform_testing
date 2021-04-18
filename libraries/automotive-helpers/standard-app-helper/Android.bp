@@ -14,6 +14,10 @@
 // limitations under the License.
 //
 
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
 java_library {
     name: "automotive-standard-app-helper",
     libs: [
@@ -22,7 +26,7 @@ java_library {
         "app-helpers-core",
     ],
     static_libs: [
-        "androidx.test.runner",
+        "automotive-utility-helper",
     ],
     srcs: ["src/**/*.java"],
     sdk_version: "test_current",

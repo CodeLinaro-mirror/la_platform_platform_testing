@@ -14,6 +14,19 @@
 
 native_tests := \
     adbd_test \
+    android_logger_device_test_src_lib \
+    anyhow_device_test_src_lib \
+    anyhow_device_test_tests_test_autotrait \
+    anyhow_device_test_tests_test_boxed \
+    anyhow_device_test_tests_test_chain \
+    anyhow_device_test_tests_test_context \
+    anyhow_device_test_tests_test_convert \
+    anyhow_device_test_tests_test_downcast \
+    anyhow_device_test_tests_test_ffi \
+    anyhow_device_test_tests_test_fmt \
+    anyhow_device_test_tests_test_macros \
+    anyhow_device_test_tests_test_repr \
+    anyhow_device_test_tests_test_source \
     audio_health_tests \
     backtrace_test \
     bionic-unit-tests \
@@ -52,9 +65,11 @@ native_tests := \
     installd_service_test \
     installd_utils_test \
     keystore2_crypto_test_rust \
-    keystore2_km_compat_test \
     keystore2_selinux_test \
     keystore2_test \
+    lazy_static_device_test_src_lib \
+    lazy_static_device_test_tests_no_std \
+    lazy_static_device_test_tests_test \
     libandroidfw_tests \
     libappfuse_test \
     libbase_test \
@@ -117,14 +132,120 @@ native_tests := \
     resolv_gold_test \
     resolv_integration_test \
     resolv_unit_test \
+    ring_device_test_src_lib \
+    ring_device_test_tests_aead_tests \
+    ring_device_test_tests_agreement_tests \
+    ring_device_test_tests_constant_time_tests \
+    ring_device_test_tests_digest_tests \
+    ring_device_test_tests_ecdsa_tests \
+    ring_device_test_tests_ed25519_tests \
+    ring_device_test_tests_hkdf_tests \
+    ring_device_test_tests_hmac_tests \
+    ring_device_test_tests_pbkdf2_tests \
+    ring_device_test_tests_quic_tests \
+    ring_device_test_tests_rand_tests \
+    ring_device_test_tests_rsa_tests \
+    ring_device_test_tests_signature_tests \
     scrape_mmap_addr \
     simpleperf_cpu_hotplug_test \
     simpleperf_unit_test \
     statsd_test \
     syscall_filter_unittest_gtest \
     time-unit-tests \
+    tokio_device_test_tests_async_send_sync \
+    tokio_device_test_tests_buffered \
+    tokio_device_test_tests_fs \
+    tokio_device_test_tests_fs_copy \
+    tokio_device_test_tests_fs_dir \
+    tokio_device_test_tests_fs_file \
+    tokio_device_test_tests_fs_file_mocked \
+    tokio_device_test_tests_fs_link \
+    tokio_device_test_tests_io_async_fd \
+    tokio_device_test_tests_io_async_read \
+    tokio_device_test_tests_io_chain \
+    tokio_device_test_tests_io_copy \
+    tokio_device_test_tests_io_driver \
+    tokio_device_test_tests_io_driver_drop \
+    tokio_device_test_tests_io_lines \
+    tokio_device_test_tests_io_mem_stream \
+    tokio_device_test_tests_io_read \
+    tokio_device_test_tests_io_read_buf \
+    tokio_device_test_tests_io_read_exact \
+    tokio_device_test_tests_io_read_line \
+    tokio_device_test_tests_io_read_to_end \
+    tokio_device_test_tests_io_read_to_string \
+    tokio_device_test_tests_io_read_until \
+    tokio_device_test_tests_io_split \
+    tokio_device_test_tests_io_take \
+    tokio_device_test_tests_io_write \
+    tokio_device_test_tests_io_write_all \
+    tokio_device_test_tests_io_write_buf \
+    tokio_device_test_tests_io_write_int \
+    tokio_device_test_tests_macros_join \
+    tokio_device_test_tests_macros_pin \
+    tokio_device_test_tests_macros_select \
+    tokio_device_test_tests_macros_test \
+    tokio_device_test_tests_macros_try_join \
+    tokio_device_test_tests_net_bind_resource \
+    tokio_device_test_tests_net_lookup_host \
+    tokio_device_test_tests_no_rt \
+    tokio_device_test_tests_process_issue_2174 \
+    tokio_device_test_tests_process_issue_42 \
+    tokio_device_test_tests_process_kill_on_drop \
+    tokio_device_test_tests_process_smoke \
+    tokio_device_test_tests_rt_basic \
+    tokio_device_test_tests_rt_common \
+    tokio_device_test_tests_rt_threaded \
+    tokio_device_test_tests_signal_ctrl_c \
+    tokio_device_test_tests_signal_drop_recv \
+    tokio_device_test_tests_signal_drop_rt \
+    tokio_device_test_tests_signal_drop_signal \
+    tokio_device_test_tests_signal_multi_rt \
+    tokio_device_test_tests_signal_no_rt \
+    tokio_device_test_tests_signal_notify_both \
+    tokio_device_test_tests_signal_twice \
+    tokio_device_test_tests_signal_usr1 \
+    tokio_device_test_tests_sync_barrier \
+    tokio_device_test_tests_sync_broadcast \
+    tokio_device_test_tests_sync_errors \
+    tokio_device_test_tests_sync_mpsc \
+    tokio_device_test_tests_sync_mutex \
+    tokio_device_test_tests_sync_mutex_owned \
+    tokio_device_test_tests_sync_notify \
+    tokio_device_test_tests_sync_oneshot \
+    tokio_device_test_tests_sync_rwlock \
+    tokio_device_test_tests_sync_semaphore \
+    tokio_device_test_tests_sync_semaphore_owned \
+    tokio_device_test_tests_sync_watch \
+    tokio_device_test_tests_task_abort \
+    tokio_device_test_tests_task_blocking \
+    tokio_device_test_tests_task_local \
+    tokio_device_test_tests_task_local_set \
+    tokio_device_test_tests_tcp_accept \
+    tokio_device_test_tests_tcp_connect \
+    tokio_device_test_tests_tcp_echo \
+    tokio_device_test_tests_tcp_into_split \
+    tokio_device_test_tests_tcp_into_std \
+    tokio_device_test_tests_tcp_peek \
+    tokio_device_test_tests_tcp_shutdown \
+    tokio_device_test_tests_tcp_socket \
+    tokio_device_test_tests_tcp_split \
+    tokio_device_test_tests_tcp_stream \
+    tokio_device_test_tests_test_clock \
+    tokio_device_test_tests_udp \
+    tokio_device_test_tests_uds_cred \
+    tokio_device_test_tests_uds_datagram \
+    tokio_device_test_tests_uds_split \
+    tokio_device_test_tests_uds_stream \
+    tokio-test_device_test_src_lib \
+    tokio-test_device_test_tests_block_on \
+    tokio-test_device_test_tests_io \
+    tokio-test_device_test_tests_macros \
     unicode-xid_device_test_src_lib \
     update_engine_unittests \
+    url_device_test_src_lib \
+    url_device_test_tests_data \
+    url_device_test_tests_unit \
     vintf_object_test \
     wificond_unit_test \
     ziparchive-tests \
