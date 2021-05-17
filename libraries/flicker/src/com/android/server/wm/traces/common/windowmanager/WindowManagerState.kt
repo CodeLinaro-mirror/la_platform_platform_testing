@@ -87,6 +87,10 @@ open class WindowManagerState(
         get() = appWindows.filter { it.isVisible }
             .map { it.title }
             .firstOrNull() ?: ""
+    val pinnedWindows: Array<WindowState>
+        get() = visibleWindows
+            .filter { it.windowingMode == WINDOWING_MODE_PINNED }
+            .toTypedArray()
 
     val focusedDisplay: DisplayContent? get() = getDisplay(focusedDisplayId)
     val focusedStackId: Int get() = focusedDisplay?.focusedRootTaskId ?: -1
@@ -261,7 +265,6 @@ open class WindowManagerState(
      * @param partialWindowTitle window title to search
      * @param displayId display where to search the activity
      */
-    @JvmOverloads
     fun getActivityForWindow(
         partialWindowTitle: String,
         displayId: Int = DEFAULT_DISPLAY
@@ -432,11 +435,11 @@ open class WindowManagerState(
         windowStates.filter { ws ->
             ((ws.title == packageName ||
                 ws.title.startsWith("$packageName/")) &&
-                restrictToTypes.any { type -> type == ws.type })
+                restrictToTypes.any { type -> type == ws.attributes.type })
         }
 
     fun getMatchingWindowType(type: Int): List<WindowState> =
-        windowStates.filter { it.type == type }
+        windowStates.filter { it.attributes.type == type }
 
     fun getMatchingWindowTokens(windowName: String): List<String> =
         windowStates.filter { it.title === windowName }.map { it.token }
@@ -482,6 +485,18 @@ open class WindowManagerState(
         visibleWindows.any { it.title == windowName }
 
     /**
+     * Checks if the state has any window in PIP mode
+     */
+    fun hasPipWindow(): Boolean = pinnedWindows.isNotEmpty()
+
+    /**
+     * Checks that an activity [windowName] is in PIP mode
+     */
+    fun isInPipMode(windowName: String): Boolean {
+        return pinnedWindows.any { it.title.contains(windowName) }
+    }
+
+    /**
      * Checks whether the display contains the given activity.
      */
     fun hasActivityInDisplay(displayId: Int, activityName: String): Boolean {
@@ -494,7 +509,7 @@ open class WindowManagerState(
     }
 
     fun findFirstWindowWithType(type: Int): WindowState? =
-        windowStates.firstOrNull { it.type == type }
+        windowStates.firstOrNull { it.attributes.type == type }
 
     fun getZOrder(w: WindowState): Int = windowStates.size - windowStates.indexOf(w)
 
@@ -576,6 +591,10 @@ open class WindowManagerState(
         internal const val ACTIVITY_TYPE_DREAM = 5
         internal const val WINDOWING_MODE_UNDEFINED = 0
         private const val DENSITY_DEFAULT = 160
+        /**
+         * @see android.app.WindowConfiguration.WINDOWING_MODE_PINNED
+         */
+        private const val WINDOWING_MODE_PINNED = 2
 
         /**
          * @see WindowManager.LayoutParams

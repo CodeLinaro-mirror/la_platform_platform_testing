@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package android.platform.test.scenario.generic;
 
-@file:JvmName("Extensions")
+import android.platform.test.microbenchmark.Microbenchmark;
 
-package com.android.server.wm.traces.parser.windowmanager
+import org.junit.runner.RunWith;
 
-import android.content.ComponentName
-import com.android.server.wm.traces.common.windowmanager.WindowManagerState
-
-internal val WindowManagerState.homeActivityName: ComponentName?
-    get() {
-        val activity = homeActivity ?: return null
-        return ComponentName.unflattenFromString(activity.name)
-    }
+@RunWith(Microbenchmark.class)
+public class OpenAppsFromHomeMicrobenchmark extends OpenAppsFromHome {}

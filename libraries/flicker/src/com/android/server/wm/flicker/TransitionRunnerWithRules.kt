@@ -20,6 +20,7 @@ import android.platform.test.rule.NavigationModeRule
 import android.platform.test.rule.PressHomeRule
 import android.platform.test.rule.UnlockScreenRule
 import com.android.server.wm.flicker.rules.ChangeDisplayOrientationRule
+import com.android.server.wm.flicker.rules.RemoveAllTasksButHomeRule
 import org.junit.rules.RuleChain
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
@@ -34,6 +35,7 @@ class TransitionRunnerWithRules(private val testConfig: Map<String, Any?>) : Tra
 
     private fun buildDefaultSetupRules(): RuleChain {
         return RuleChain.outerRule(ChangeDisplayOrientationRule(testConfig.startRotation))
+            .around(RemoveAllTasksButHomeRule())
             .around(NavigationModeRule(testConfig.navBarMode))
             .around(PressHomeRule())
             .around(UnlockScreenRule())
@@ -42,20 +44,19 @@ class TransitionRunnerWithRules(private val testConfig: Map<String, Any?>) : Tra
     private fun buildTransitionRule(flicker: Flicker): Statement {
         return object : Statement() {
                 override fun evaluate() {
-                    result = execute(flicker)
+                    result = runTransition(flicker)
                 }
             }
+    }
+
+    private fun runTransition(flicker: Flicker): FlickerResult {
+        return super.run(flicker)
     }
 
     private fun buildTransitionChain(flicker: Flicker): Statement {
         val setupRules = buildDefaultSetupRules()
         val transitionRule = buildTransitionRule(flicker)
         return setupRules.apply(transitionRule, Description.EMPTY)
-    }
-
-    override fun execute(flicker: Flicker): FlickerResult {
-        check(flicker)
-        return super.run(flicker)
     }
 
     override fun cleanUp() {
