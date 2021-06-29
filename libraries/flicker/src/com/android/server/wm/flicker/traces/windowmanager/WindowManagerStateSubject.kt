@@ -104,15 +104,16 @@ class WindowManagerStateSubject private constructor(
      * @param partialWindowTitles Name of the layer to search
      */
     fun frameRegion(vararg partialWindowTitles: String): RegionSubject {
-        val selectedWindows = subjects.filter { it.name.containsAny(*partialWindowTitles) }
-
-        if (selectedWindows.isEmpty()) {
-            fail("Could not find", selectedWindows.joinToString(", "))
-        }
-
+        val selectedWindows = wmState.windowStates
+            .filter { it.name.containsAny(*partialWindowTitles) }
         val visibleWindows = selectedWindows.filter { it.isVisible }
-        val frameRegions = visibleWindows.mapNotNull { it.windowState?.frameRegion }.toTypedArray()
-        return RegionSubject.assertThat(frameRegions, selectedWindows)
+        val frameRegions = selectedWindows.map { it.frameRegion }
+
+        val invisibleWindowFacts = selectedWindows
+            .filterNot { it in visibleWindows }
+            .map { Fact.fact("Is Invisible", it.name) }
+
+        return RegionSubject.assertThat(frameRegions, this, invisibleWindowFacts)
     }
 
     /**

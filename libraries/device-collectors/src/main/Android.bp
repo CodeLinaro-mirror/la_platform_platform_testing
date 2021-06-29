@@ -28,7 +28,6 @@ java_library {
         "androidx.test.uiautomator",
         "jank-helper",
         "junit",
-        "lyric-metric-helper",
         "memory-helper",
         "perfetto-helper",
         "power-helper",

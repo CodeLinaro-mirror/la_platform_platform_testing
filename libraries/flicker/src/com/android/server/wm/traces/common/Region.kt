@@ -29,9 +29,10 @@ class Region(val rects: Array<Rect>) : Rect(
         bottom: Int
     ) : this(Rect(left, top, right, bottom))
 
-    constructor(rect: Rect?): this(rect?.let { arrayOf(rect) } ?: emptyArray())
+    constructor(rect: Rect): this(arrayOf(rect))
 
-    constructor(rect: RectF?): this(rect?.toRect())
+    constructor(rect: RectF): this(
+        Rect(rect.left.toInt(), rect.top.toInt(), rect.right.toInt(), rect.bottom.toInt()))
 
     constructor() : this(Rect.EMPTY)
 

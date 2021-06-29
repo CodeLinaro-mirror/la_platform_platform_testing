@@ -74,26 +74,6 @@ fun withTracing(
     outputDir: Path = getDefaultFlickerOutputDir(),
     predicate: () -> Unit
 ): DeviceStateDump {
-    val traces = recordTraces(outputDir, predicate)
-    val wmTraceData = traces.first
-    val layersTraceData = traces.second
-    return DeviceStateDump.fromTrace(wmTraceData, layersTraceData)
-}
-
-/**
- * Acquire the [WindowManagerTrace] and [LayersTrace] with the device state changes that happen
- * when executing the commands defined in the [predicate].
- *
- * @param outputDir Directory where to store the traces
- * @param predicate Commands to execute
- * @throws UnsupportedOperationException If tracing is already activated
- * @return a pair containing the WM and SF traces
- */
-@JvmOverloads
-fun recordTraces(
-    outputDir: Path = getDefaultFlickerOutputDir(),
-    predicate: () -> Unit
-): Pair<ByteArray, ByteArray> {
     var wmTraceData = ByteArray(0)
     val layersOutputDir = outputDir.resolve("withSFTracing")
     val layersTraceData = LayersTraceMonitor(layersOutputDir).withTracing {
@@ -101,5 +81,5 @@ fun recordTraces(
         wmTraceData = WindowManagerTraceMonitor(wmOutputDir).withTracing(predicate)
     }
 
-    return Pair(wmTraceData, layersTraceData)
+    return DeviceStateDump.fromTrace(wmTraceData, layersTraceData)
 }

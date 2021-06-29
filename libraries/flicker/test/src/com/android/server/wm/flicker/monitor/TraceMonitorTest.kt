@@ -20,7 +20,6 @@ import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.UiDevice
 import com.android.server.wm.flicker.FlickerRunResult
 import com.android.server.wm.flicker.getDefaultFlickerOutputDir
-import com.android.server.wm.traces.parser.DeviceStateDump
 import com.google.common.io.Files
 import com.google.common.truth.Truth
 import org.junit.After
@@ -88,15 +87,6 @@ abstract class TraceMonitorTest<T : TransitionMonitor> {
         assertTrace(trace)
     }
 
-    private fun validateTrace(dump: DeviceStateDump) {
-        Truth.assertWithMessage("Could not obtain SF trace")
-            .that(dump.layersTrace?.entries)
-            .isNotEmpty()
-        Truth.assertWithMessage("Could not obtain WM trace")
-            .that(dump.wmTrace?.entries)
-            .isNotEmpty()
-    }
-
     @Test
     fun withTracing() {
         val trace = withTracing {
@@ -104,17 +94,11 @@ abstract class TraceMonitorTest<T : TransitionMonitor> {
             device.pressRecentApps()
         }
 
-        this.validateTrace(trace)
-    }
-
-    @Test
-    fun recordTraces() {
-        val trace = recordTraces {
-            device.pressHome()
-            device.pressRecentApps()
-        }
-
-        val dump = DeviceStateDump.fromTrace(trace.first, trace.second)
-        this.validateTrace(dump)
+        Truth.assertWithMessage("Could not obtain SF trace")
+            .that(trace.layersTrace?.entries)
+            .isNotEmpty()
+        Truth.assertWithMessage("Could not obtain WM trace")
+            .that(trace.wmTrace?.entries)
+            .isNotEmpty()
     }
 }

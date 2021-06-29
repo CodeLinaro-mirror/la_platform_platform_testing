@@ -115,29 +115,25 @@ class LayerTraceEntrySubject private constructor(
      * Obtains the region occupied by all layers with name containing any of [partialLayerNames]
      *
      * @param partialLayerNames Name of the layer to search
-     * @param useCompositionEngineRegionOnly If true, uses only the region calculated from the
-     *   Composition Engine (CE) -- visibleRegion in the proto definition. Otherwise calculates
-     *   the visible region when the information is not available from the CE
      */
-    fun visibleRegion(
-        vararg partialLayerNames: String,
-        useCompositionEngineRegionOnly: Boolean = true
-    ): RegionSubject {
-        val selectedLayers = subjects
+    fun visibleRegion(vararg partialLayerNames: String): RegionSubject {
+        val selectedLayers = entry.flattenedLayers
             .filter { it.name.containsAny(*partialLayerNames) }
+        val visibleLayers = selectedLayers.filter { it.isVisible }
+        val visibleAreas = visibleLayers.mapNotNull { it.visibleRegion }
+
+        val invisibleLayerFacts = selectedLayers
+            .filter { it.isInvisible }
+            .map { Fact.fact("Is Invisible", "${it.name} - ${it.visibilityReason}") }
+            .toMutableList()
 
         if (selectedLayers.isEmpty()) {
-            fail("Could not find", partialLayerNames.joinToString(", "))
+            partialLayerNames.forEach { layerName ->
+                invisibleLayerFacts.add(Fact.fact("Could not find", layerName))
+            }
         }
 
-        val visibleLayers = selectedLayers.filter { it.isVisible }
-        return if (useCompositionEngineRegionOnly) {
-            val visibleAreas = visibleLayers.mapNotNull { it.layer?.visibleRegion }.toTypedArray()
-            RegionSubject.assertThat(visibleAreas, selectedLayers)
-        } else {
-            val visibleAreas = visibleLayers.mapNotNull { it.layer?.screenBounds }.toTypedArray()
-            RegionSubject.assertThat(visibleAreas, selectedLayers)
-        }
+        return RegionSubject.assertThat(visibleAreas, this, invisibleLayerFacts)
     }
 
     /**
