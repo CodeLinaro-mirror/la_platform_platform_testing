@@ -98,7 +98,12 @@ class LayerTraceEntryLazy(
                 crop,
                 proto.isRelativeOf,
                 proto.zOrderRelativeOf,
-                proto.layerStack
+                proto.layerStack,
+                Transform(proto.transform, position = proto.requestedPosition),
+                proto.requestedColor.toColor(),
+                proto.cornerRadiusCrop?.toRectF() ?: RectF.EMPTY,
+                Transform(proto.inputWindowInfo?.transform, position = null),
+                proto.inputWindowInfo?.touchableRegion?.toRegion()
             )
         }
 
