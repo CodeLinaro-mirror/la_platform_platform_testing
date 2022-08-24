@@ -67,6 +67,10 @@ public class HeapDumpListener extends BaseCollectionListener<String> {
         mIsEnabledForAll =
                 Boolean.parseBoolean(args.getString(ITERATION_ALL_ENABLE, String.valueOf(false)));
 
+        if (mIsCollectPerRun) {
+            return;
+        }
+
         if (!mIsEnabledForAll) {
             String iterations = args.getString(ENABLE_ITERATION_IDS);
             if (iterations == null || iterations.isEmpty()) {
@@ -82,20 +86,23 @@ public class HeapDumpListener extends BaseCollectionListener<String> {
 
     @Override
     public void testStart(Function<String, Boolean> filter, Description description) {
-        if (mIsDisabled) {
-            mHelper.startCollecting(false, null);
-            return;
-        }
-
         updateIterationCount(description);
-
         if (mIsEnabledForAll) {
-            mHelper.startCollecting(true, getHeapDumpFileId(description));
-        } else {
-            if (mValidIterationIds.contains(mTestIterationCount.get(getTestFileName(description)))) {
-                mHelper.startCollecting(true, getHeapDumpFileId(description));
-            } else {
-                mHelper.startCollecting(false, null);
+            mHelper.startCollecting(getHeapDumpFileId(description));
+        } else if (mIsCollectPerRun || mValidIterationIds
+                .contains(mTestIterationCount.get(getTestFileName(description)))) {
+            mHelper.startCollecting(getHeapDumpFileId(description));
+        }
+    }
+
+    @Override
+    public final void onTestEnd(DataRecord testData, Description description) {
+        if (!mIsCollectPerRun) {
+            if (mIsEnabledForAll) {
+                super.onTestEnd(testData, description);
+            } else if (mValidIterationIds
+                    .contains(mTestIterationCount.get(getTestFileName(description)))) {
+                super.onTestEnd(testData, description);
             }
         }
     }
@@ -124,11 +131,19 @@ public class HeapDumpListener extends BaseCollectionListener<String> {
 
     /**
      * Returns the packagename.classname_methodname which has no spaces and used to create file
-     * names.
+     * names. If class name or method name is null then return the heapdump.
      */
     public static String getTestFileName(Description description) {
-        return String.format(FILE_NAME_PREFIX_FORMAT,
-                description.getClassName().replaceAll(SPACES_PATTERN, REPLACEMENT_CHAR).trim(),
-                description.getMethodName().replaceAll(SPACES_PATTERN, REPLACEMENT_CHAR).trim());
+        if (description.getClassName() != null && !description.getClassName().isEmpty()
+                && description.getMethodName() != null
+                && !description.getMethodName().isEmpty()) {
+            String[] className = description.getClassName().split("\\$");
+            return String.format(FILE_NAME_PREFIX_FORMAT,
+                    className[0].replaceAll(SPACES_PATTERN, REPLACEMENT_CHAR).trim(),
+                    description.getMethodName().replaceAll(SPACES_PATTERN, REPLACEMENT_CHAR)
+                            .trim());
+        } else {
+            return "heapdump";
+        }
     }
 }
