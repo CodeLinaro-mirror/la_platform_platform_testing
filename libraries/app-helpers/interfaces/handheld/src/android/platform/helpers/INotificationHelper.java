@@ -164,6 +164,21 @@ public interface INotificationHelper extends IAppHelper {
      * @param senderName Name of notification sender.
      * @param id An unique notification identifier.
      * @param text Notification message content.
+     * @param shortcutId id of the shortcut used in the notification.
+     * @param messageToActivity message to send to bubble test activity.
+     */
+    default void postBubbleNotification(
+            String senderName, int id, String text, String shortcutId, String messageToActivity) {
+        throw new UnsupportedOperationException("Not yet implemented.");
+    }
+
+    /**
+     * Posts a bubble notification. This notification is associated with a conversation shortcut, a
+     * BubbleMetadata, and in {@link android.app.Notification.MessagingStyle}.
+     *
+     * @param senderName Name of notification sender.
+     * @param id An unique notification identifier.
+     * @param text Notification message content.
      */
     default void postBubbleNotification(String senderName, int id, String text) {
         throw new UnsupportedOperationException("Not yet implemented.");
@@ -295,28 +310,6 @@ public interface INotificationHelper extends IAppHelper {
      * must be present.
      */
     default void clearAllNotifications() {
-        throw new UnsupportedOperationException("Not yet implemented.");
-    }
-
-    /**
-     * Runs a shell command which causes System UI to hide all notifications EXCEPT from the test
-     * application, when enabled is true. When enabled is false, the default debug filter is reset
-     * and all notifications will be restored.
-     *
-     * <p>Fails if any notifications are left in the shade after the filter is applied.
-     */
-    default void setDebugNotificationFilter(boolean enabled) {
-        throw new UnsupportedOperationException("Not yet implemented.");
-    }
-
-    /**
-     * Runs a shell command which causes System UI to hide all notifications EXCEPT from all the
-     * provided packages. If no packages are provided, the default debug filter is reset and all
-     * notifications will be restored.
-     *
-     * <p>Fails if any notifications are left in the shade after the filter is applied.
-     */
-    default void setDebugNotificationFilter(@Nullable List<String> allowedPackages) {
         throw new UnsupportedOperationException("Not yet implemented.");
     }
 
