@@ -244,6 +244,45 @@ class RegionSubject(
     }
 
     /**
+     * Asserts that [region] is not bigger than [testRegion], even if the regions don't overlap.
+     *
+     * @param testRegion Area to compare to
+     */
+    fun notBiggerThan(testRegion: Region): RegionSubject = apply {
+        val testArea = testRegion.bounds.area
+        val area = region.bounds.area
+
+        if (area > testArea) {
+            fail(
+                Fact.fact("Region to test", testRegion),
+                Fact.fact("Area of test region", testArea),
+                Fact.fact("Covered region", region),
+                Fact.fact("Area of region", area)
+            )
+        }
+    }
+
+    /**
+     * Asserts that [region] is positioned to the right and bottom from [testRegion], but the
+     * regions can overlap and [region] can be smaller than [testRegion]
+     *
+     * @param testRegion Area to compare to
+     * @param threshold Offset threshold by which the position might be off
+     */
+    fun isToTheRightBottom(testRegion: Region, threshold: Int): RegionSubject = apply {
+        val horizontallyPositionedToTheRight =
+            testRegion.bounds.left - threshold <= region.bounds.left
+        val verticallyPositionedToTheBottom = testRegion.bounds.top - threshold <= region.bounds.top
+
+        if (!horizontallyPositionedToTheRight || !verticallyPositionedToTheBottom) {
+            fail(
+                Fact.fact("Region to test", testRegion),
+                Fact.fact("Actual region", region)
+            )
+        }
+    }
+
+    /**
      * Asserts that [region] covers at least [testRegion], that is, its area covers each point
      * in the region
      *
@@ -356,25 +395,26 @@ class RegionSubject(
                 this.region.height
         val otherAspectRatio = other.region.width.toFloat() /
                 other.region.height
-        check("Should have same aspect ratio, old is $aspectRatio and new is $otherAspectRatio")
-                .that(abs(aspectRatio - otherAspectRatio) > 0.1).isFalse()
+        check("Aspect Ratio Difference (Old=$aspectRatio, New=$otherAspectRatio)")
+            .that(abs(aspectRatio - otherAspectRatio))
+            .isAtMost(0.1f)
     }
 
     companion object {
         @VisibleForTesting
-        const val MSG_ERROR_TOP_POSITION = "Incorrect top position"
+        const val MSG_ERROR_TOP_POSITION = "Top position"
 
         @VisibleForTesting
-        const val MSG_ERROR_BOTTOM_POSITION = "Incorrect top position"
+        const val MSG_ERROR_BOTTOM_POSITION = "Bottom position"
 
         @VisibleForTesting
-        const val MSG_ERROR_LEFT_POSITION = "Incorrect left position"
+        const val MSG_ERROR_LEFT_POSITION = "Left position"
 
         @VisibleForTesting
-        const val MSG_ERROR_RIGHT_POSITION = "Incorrect right position"
+        const val MSG_ERROR_RIGHT_POSITION = "Right position"
 
         @VisibleForTesting
-        const val MSG_ERROR_AREA = "Incorrect rect area"
+        const val MSG_ERROR_AREA = "Rect area"
 
         private fun mergeRegions(regions: Array<Region>): Region {
             val result = Region.EMPTY

@@ -16,8 +16,9 @@
 
 package com.android.server.wm.traces.common.windowmanager.windows
 
-import com.android.server.wm.traces.common.FlickerComponentName
+import com.android.server.wm.traces.common.IComponentMatcher
 import com.android.server.wm.traces.common.Rect
+import kotlin.math.min
 
 /**
  * Represents a display content in the window manager hierarchy
@@ -49,6 +50,14 @@ open class DisplayContent(
     override val name: String = id.toString()
     override val isVisible: Boolean = false
 
+    val isTablet: Boolean get() {
+        val smallestWidth = dpiFromPx(
+            min(displayRect.width.toFloat(), displayRect.height.toFloat()),
+            dpi
+        )
+        return smallestWidth >= TABLET_MIN_DPS
+    }
+
     val rootTasks: Array<Task>
         get() {
             val tasks = this.collectDescendants<Task> { it.isRootTask }.toMutableList()
@@ -71,12 +80,22 @@ open class DisplayContent(
             return tasks.toTypedArray()
         }
 
-    fun containsActivity(component: FlickerComponentName): Boolean =
-        rootTasks.any { it.containsActivity(component) }
+    /**
+     * @return if [componentMatcher] matches any activity
+     *
+     * @param componentMatcher Components to search
+     */
+    fun containsActivity(componentMatcher: IComponentMatcher): Boolean =
+        rootTasks.any { it.containsActivity(componentMatcher) }
 
-    fun getTaskDisplayArea(activityName: String): DisplayArea? {
+    /**
+     * @return THe [DisplayArea] matching [componentMatcher], or null if none matches
+     *
+     * @param componentMatcher Components to search
+     */
+    fun getTaskDisplayArea(componentMatcher: IComponentMatcher): DisplayArea? {
         val taskDisplayAreas = this.collectDescendants<DisplayArea> { it.isTaskDisplayArea }
-            .filter { it.containsActivity(activityName) }
+            .filter { it.containsActivity(componentMatcher) }
 
         if (taskDisplayAreas.size > 1) {
             throw IllegalArgumentException(
@@ -140,5 +159,17 @@ open class DisplayContent(
         result = 31 * result + name.hashCode()
         result = 31 * result + isVisible.hashCode()
         return result
+    }
+
+    companion object {
+        /** From [android.util.DisplayMetrics] */
+        private const val DENSITY_DEFAULT = 160f
+        /** From [com.android.systemui.shared.recents.utilities.Utilities] */
+        private const val TABLET_MIN_DPS = 600f
+
+        private fun dpiFromPx(size: Float, densityDpi: Int): Float {
+            val densityRatio: Float = densityDpi.toFloat() / DENSITY_DEFAULT
+            return size / densityRatio
+        }
     }
 }
