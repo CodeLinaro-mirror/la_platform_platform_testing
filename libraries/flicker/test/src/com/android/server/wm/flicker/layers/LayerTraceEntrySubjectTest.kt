@@ -16,10 +16,7 @@
 
 package com.android.server.wm.flicker.layers
 
-import com.android.server.wm.flicker.DOCKER_STACK_DIVIDER_COMPONENT
-import com.android.server.wm.flicker.IMAGINARY_COMPONENT
-import com.android.server.wm.flicker.LAUNCHER_COMPONENT
-import com.android.server.wm.flicker.SIMPLE_APP_COMPONENT
+import com.android.server.wm.flicker.TestComponents
 import com.android.server.wm.flicker.assertFailure
 import com.android.server.wm.flicker.assertThatErrorContainsDebugInfo
 import com.android.server.wm.flicker.assertThrows
@@ -27,7 +24,7 @@ import com.android.server.wm.flicker.assertions.FlickerSubject
 import com.android.server.wm.flicker.readLayerTraceFromFile
 import com.android.server.wm.flicker.traces.layers.LayerTraceEntrySubject
 import com.android.server.wm.flicker.traces.layers.LayersTraceSubject
-import com.android.server.wm.traces.common.FlickerComponentName
+import com.android.server.wm.traces.common.ComponentMatcher
 import com.android.server.wm.traces.common.region.Region
 import com.google.common.truth.Truth
 import org.junit.FixMethodOrder
@@ -46,10 +43,12 @@ class LayerTraceEntrySubjectTest {
         val error = assertThrows(AssertionError::class.java) {
             LayersTraceSubject.assertThat(layersTraceEntries)
                 .first()
-                .visibleRegion(IMAGINARY_COMPONENT)
+                .visibleRegion(TestComponents.IMAGINARY)
         }
         assertThatErrorContainsDebugInfo(error)
-        Truth.assertThat(error).hasMessageThat().contains(IMAGINARY_COMPONENT.classNames.first())
+        Truth.assertThat(error)
+            .hasMessageThat()
+            .contains(TestComponents.IMAGINARY.classNames.first())
         Truth.assertThat(error).hasMessageThat().contains(FlickerSubject.ASSERTION_TAG)
     }
 
@@ -57,17 +56,17 @@ class LayerTraceEntrySubjectTest {
     fun testCanInspectBeginning() {
         val layersTraceEntries = readLayerTraceFromFile("layers_trace_launch_split_screen.pb")
         LayerTraceEntrySubject.assertThat(layersTraceEntries.entries.first())
-            .isVisible(FlickerComponentName.NAV_BAR)
-            .notContains(DOCKER_STACK_DIVIDER_COMPONENT)
-            .isVisible(LAUNCHER_COMPONENT)
+            .isVisible(ComponentMatcher.NAV_BAR)
+            .notContains(TestComponents.DOCKER_STACK_DIVIDER)
+            .isVisible(TestComponents.LAUNCHER)
     }
 
     @Test
     fun testCanInspectEnd() {
         val layersTraceEntries = readLayerTraceFromFile("layers_trace_launch_split_screen.pb")
         LayerTraceEntrySubject.assertThat(layersTraceEntries.entries.last())
-            .isVisible(FlickerComponentName.NAV_BAR)
-            .isVisible(DOCKER_STACK_DIVIDER_COMPONENT)
+            .isVisible(ComponentMatcher.NAV_BAR)
+            .isVisible(TestComponents.DOCKER_STACK_DIVIDER)
     }
 
     // b/75276931
@@ -96,12 +95,12 @@ class LayerTraceEntrySubjectTest {
         val expectedVisibleRegion = Region.from(0, 0, 1, 1)
         val error = assertThrows(AssertionError::class.java) {
             LayersTraceSubject.assertThat(trace).entry(937229257165)
-                .visibleRegion(IMAGINARY_COMPONENT)
+                .visibleRegion(TestComponents.IMAGINARY)
                 .coversExactly(expectedVisibleRegion)
         }
         assertFailure(error)
             .factValue("Could not find layers")
-                .contains(IMAGINARY_COMPONENT.toWindowName())
+                .contains(TestComponents.IMAGINARY.toWindowName())
     }
 
     @Test
@@ -110,7 +109,7 @@ class LayerTraceEntrySubjectTest {
         val expectedVisibleRegion = Region.from(0, 0, 1, 1)
         val error = assertThrows(AssertionError::class.java) {
             LayersTraceSubject.assertThat(trace).entry(937126074082)
-                .visibleRegion(DOCKER_STACK_DIVIDER_COMPONENT)
+                .visibleRegion(TestComponents.DOCKER_STACK_DIVIDER)
                 .coversExactly(expectedVisibleRegion)
         }
         assertFailure(error)
@@ -124,7 +123,7 @@ class LayerTraceEntrySubjectTest {
         val expectedVisibleRegion = Region.from(0, 0, 1, 1)
         val error = assertThrows(AssertionError::class.java) {
             LayersTraceSubject.assertThat(trace).entry(935346112030)
-                .visibleRegion(SIMPLE_APP_COMPONENT)
+                .visibleRegion(TestComponents.SIMPLE_APP)
                 .coversExactly(expectedVisibleRegion)
         }
         assertFailure(error)
@@ -138,7 +137,7 @@ class LayerTraceEntrySubjectTest {
         val expectedVisibleRegion = Region.from(0, 0, 1440, 99)
         val error = assertThrows(AssertionError::class.java) {
             LayersTraceSubject.assertThat(trace).entry(937126074082)
-                .visibleRegion(FlickerComponentName.STATUS_BAR)
+                .visibleRegion(ComponentMatcher.STATUS_BAR)
                 .coversExactly(expectedVisibleRegion)
         }
         assertFailure(error)
@@ -151,7 +150,7 @@ class LayerTraceEntrySubjectTest {
         val trace = readLayerTraceFromFile("layers_trace_launch_split_screen.pb")
         val expectedVisibleRegion = Region.from(0, 0, 1080, 145)
         LayersTraceSubject.assertThat(trace).entry(90480846872160)
-            .visibleRegion(FlickerComponentName.STATUS_BAR)
+            .visibleRegion(ComponentMatcher.STATUS_BAR)
             .coversExactly(expectedVisibleRegion)
     }
 
@@ -160,7 +159,7 @@ class LayerTraceEntrySubjectTest {
         val trace = readLayerTraceFromFile("layers_trace_invalid_layer_visibility.pb")
         val error = assertThrows(AssertionError::class.java) {
             LayersTraceSubject.assertThat(trace).entry(252794268378458)
-                .isVisible(SIMPLE_APP_COMPONENT)
+                .isVisible(TestComponents.SIMPLE_APP)
         }
         assertFailure(error)
             .factValue("Is Invisible", 0)
@@ -176,7 +175,7 @@ class LayerTraceEntrySubjectTest {
         entry.visibleRegion(useCompositionEngineRegionOnly = false)
             .coversExactly(Region.from(0, 0, 1440, 2960))
 
-        entry.visibleRegion(FlickerComponentName.IME,
+        entry.visibleRegion(ComponentMatcher.IME,
             useCompositionEngineRegionOnly = false)
             .coversExactly(Region.from(0, 171, 1440, 2960))
     }
