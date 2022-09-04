@@ -85,12 +85,11 @@ object WindowManagerTraceParser {
      *
      * @param data binary proto data
      */
-    @JvmOverloads
     @JvmStatic
     fun parseFromTrace(
         data: ByteArray?
     ): WindowManagerTrace {
-        var fileProto: WindowManagerTraceFileProto? = null
+        var fileProto: WindowManagerTraceFileProto?
         try {
             measureTimeMillis {
                 fileProto = WindowManagerTraceFileProto.parseFrom(data)
@@ -110,7 +109,6 @@ object WindowManagerTraceParser {
      *
      * @param proto Parsed proto data
      */
-    @JvmOverloads
     @JvmStatic
     fun parseFromTrace(
         proto: WindowManagerTraceFileProto
@@ -257,9 +255,9 @@ object WindowManagerTraceParser {
                     ?: Rect.EMPTY,
                 pinnedStackMovementBounds = proto.pinnedTaskController?.movementBounds?.toRect()
                     ?: Rect.EMPTY,
-                displayRect = Rect(0, 0, proto.displayInfo?.logicalWidth
+                displayRect = Rect.from(0, 0, proto.displayInfo?.logicalWidth
                     ?: 0, proto.displayInfo?.logicalHeight ?: 0),
-                appRect = Rect(0, 0, proto.displayInfo?.appWidth ?: 0,
+                appRect = Rect.from(0, 0, proto.displayInfo?.appWidth ?: 0,
                     proto.displayInfo?.appHeight
                         ?: 0),
                 dpi = proto.dpi,
@@ -572,5 +570,5 @@ object WindowManagerTraceParser {
         }
     }
 
-    private fun RectProto.toRect() = Rect(this.left, this.top, this.right, this.bottom)
+    private fun RectProto.toRect() = Rect.from(this.left, this.top, this.right, this.bottom)
 }
