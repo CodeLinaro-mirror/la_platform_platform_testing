@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,13 @@
 package com.android.server.wm.traces.common.service.processors
 
 import com.android.server.wm.traces.common.DeviceStateDump
-import com.android.server.wm.traces.common.layers.BaseLayerTraceEntry
 import com.android.server.wm.traces.common.layers.LayersTrace
-import com.android.server.wm.traces.common.service.ITagProcessor
+import com.android.server.wm.traces.common.service.ITagGenerator
+import com.android.server.wm.traces.common.service.Scenario
 import com.android.server.wm.traces.common.tags.Tag
 import com.android.server.wm.traces.common.tags.TagState
 import com.android.server.wm.traces.common.tags.TagTrace
-import com.android.server.wm.traces.common.tags.Transition
-import com.android.server.wm.traces.common.windowmanager.WindowManagerState
+import com.android.server.wm.traces.common.transition.TransitionsTrace
 import com.android.server.wm.traces.common.windowmanager.WindowManagerTrace
 
 /**
@@ -32,17 +31,17 @@ import com.android.server.wm.traces.common.windowmanager.WindowManagerTrace
  * WindowManager and SurfaceFlinger traces, and ensuring the 1:1 correspondence between the start
  * and end tags invariant is maintained by [BaseFsmState].
  */
-abstract class TransitionProcessor(internal val logger: (String) -> Unit) : ITagProcessor {
-    abstract val transition: Transition
+abstract class TransitionProcessor(internal val logger: (String) -> Unit) : ITagGenerator {
+    abstract val scenario: Scenario
     abstract fun getInitialState(tags: MutableMap<Long, MutableList<Tag>>): BaseState
 
     abstract inner class BaseState(
         tags: MutableMap<Long, MutableList<Tag>>
-    ) : BaseFsmState(tags, logger, transition) {
+    ) : BaseFsmState(tags, logger, scenario) {
         abstract override fun doProcessState(
-            previous: DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>?,
-            current: DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>,
-            next: DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>
+                previous: DeviceStateDump?,
+                current: DeviceStateDump,
+                next: DeviceStateDump
         ): FSMState
     }
 
@@ -56,7 +55,8 @@ abstract class TransitionProcessor(internal val logger: (String) -> Unit) : ITag
      */
     override fun generateTags(
         wmTrace: WindowManagerTrace,
-        layersTrace: LayersTrace
+        layersTrace: LayersTrace,
+        transitionsTrace: TransitionsTrace
     ): TagTrace {
         val tags = mutableMapOf<Long, MutableList<Tag>>()
         var currPosition: FSMState? = getInitialState(tags)
@@ -65,10 +65,10 @@ abstract class TransitionProcessor(internal val logger: (String) -> Unit) : ITag
         val dumpIterator = dumpList.iterator()
 
         // always keep a reference to previous, current and next states
-        var previous: DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>?
-        var current: DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>? = null
-        var next: DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>? =
-            dumpIterator.next()
+        var previous: DeviceStateDump?
+        var current: DeviceStateDump? = null
+        var next: DeviceStateDump? =
+                dumpIterator.next()
         while (currPosition != null) {
             previous = current
             current = next
@@ -92,20 +92,20 @@ abstract class TransitionProcessor(internal val logger: (String) -> Unit) : ITag
 
     companion object {
         internal fun createDumpList(
-            wmTrace: WindowManagerTrace,
-            layersTrace: LayersTrace
-        ): List<DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>> {
+                wmTrace: WindowManagerTrace,
+                layersTrace: LayersTrace
+        ): List<DeviceStateDump> {
             val wmTimestamps = wmTrace.map { it.timestamp }.toTypedArray()
             val layersTimestamps = layersTrace.map { it.timestamp }.toTypedArray()
             val fullTimestamps = setOf(*wmTimestamps, *layersTimestamps).sorted()
 
             return fullTimestamps.map { baseTimestamp ->
                 val wmState = wmTrace
-                    .lastOrNull { it.timestamp <= baseTimestamp }
-                    ?: wmTrace.first()
+                        .lastOrNull { it.timestamp <= baseTimestamp }
+                        ?: wmTrace.first()
                 val layerState = layersTrace
-                    .lastOrNull { it.timestamp <= baseTimestamp }
-                    ?: layersTrace.first()
+                        .lastOrNull { it.timestamp <= baseTimestamp }
+                        ?: layersTrace.first()
                 DeviceStateDump(wmState, layerState)
             }.distinctBy { Pair(it.wmState.timestamp, it.layerState.timestamp) }
         }

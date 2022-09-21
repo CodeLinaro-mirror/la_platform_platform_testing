@@ -16,6 +16,8 @@
 
 package com.android.server.wm.traces.common
 
+import kotlin.js.JsName
+
 /**
  * Create a new component identifier.
  *
@@ -27,13 +29,16 @@ package com.android.server.wm.traces.common
  * @param className The name of the class inside <var>pkg</var> that
  * implements the component.
  */
-data class ComponentName(val packageName: String, val className: String) {
+data class ComponentName(
+    override val packageName: String,
+    override val className: String
+) : IComponentName {
     /**
      * Obtains the activity name from the component name.
      *
      * See [ComponentName.toWindowName] for additional information
      */
-    fun toActivityName(): String {
+    override fun toActivityName(): String {
         return when {
             packageName.isNotEmpty() && className.isNotEmpty() -> {
                 val sb = StringBuilder(packageName.length + className.length)
@@ -55,7 +60,7 @@ data class ComponentName(val packageName: String, val className: String) {
      * If the component doesn't have a package name, assume it's a system component and return only
      * the class name
      */
-    fun toWindowName(): String {
+    override fun toWindowName(): String {
         return when {
             packageName.isNotEmpty() && className.isNotEmpty() -> "$packageName/$className"
             packageName.isNotEmpty() -> packageName
@@ -64,6 +69,7 @@ data class ComponentName(val packageName: String, val className: String) {
         }
     }
 
+    @JsName("toShortWindowName")
     private fun toShortWindowName(): String {
         return when {
             packageName.isNotEmpty() && className.isNotEmpty() ->
@@ -79,7 +85,7 @@ data class ComponentName(val packageName: String, val className: String) {
      *
      * See [toWindowName] for additional information
      */
-    fun toLayerName(): String {
+    override fun toLayerName(): String {
         var result = this.toWindowName()
         if (result.contains("/") && !result.contains("#")) {
             result = "$result#"
@@ -88,11 +94,13 @@ data class ComponentName(val packageName: String, val className: String) {
         return result
     }
 
+    @JsName("appendShortString")
     private fun appendShortString(sb: StringBuilder, packageName: String, className: String) {
         sb.append(packageName).append('/')
         appendShortClassName(sb, packageName, className)
     }
 
+    @JsName("appendShortClassName")
     private fun appendShortClassName(sb: StringBuilder, packageName: String, className: String) {
         if (className.startsWith(packageName)) {
             val packageNameLength = packageName.length
@@ -105,15 +113,19 @@ data class ComponentName(val packageName: String, val className: String) {
         sb.append(className)
     }
 
+    @JsName("toActivityRecordFilter")
     fun toActivityRecordFilter(): Regex =
         Regex("ActivityRecord\\{.*${Regex.escape(this.toShortWindowName())}")
 
+    @JsName("toActivityNameRegex")
     fun toActivityNameRegex(): Regex =
         Regex(".*${Regex.escape(this.toActivityName())}.*")
 
+    @JsName("toWindowNameRegex")
     fun toWindowNameRegex(): Regex =
         Regex(".*${Regex.escape(this.toWindowName())}.*")
 
+    @JsName("toLayerNameRegex")
     fun toLayerNameRegex(): Regex =
         Regex(".*${Regex.escape(this.toLayerName())}.*")
 

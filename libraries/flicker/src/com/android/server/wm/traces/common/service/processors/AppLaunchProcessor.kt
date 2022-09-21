@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,34 +17,32 @@
 package com.android.server.wm.traces.common.service.processors
 
 import com.android.server.wm.traces.common.DeviceStateDump
-import com.android.server.wm.traces.common.layers.BaseLayerTraceEntry
+import com.android.server.wm.traces.common.service.Scenario
 import com.android.server.wm.traces.common.tags.Tag
-import com.android.server.wm.traces.common.tags.Transition
-import com.android.server.wm.traces.common.windowmanager.WindowManagerState
 
 /**
  * This processor creates tags when an app is launched.
  * @param logger logs by invoking any event messages
  */
 class AppLaunchProcessor(logger: (String) -> Unit) : TransitionProcessor(logger) {
-    override val transition = Transition.APP_LAUNCH
+    override val scenario = Scenario.APP_LAUNCH
     private val windowsBecomeVisible =
-        HashMap<Int, DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>>()
+            HashMap<Int, DeviceStateDump>()
 
     override fun getInitialState(tags: MutableMap<Long, MutableList<Tag>>) =
-        WaitUntilWindowIsInVisibleActivity(tags)
+            WaitUntilWindowIsInVisibleActivity(tags)
 
     /**
      * FSM state that stores any newly visible window activities (start tag)
      * and when their layers stop scaling (end tag).
      */
     inner class WaitUntilWindowIsInVisibleActivity(
-        tags: MutableMap<Long, MutableList<Tag>>
+            tags: MutableMap<Long, MutableList<Tag>>
     ) : BaseState(tags) {
         override fun doProcessState(
-            previous: DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>?,
-            current: DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>,
-            next: DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>
+                previous: DeviceStateDump?,
+                current: DeviceStateDump,
+                next: DeviceStateDump
         ): FSMState {
             if (previous == null) return this
             val prevVisibleWindows = previous.wmState.visibleWindows
@@ -56,7 +54,7 @@ class AppLaunchProcessor(logger: (String) -> Unit) : TransitionProcessor(logger)
             val appLaunchedLayers = windowsBecomeVisible.filterKeys { layerId ->
                 val currDumpLayer = current.layerState.getLayerById(layerId)
                 (previous.layerState.getLayerById(layerId)?.isScaling == true &&
-                currDumpLayer?.isScaling == false)
+                        currDumpLayer?.isScaling == false)
             }
 
             // Only want to tag when one app is being launched.
@@ -66,13 +64,13 @@ class AppLaunchProcessor(logger: (String) -> Unit) : TransitionProcessor(logger)
             } else if (appLaunchedLayers.isNotEmpty()) {
                 val firstDump = appLaunchedLayers.entries.first()
                 val layerId = firstDump.key
-                addStartTransitionTag(firstDump.value, transition,
-                    layerId = layerId,
-                    timestamp = firstDump.value.layerState.timestamp
+                addStartTransitionTag(firstDump.value, scenario,
+                        layerId = layerId,
+                        timestamp = firstDump.value.layerState.timestamp
                 )
-                addEndTransitionTag(current, transition,
-                    layerId = layerId,
-                    timestamp = current.layerState.timestamp
+                addEndTransitionTag(current, scenario,
+                        layerId = layerId,
+                        timestamp = current.layerState.timestamp
                 )
                 windowsBecomeVisible.clear()
             }

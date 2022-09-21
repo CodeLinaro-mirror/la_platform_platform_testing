@@ -19,12 +19,12 @@ package com.android.server.wm.flicker
 import android.content.Context
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.server.wm.flicker.FlickerRunResult.Companion.RunStatus.ASSERTION_SUCCESS
+import com.android.server.wm.flicker.helpers.isShellTransitionsEnabled
 import com.android.server.wm.flicker.traces.FlickerSubjectException
+import com.android.server.wm.traces.common.DeviceTraceDump
 import com.android.server.wm.traces.common.layers.LayersTrace
-import com.android.server.wm.traces.common.tags.TagTrace
 import com.android.server.wm.traces.common.windowmanager.WindowManagerTrace
 import com.android.server.wm.traces.parser.layers.LayersTraceParser
-import com.android.server.wm.traces.parser.tags.TagTraceParserUtil
 import com.android.server.wm.traces.parser.windowmanager.WindowManagerTraceParser
 import com.google.common.io.ByteStreams
 import com.google.common.truth.ExpectFailure
@@ -36,7 +36,10 @@ import java.util.zip.ZipInputStream
 
 internal fun readWmTraceFromFile(relativePath: String): WindowManagerTrace {
     return try {
-        WindowManagerTraceParser.parseFromTrace(readTestFile(relativePath))
+        WindowManagerTraceParser.parseFromTrace(
+            readTestFile(relativePath),
+            clearCacheAfterParsing = false
+        )
     } catch (e: Exception) {
         throw RuntimeException(e)
     }
@@ -44,7 +47,10 @@ internal fun readWmTraceFromFile(relativePath: String): WindowManagerTrace {
 
 internal fun readWmTraceFromDumpFile(relativePath: String): WindowManagerTrace {
     return try {
-        WindowManagerTraceParser.parseFromDump(readTestFile(relativePath))
+        WindowManagerTraceParser.parseFromDump(
+            readTestFile(relativePath),
+            clearCacheAfterParsing = false
+        )
     } catch (e: Exception) {
         throw RuntimeException(e)
     }
@@ -60,14 +66,6 @@ internal fun readLayerTraceFromFile(
             ignoreLayersStackMatchNoDisplay = false,
             ignoreLayersInVirtualDisplay = false
         ) { ignoreOrphanLayers }
-    } catch (e: Exception) {
-        throw RuntimeException(e)
-    }
-}
-
-internal fun readTagTraceFromFile(relativePath: String): TagTrace {
-    return try {
-        TagTraceParserUtil.parseFromTrace(readTestFile(relativePath))
     } catch (e: Exception) {
         throw RuntimeException(e)
     }
@@ -127,20 +125,40 @@ fun assertThatErrorContainsDebugInfo(error: Throwable, withBlameEntry: Boolean =
 
 fun assertArchiveContainsAllTraces(
     runStatus: FlickerRunResult.Companion.RunStatus = ASSERTION_SUCCESS,
-    testName: String = "",
+    testName: String,
     iteration: Int = 0
 ) {
     val archiveFileName = "${runStatus.prefix}_${testName}_$iteration.zip"
     val archivePath = getDefaultFlickerOutputDir().resolve(archiveFileName)
     Truth.assertWithMessage("Expected trace archive `$archivePath` to exist")
-            .that(Files.exists(archivePath)).isTrue()
+        .that(Files.exists(archivePath)).isTrue()
 
     val archiveStream = ZipInputStream(FileInputStream(archivePath.toFile()))
 
-    val expectedFiles = listOf("wm_trace.winscope", "layers_trace.winscope", "transition.mp4")
+    val expectedFiles = mutableListOf(
+        "wm_trace.winscope",
+        "layers_trace.winscope",
+        "transition.mp4",
+        "transactions_trace.winscope"
+    )
+
+    if (isShellTransitionsEnabled) {
+        expectedFiles.add("transition_trace.winscope")
+    }
+
     val actualFiles = generateSequence { archiveStream.nextEntry }.map { it.name }.toList()
 
     Truth.assertThat(actualFiles).hasSize(expectedFiles.size)
     Truth.assertWithMessage("Trace archive doesn't contain all expected traces")
-            .that(actualFiles.containsAll(expectedFiles)).isTrue()
+        .that(actualFiles.containsAll(expectedFiles)).isTrue()
+}
+
+fun getTestTraceDump(
+    traceFilesLocation: String,
+    wmTraceFilename: String = "wm_trace.winscope",
+    layersTraceFilename: String = "layers_trace.winscope"
+): DeviceTraceDump {
+    val wmTraceByteArray = readTestFile(traceFilesLocation + wmTraceFilename)
+    val layersTraceByteArray = readTestFile(traceFilesLocation + layersTraceFilename)
+    return TraceFileReader.fromTraceByteArray(wmTraceByteArray, layersTraceByteArray)
 }

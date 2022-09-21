@@ -20,11 +20,13 @@ import com.android.server.wm.flicker.assertions.Assertion
 import com.android.server.wm.flicker.traces.FlickerFailureStrategy
 import com.android.server.wm.flicker.traces.FlickerTraceSubject
 import com.android.server.wm.flicker.traces.region.RegionTraceSubject
-import com.android.server.wm.traces.common.ComponentMatcher
+import com.android.server.wm.traces.common.ComponentNameMatcher
+import com.android.server.wm.traces.common.EdgeExtensionComponentMatcher
 import com.android.server.wm.traces.common.IComponentMatcher
 import com.android.server.wm.traces.common.layers.Layer
 import com.android.server.wm.traces.common.layers.LayersTrace
 import com.android.server.wm.traces.common.region.RegionTrace
+import com.google.common.truth.Fact
 import com.google.common.truth.FailureMetadata
 import com.google.common.truth.FailureStrategy
 import com.google.common.truth.StandardSubjectBuilder
@@ -57,11 +59,17 @@ import com.google.common.truth.Subject.Factory
 class LayersTraceSubject private constructor(
     fm: FailureMetadata,
     val trace: LayersTrace,
-    override val parent: LayersTraceSubject?
+    override val parent: LayersTraceSubject?,
+    val facts: Collection<Fact>
 ) : FlickerTraceSubject<LayerTraceEntrySubject>(fm, trace),
     ILayerSubject<LayersTraceSubject, RegionTraceSubject> {
-    override val selfFacts
-        get() = super.selfFacts.toMutableList()
+
+    override val selfFacts by lazy {
+        val allFacts = super.selfFacts.toMutableList()
+        allFacts.addAll(facts)
+        allFacts
+    }
+
     override val subjects by lazy {
         trace.entries.map { LayerTraceEntrySubject.assertThat(it, trace, this) }
     }
@@ -111,16 +119,18 @@ class LayersTraceSubject private constructor(
      */
     @JvmOverloads
     fun visibleLayersShownMoreThanOneConsecutiveEntry(
-        ignoreLayers: List<ComponentMatcher> = listOf(
-            ComponentMatcher.SPLASH_SCREEN,
-            ComponentMatcher.SNAPSHOT
+        ignoreLayers: List<IComponentMatcher> = listOf(
+            ComponentNameMatcher.SPLASH_SCREEN,
+            ComponentNameMatcher.SNAPSHOT,
+            ComponentNameMatcher.IME_SNAPSHOT,
+            EdgeExtensionComponentMatcher()
         )
     ): LayersTraceSubject = apply {
         visibleEntriesShownMoreThanOneConsecutiveTime { subject ->
             subject.entry.visibleLayers
                 .filter {
                     ignoreLayers.none { componentMatcher ->
-                        componentMatcher.toLayerName() in it.name
+                        componentMatcher.layerMatchesAnyOf(it)
                     }
                 }
                 .map { it.name }
@@ -140,7 +150,7 @@ class LayersTraceSubject private constructor(
         isOptional: Boolean
     ): LayersTraceSubject =
         apply {
-            addAssertion("notContains(${componentMatcher.toLayerName()})", isOptional) {
+            addAssertion("notContains(${componentMatcher.toLayerIdentifier()})", isOptional) {
                 it.notContains(componentMatcher)
             }
         }
@@ -157,7 +167,7 @@ class LayersTraceSubject private constructor(
         isOptional: Boolean
     ): LayersTraceSubject =
         apply {
-            addAssertion("contains(${componentMatcher.toLayerName()})", isOptional) {
+            addAssertion("contains(${componentMatcher.toLayerIdentifier()})", isOptional) {
                 it.contains(componentMatcher)
             }
         }
@@ -174,7 +184,7 @@ class LayersTraceSubject private constructor(
         isOptional: Boolean
     ): LayersTraceSubject =
         apply {
-            addAssertion("isVisible(${componentMatcher.toLayerName()})", isOptional) {
+            addAssertion("isVisible(${componentMatcher.toLayerIdentifier()})", isOptional) {
                 it.isVisible(componentMatcher)
             }
         }
@@ -191,7 +201,7 @@ class LayersTraceSubject private constructor(
         isOptional: Boolean
     ): LayersTraceSubject =
         apply {
-            addAssertion("isInvisible(${componentMatcher.toLayerName()})", isOptional) {
+            addAssertion("isInvisible(${componentMatcher.toLayerIdentifier()})", isOptional) {
                 it.isInvisible(componentMatcher)
             }
         }
@@ -211,7 +221,7 @@ class LayersTraceSubject private constructor(
     ): LayersTraceSubject =
         apply {
             addAssertion(
-                "isSplashScreenVisibleFor(${componentMatcher.toLayerName()})",
+                "isSplashScreenVisibleFor(${componentMatcher.toLayerIdentifier()})",
                 isOptional
             ) {
                 it.isSplashScreenVisibleFor(componentMatcher)
@@ -257,7 +267,7 @@ class LayersTraceSubject private constructor(
     fun hasFrameSequence(
         name: String,
         frameNumbers: Iterable<Long>
-    ): LayersTraceSubject = hasFrameSequence(ComponentMatcher("", name), frameNumbers)
+    ): LayersTraceSubject = hasFrameSequence(ComponentNameMatcher("", name), frameNumbers)
 
     fun hasFrameSequence(
         componentMatcher: IComponentMatcher,
@@ -281,7 +291,7 @@ class LayersTraceSubject private constructor(
         }.all { it }
         val allFramesFound = frameNumbers.count() == numFound
         if (!allFramesFound || !frameNumbersMatch) {
-            val message = "Could not find Layer:" + componentMatcher.toLayerName() +
+            val message = "Could not find Layer:" + componentMatcher.toLayerIdentifier() +
                 " with frame sequence:" + frameNumbers.joinToString(",") +
                 " Found:\n" + entries.joinToString("\n")
             fail(message)
@@ -308,8 +318,11 @@ class LayersTraceSubject private constructor(
         /**
          * Boilerplate Subject.Factory for LayersTraceSubject
          */
-        private fun getFactory(parent: LayersTraceSubject?): Factory<Subject, LayersTrace> =
-            Factory { fm, subject -> LayersTraceSubject(fm, subject, parent) }
+        private fun getFactory(
+            parent: LayersTraceSubject?,
+            facts: Collection<Fact> = emptyList()
+        ): Factory<Subject, LayersTrace> =
+            Factory { fm, subject -> LayersTraceSubject(fm, subject, parent, facts) }
 
         /**
          * Creates a [LayersTraceSubject] to representing a SurfaceFlinger trace,
@@ -321,11 +334,12 @@ class LayersTraceSubject private constructor(
         @JvmOverloads
         fun assertThat(
             trace: LayersTrace,
-            parent: LayersTraceSubject? = null
+            parent: LayersTraceSubject? = null,
+            facts: Collection<Fact> = emptyList()
         ): LayersTraceSubject {
             val strategy = FlickerFailureStrategy()
             val subject = StandardSubjectBuilder.forCustomFailureStrategy(strategy)
-                .about(getFactory(parent))
+                .about(getFactory(parent, facts))
                 .that(trace) as LayersTraceSubject
             strategy.init(subject)
             return subject
@@ -335,8 +349,11 @@ class LayersTraceSubject private constructor(
          * Static method for getting the subject factory (for use with assertAbout())
          */
         @JvmStatic
-        fun entries(parent: LayersTraceSubject?): Factory<Subject, LayersTrace> {
-            return getFactory(parent)
+        fun entries(
+            parent: LayersTraceSubject?,
+            facts: Collection<Fact> = emptyList()
+        ): Factory<Subject, LayersTrace> {
+            return getFactory(parent, facts)
         }
     }
 }

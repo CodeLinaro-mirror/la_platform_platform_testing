@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import com.android.server.wm.traces.common.ITrace
 data class TagTrace(
     override val entries: Array<TagState>
 ) : ITrace<TagState>,
-    List<TagState> by entries.toList() {
+        List<TagState> by entries.toList() {
     override fun toString(): String = "FlickerTagTrace(${entries.firstOrNull()?.timestamp ?: 0}, " +
             "${entries.lastOrNull()?.timestamp ?: 0})"
 
@@ -37,7 +37,6 @@ data class TagTrace(
     }
 
     override fun hashCode(): Int {
-        var result = entries.contentDeepHashCode()
-        return result
+        return entries.contentDeepHashCode()
     }
 }
