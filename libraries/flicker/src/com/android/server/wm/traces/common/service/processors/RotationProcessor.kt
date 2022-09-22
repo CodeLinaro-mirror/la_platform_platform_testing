@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,13 @@
 
 package com.android.server.wm.traces.common.service.processors
 
-import com.android.server.wm.traces.common.ComponentMatcher
+import com.android.server.wm.traces.common.ComponentNameMatcher
 import com.android.server.wm.traces.common.DeviceStateDump
 import com.android.server.wm.traces.common.RectF
 import com.android.server.wm.traces.common.WindowManagerConditionsFactory
 import com.android.server.wm.traces.common.layers.BaseLayerTraceEntry
+import com.android.server.wm.traces.common.service.Scenario
 import com.android.server.wm.traces.common.tags.Tag
-import com.android.server.wm.traces.common.tags.Transition
 import com.android.server.wm.traces.common.windowmanager.WindowManagerState
 
 /**
@@ -32,7 +32,7 @@ import com.android.server.wm.traces.common.windowmanager.WindowManagerState
  * to occur and both nav and status bars to appear
  */
 class RotationProcessor(logger: (String) -> Unit) : TransitionProcessor(logger) {
-    override val transition = Transition.ROTATION
+    override val scenario = Scenario.ROTATION
     override fun getInitialState(tags: MutableMap<Long, MutableList<Tag>>) = InitialState(tags)
 
     /**
@@ -43,13 +43,13 @@ class RotationProcessor(logger: (String) -> Unit) : TransitionProcessor(logger) 
         tags: MutableMap<Long, MutableList<Tag>>
     ) : BaseState(tags) {
         override fun doProcessState(
-            previous: DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>?,
-            current: DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>,
-            next: DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>
+            previous: DeviceStateDump?,
+            current: DeviceStateDump,
+            next: DeviceStateDump
         ): FSMState {
             val currDisplayRect = current.wmState.displaySize()
             logger.invoke("(${current.wmState.timestamp}) Initial state. " +
-                "Display size $currDisplayRect")
+                    "Display size $currDisplayRect")
             return WaitDisplayRectChange(tags, currDisplayRect)
         }
     }
@@ -62,9 +62,9 @@ class RotationProcessor(logger: (String) -> Unit) : TransitionProcessor(logger) 
         private val currDisplayRect: RectF
     ) : BaseState(tags) {
         override fun doProcessState(
-            previous: DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>?,
-            current: DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>,
-            next: DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>
+                previous: DeviceStateDump?,
+                current: DeviceStateDump,
+                next: DeviceStateDump
         ): FSMState {
             val newWmDisplayRect = current.wmState.displaySize()
             val newLayersDisplayRect = current.layerState.screenBounds()
@@ -89,14 +89,14 @@ class RotationProcessor(logger: (String) -> Unit) : TransitionProcessor(logger) 
         }
 
         private fun processDisplaySizeChange(
-            previous: DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>,
-            newDisplayRect: RectF
+                previous: DeviceStateDump,
+                newDisplayRect: RectF
         ): FSMState {
             logger.invoke("(${previous.wmState.timestamp}) Display size changed " +
-                "to $newDisplayRect")
+                    "to $newDisplayRect")
             // tag on the last complete state at the start
             logger.invoke("(${previous.wmState.timestamp}) Tagging transition start")
-            addStartTransitionTag(previous, transition)
+            addStartTransitionTag(previous, scenario)
             return WaitRotationFinished(tags)
         }
     }
@@ -106,18 +106,18 @@ class RotationProcessor(logger: (String) -> Unit) : TransitionProcessor(logger) 
      */
     inner class WaitRotationFinished(tags: MutableMap<Long, MutableList<Tag>>) : BaseState(tags) {
         private val rotationLayerExists = WindowManagerConditionsFactory
-            .isLayerVisible(ComponentMatcher.ROTATION)
+            .isLayerVisible(ComponentNameMatcher.ROTATION)
         private val backSurfaceLayerExists = WindowManagerConditionsFactory
-            .isLayerVisible(ComponentMatcher.BACK_SURFACE)
+            .isLayerVisible(ComponentNameMatcher.BACK_SURFACE)
         private val areLayersAnimating = WindowManagerConditionsFactory.hasLayersAnimating()
         private val wmStateIdle = WindowManagerConditionsFactory
             .isAppTransitionIdle(/* default display */ 0)
         private val wmStateComplete = WindowManagerConditionsFactory.isWMStateComplete()
 
         override fun doProcessState(
-            previous: DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>?,
-            current: DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>,
-            next: DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>
+                previous: DeviceStateDump?,
+                current: DeviceStateDump,
+                next: DeviceStateDump
         ): FSMState {
             val anyLayerAnimating = areLayersAnimating.isSatisfied(current)
             val rotationLayerExists = rotationLayerExists.isSatisfied(current)
@@ -130,7 +130,7 @@ class RotationProcessor(logger: (String) -> Unit) : TransitionProcessor(logger) 
             val displaySizeDifferent = newWmDisplayRect != newLayersDisplayRect
 
             val inRotation = anyLayerAnimating || rotationLayerExists || blackSurfaceLayerExists ||
-                displaySizeDifferent || !wmStateIdle || !wmStateComplete
+                    displaySizeDifferent || !wmStateIdle || !wmStateComplete
             logger.invoke("(${current.layerState.timestamp}) " +
                 "In rotation? $inRotation (" +
                 "anyLayerAnimating=$anyLayerAnimating, " +
@@ -144,7 +144,7 @@ class RotationProcessor(logger: (String) -> Unit) : TransitionProcessor(logger) 
             } else {
                 // tag on the last complete state at the start
                 logger.invoke("(${current.layerState.timestamp}) Tagging transition end")
-                addEndTransitionTag(current, transition)
+                addEndTransitionTag(current, scenario)
                 // return to start to wait for a second rotation
                 val lastDisplayRect = current.wmState.displaySize()
                 WaitDisplayRectChange(tags, lastDisplayRect)

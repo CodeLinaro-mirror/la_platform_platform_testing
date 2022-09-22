@@ -17,6 +17,8 @@
 package com.android.server.wm.traces.common.windowmanager.windows
 
 import com.android.server.wm.traces.common.Rect
+import com.android.server.wm.traces.common.withCache
+import kotlin.js.JsName
 
 /**
  * Represents the configuration of a WM window
@@ -26,16 +28,18 @@ import com.android.server.wm.traces.common.Rect
  *
  */
 open class WindowConfiguration(
-    _appBounds: Rect?,
-    _bounds: Rect?,
-    _maxBounds: Rect?,
-    val windowingMode: Int,
-    val activityType: Int
+    @JsName("appBounds")
+    val appBounds: Rect = Rect.EMPTY,
+    @JsName("bounds")
+    val bounds: Rect = Rect.EMPTY,
+    @JsName("maxBounds")
+    val maxBounds: Rect = Rect.EMPTY,
+    @JsName("windowingMode")
+    val windowingMode: Int = 0,
+    @JsName("activityType")
+    val activityType: Int = 0
 ) {
-    val appBounds: Rect = _appBounds ?: Rect.EMPTY
-    val bounds: Rect = _bounds ?: Rect.EMPTY
-    val maxBounds: Rect = _maxBounds ?: Rect.EMPTY
-
+    @JsName("isEmpty")
     val isEmpty: Boolean
         get() = appBounds.isEmpty &&
             bounds.isEmpty &&
@@ -63,5 +67,26 @@ open class WindowConfiguration(
         result = 31 * result + bounds.hashCode()
         result = 31 * result + maxBounds.hashCode()
         return result
+    }
+
+    companion object {
+        @JsName("EMPTY")
+        val EMPTY: WindowConfiguration get() = withCache { WindowConfiguration() }
+        @JsName("from")
+        fun from(
+            appBounds: Rect?,
+            bounds: Rect?,
+            maxBounds: Rect?,
+            windowingMode: Int,
+            activityType: Int
+        ): WindowConfiguration = withCache {
+            WindowConfiguration(
+                appBounds ?: Rect.EMPTY,
+                bounds ?: Rect.EMPTY,
+                maxBounds ?: Rect.EMPTY,
+                windowingMode,
+                activityType
+            )
+        }
     }
 }

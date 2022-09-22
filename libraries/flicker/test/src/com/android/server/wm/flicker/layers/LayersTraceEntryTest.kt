@@ -21,8 +21,11 @@ import com.android.server.wm.flicker.assertThatErrorContainsDebugInfo
 import com.android.server.wm.flicker.assertThrows
 import com.android.server.wm.flicker.readLayerTraceFromFile
 import com.android.server.wm.flicker.traces.layers.LayersTraceSubject.Companion.assertThat
+import com.android.server.wm.traces.common.Cache
+import com.android.server.wm.traces.common.ComponentNameMatcher
 import com.android.server.wm.traces.common.layers.LayerTraceEntry
 import com.google.common.truth.Truth
+import org.junit.Before
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
@@ -33,6 +36,11 @@ import org.junit.runners.MethodSorters
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class LayersTraceEntryTest {
+    @Before
+    fun before() {
+        Cache.clear()
+    }
+
     @Test
     fun exceptionContainsDebugInfo() {
         val layersTraceEntries = readLayerTraceFromFile("layers_trace_emptyregion.pb")
@@ -144,25 +152,6 @@ class LayersTraceEntryTest {
     }
 
     @Test
-    fun testCanParseNonCroppedLayerWithoutHWC() {
-        val layersTrace = readLayerTraceFromFile("layers_trace_no_hwc_composition.pb")
-        val entry = layersTrace.getEntry(238517209878020)
-        Truth.assertWithMessage("IME should be visible")
-            .that(entry.visibleLayers.map { it.name })
-            .contains("InputMethod#0")
-
-        val messagesApp = "com.google.android.apps.messaging/" +
-            "com.google.android.apps.messaging.ui.ConversationListActivity#0"
-        Truth.assertWithMessage("Messages app should not be visible")
-            .that(entry.visibleLayers.map { it.name })
-            .doesNotContain(messagesApp)
-
-        Truth.assertWithMessage("Should have visible layers in all trace entries")
-            .that(entry.flattenedLayers.map { it.name })
-            .doesNotContain(messagesApp)
-    }
-
-    @Test
     fun canParseTraceEmptyState() {
         val layersTrace = readLayerTraceFromFile("layers_trace_empty_state.winscope")
         val emptyStates = layersTrace.filter { it.flattenedLayers.isEmpty() }
@@ -174,5 +163,21 @@ class LayersTraceEntryTest {
         Truth.assertWithMessage("Expected state 4d4h41m14s193ms to be empty")
             .that(emptyStates.first().timestamp)
             .isEqualTo(362474193519965)
+    }
+
+    @Test
+    fun canDetectInvisibleLayerOutOfScreen() {
+        val layersTrace = readLayerTraceFromFile("layers_trace_visible_outside_bounds.winscope")
+        val subject = assertThat(layersTrace).entry(1253267561044)
+        val region = subject.visibleRegion(ComponentNameMatcher.IME_SNAPSHOT)
+        region.isEmpty()
+        subject.isInvisible(ComponentNameMatcher.IME_SNAPSHOT)
+    }
+
+    @Test
+    fun canDetectInvisibleLayerOutOfScreen_ConsecutiveLayers() {
+        val layersTrace = readLayerTraceFromFile("layers_trace_visible_outside_bounds.winscope")
+        val subject = assertThat(layersTrace)
+        subject.visibleLayersShownMoreThanOneConsecutiveEntry()
     }
 }

@@ -20,9 +20,11 @@ import com.android.server.wm.flicker.assertThatErrorContainsDebugInfo
 import com.android.server.wm.flicker.assertThrows
 import com.android.server.wm.flicker.readLayerTraceFromFile
 import com.android.server.wm.flicker.traces.layers.LayersTraceSubject
-import com.android.server.wm.traces.common.ComponentMatcher
+import com.android.server.wm.traces.common.Cache
+import com.android.server.wm.traces.common.ComponentNameMatcher
 import com.android.server.wm.traces.common.layers.LayersTrace
 import com.google.common.truth.Truth
+import org.junit.Before
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
@@ -47,6 +49,11 @@ class LayersTraceTest {
         }
     }
 
+    @Before
+    fun before() {
+        Cache.clear()
+    }
+
     @Test
     fun testCanDetectRootLayer() {
         detectRootLayer("layers_trace_root.pb")
@@ -55,16 +62,6 @@ class LayersTraceTest {
     @Test
     fun testCanDetectRootLayerAOSP() {
         detectRootLayer("layers_trace_root_aosp.pb")
-    }
-
-    @Test
-    fun testCanParseTraceWithoutHWC() {
-        val layersTrace = readLayerTraceFromFile("layers_trace_no_hwc_composition.pb")
-        layersTrace.forEach { entry ->
-            Truth.assertWithMessage("Should have visible layers in all trace entries")
-                .that(entry.visibleLayers).asList()
-                .isNotEmpty()
-        }
     }
 
     @Test
@@ -83,7 +80,7 @@ class LayersTraceTest {
     fun canTestLayerOccludedByAppLayerHasVisibleRegion() {
         val trace = readLayerTraceFromFile("layers_trace_occluded.pb")
         val entry = trace.getEntry(1700382131522L)
-        val component = ComponentMatcher("",
+        val component = ComponentNameMatcher("",
             "com.android.server.wm.flicker.testapp.SimpleActivity#0")
         val layer = entry.getLayerWithBuffer(component)
         Truth.assertWithMessage("App should be visible")
@@ -92,7 +89,7 @@ class LayersTraceTest {
                 .that(layer?.visibleRegion?.toString())
                 .contains("SkRegion((346,1583,1094,2839))")
 
-        val splashScreenComponent = ComponentMatcher("",
+        val splashScreenComponent = ComponentNameMatcher("",
             "Splash Screen com.android.server.wm.flicker.testapp#0")
         val splashScreenLayer = entry.getLayerWithBuffer(splashScreenComponent)
         Truth.assertWithMessage("Splash screen should be visible")
@@ -105,7 +102,7 @@ class LayersTraceTest {
     @Test
     fun canTestLayerOccludedByAppLayerIsOccludedBySplashScreen() {
         val layerName = "com.android.server.wm.flicker.testapp.SimpleActivity#0"
-        val component = ComponentMatcher("", layerName)
+        val component = ComponentNameMatcher("", layerName)
         val trace = readLayerTraceFromFile("layers_trace_occluded.pb")
         val entry = trace.getEntry(1700382131522L)
         val layer = entry.getLayerWithBuffer(component)
@@ -135,7 +132,7 @@ class LayersTraceTest {
     @Test
     fun canFilter() {
         val trace = readLayerTraceFromFile("layers_trace_openchrome.pb")
-        val splitlayersTrace = trace.filter(71607477186189, 71607812120180)
+        val splitlayersTrace = trace.slice(71607477186189, 71607812120180)
 
         Truth.assertThat(splitlayersTrace).isNotEmpty()
 
@@ -146,7 +143,7 @@ class LayersTraceTest {
     @Test
     fun canFilter_wrongTimestamps() {
         val trace = readLayerTraceFromFile("layers_trace_openchrome.pb")
-        val splitLayersTrace = trace.filter(9213763541297, 9215895891561)
+        val splitLayersTrace = trace.slice(9213763541297, 9215895891561)
 
         Truth.assertThat(splitLayersTrace).isEmpty()
     }
