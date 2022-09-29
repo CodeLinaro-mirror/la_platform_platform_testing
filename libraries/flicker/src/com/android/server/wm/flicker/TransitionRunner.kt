@@ -86,7 +86,7 @@ open class TransitionRunner {
      */
     internal open fun run(flicker: Flicker): FlickerResult {
         val runs = mutableListOf<FlickerRunResult>()
-        val executionErrors = mutableListOf<Throwable>()
+        val executionErrors = mutableListOf<ExecutionError>()
         safeExecution(flicker, runs, executionErrors) {
             runTestSetup(flicker)
 
@@ -110,7 +110,7 @@ open class TransitionRunner {
     private fun safeExecution(
         flicker: Flicker,
         runs: MutableList<FlickerRunResult>,
-        executionErrors: MutableList<Throwable>,
+        executionErrors: MutableList<ExecutionError>,
         execution: () -> Unit
     ) {
         try {
@@ -222,7 +222,9 @@ open class TransitionRunner {
     private fun runTransitionSetup(flicker: Flicker) {
         try {
             flicker.runSetup.forEach { it.invoke(flicker) }
-            flicker.wmHelper.waitFor(UI_STABLE_CONDITIONS)
+            flicker.wmHelper.StateSyncBuilder()
+                .add(UI_STABLE_CONDITIONS)
+                .waitFor()
         } catch (e: Throwable) {
             throw TransitionSetupFailure(e)
         }
@@ -241,7 +243,9 @@ open class TransitionRunner {
     @Throws(TransitionTeardownFailure::class)
     private fun runTransitionTeardown(flicker: Flicker) {
         try {
-            flicker.wmHelper.waitFor(UI_STABLE_CONDITIONS)
+            flicker.wmHelper.StateSyncBuilder()
+                .add(UI_STABLE_CONDITIONS)
+                .waitFor()
             flicker.traceMonitors.forEach { it.tryStop() }
             flicker.runTeardown.forEach { it.invoke(flicker) }
         } catch (e: Throwable) {
@@ -332,11 +336,20 @@ open class TransitionRunner {
                 WindowManagerConditionsFactory.hasLayersAnimating().negate()
         ))
 
-        class TestSetupFailure(val e: Throwable) : Throwable(e)
-        class TransitionSetupFailure(val e: Throwable) : Throwable(e)
-        class TransitionExecutionFailure(val e: Throwable) : Throwable(e)
-        class TraceProcessingFailure(val e: Throwable) : Throwable(e)
-        class TransitionTeardownFailure(val e: Throwable) : Throwable(e)
-        class TestTeardownFailure(val e: Throwable) : Throwable(e)
+        open class ExecutionError(val inner: Throwable) : Throwable(inner) {
+            init {
+                super.setStackTrace(inner.stackTrace)
+            }
+
+            override val message: String?
+                get() = inner.toString()
+        }
+
+        class TestSetupFailure(val e: Throwable) : ExecutionError(e)
+        class TransitionSetupFailure(val e: Throwable) : ExecutionError(e)
+        class TransitionExecutionFailure(val e: Throwable) : ExecutionError(e)
+        class TraceProcessingFailure(val e: Throwable) : ExecutionError(e)
+        class TransitionTeardownFailure(val e: Throwable) : ExecutionError(e)
+        class TestTeardownFailure(val e: Throwable) : ExecutionError(e)
     }
 }

@@ -27,6 +27,7 @@ import com.google.common.truth.Fact
 import com.google.common.truth.FailureMetadata
 import com.google.common.truth.StandardSubjectBuilder
 import com.google.common.truth.Subject.Factory
+import kotlin.math.abs
 
 /**
  * Truth subject for [Rect] objects, used to make assertions over behaviors that occur on a
@@ -243,6 +244,45 @@ class RegionSubject(
     }
 
     /**
+     * Asserts that [region] is not bigger than [testRegion], even if the regions don't overlap.
+     *
+     * @param testRegion Area to compare to
+     */
+    fun notBiggerThan(testRegion: Region): RegionSubject = apply {
+        val testArea = testRegion.bounds.area
+        val area = region.bounds.area
+
+        if (area > testArea) {
+            fail(
+                Fact.fact("Region to test", testRegion),
+                Fact.fact("Area of test region", testArea),
+                Fact.fact("Covered region", region),
+                Fact.fact("Area of region", area)
+            )
+        }
+    }
+
+    /**
+     * Asserts that [region] is positioned to the right and bottom from [testRegion], but the
+     * regions can overlap and [region] can be smaller than [testRegion]
+     *
+     * @param testRegion Area to compare to
+     * @param threshold Offset threshold by which the position might be off
+     */
+    fun isToTheRightBottom(testRegion: Region, threshold: Int): RegionSubject = apply {
+        val horizontallyPositionedToTheRight =
+            testRegion.bounds.left - threshold <= region.bounds.left
+        val verticallyPositionedToTheBottom = testRegion.bounds.top - threshold <= region.bounds.top
+
+        if (!horizontallyPositionedToTheRight || !verticallyPositionedToTheBottom) {
+            fail(
+                Fact.fact("Region to test", testRegion),
+                Fact.fact("Actual region", region)
+            )
+        }
+    }
+
+    /**
      * Asserts that [region] covers at least [testRegion], that is, its area covers each point
      * in the region
      *
@@ -345,21 +385,36 @@ class RegionSubject(
         notOverlaps(Region.from(testRect))
     }
 
+    /**
+     * Asserts that [region] and [previous] have same aspect ratio, margin of error up to 0.1.
+     *
+     * @param other Other region
+     */
+    fun isSameAspectRatio(other: RegionSubject): RegionSubject = apply {
+        val aspectRatio = this.region.width.toFloat() /
+                this.region.height
+        val otherAspectRatio = other.region.width.toFloat() /
+                other.region.height
+        check("Aspect Ratio Difference (Old=$aspectRatio, New=$otherAspectRatio)")
+            .that(abs(aspectRatio - otherAspectRatio))
+            .isAtMost(0.1f)
+    }
+
     companion object {
         @VisibleForTesting
-        const val MSG_ERROR_TOP_POSITION = "Incorrect top position"
+        const val MSG_ERROR_TOP_POSITION = "Top position"
 
         @VisibleForTesting
-        const val MSG_ERROR_BOTTOM_POSITION = "Incorrect top position"
+        const val MSG_ERROR_BOTTOM_POSITION = "Bottom position"
 
         @VisibleForTesting
-        const val MSG_ERROR_LEFT_POSITION = "Incorrect left position"
+        const val MSG_ERROR_LEFT_POSITION = "Left position"
 
         @VisibleForTesting
-        const val MSG_ERROR_RIGHT_POSITION = "Incorrect right position"
+        const val MSG_ERROR_RIGHT_POSITION = "Right position"
 
         @VisibleForTesting
-        const val MSG_ERROR_AREA = "Incorrect rect area"
+        const val MSG_ERROR_AREA = "Rect area"
 
         private fun mergeRegions(regions: Array<Region>): Region {
             val result = Region.EMPTY

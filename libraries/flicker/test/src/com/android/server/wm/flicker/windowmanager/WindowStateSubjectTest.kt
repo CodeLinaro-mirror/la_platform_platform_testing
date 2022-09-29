@@ -16,7 +16,7 @@
 
 package com.android.server.wm.flicker.windowmanager
 
-import com.android.server.wm.flicker.IMAGINARY_COMPONENT
+import com.android.server.wm.flicker.TestComponents
 import com.android.server.wm.flicker.assertThatErrorContainsDebugInfo
 import com.android.server.wm.flicker.assertThrows
 import com.android.server.wm.flicker.readWmTraceFromFile
@@ -31,24 +31,20 @@ class WindowStateSubjectTest {
     @Test
     fun exceptionContainsDebugInfoImaginary() {
         val error = assertThrows(AssertionError::class.java) {
-            WindowManagerTraceSubject.assertThat(trace)
-                    .first()
-                    .windowState(IMAGINARY_COMPONENT.className)
-                    .exists()
+            WindowManagerTraceSubject.assertThat(trace).first()
+                .windowState(TestComponents.IMAGINARY.classNames.first()).exists()
         }
         assertThatErrorContainsDebugInfo(error)
-        Truth.assertThat(error).hasMessageThat().contains(IMAGINARY_COMPONENT.className)
+        Truth.assertThat(error)
+            .hasMessageThat()
+            .contains(TestComponents.IMAGINARY.classNames.first())
         Truth.assertThat(error).hasMessageThat().contains("Window title")
     }
 
     @Test
     fun exceptionContainsDebugInfoConcrete() {
         val error = assertThrows(AssertionError::class.java) {
-            WindowManagerTraceSubject.assertThat(trace)
-                    .first()
-                    .subjects
-                    .first()
-                    .doesNotExist()
+            WindowManagerTraceSubject.assertThat(trace).first().subjects.first().doesNotExist()
         }
         assertThatErrorContainsDebugInfo(error)
     }

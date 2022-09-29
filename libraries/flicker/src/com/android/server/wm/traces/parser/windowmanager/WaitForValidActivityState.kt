@@ -18,11 +18,11 @@ package com.android.server.wm.traces.parser.windowmanager
 
 import android.app.ActivityTaskManager
 import android.app.WindowConfiguration
-import com.android.server.wm.traces.common.FlickerComponentName
+import com.android.server.wm.traces.common.IComponentMatcher
 
 data class WaitForValidActivityState(
     @JvmField
-    val activityName: FlickerComponentName?,
+    val activityName: IComponentMatcher?,
     @JvmField
     val windowName: String?,
     @JvmField
@@ -32,7 +32,7 @@ data class WaitForValidActivityState(
     @JvmField
     val activityType: Int
 ) {
-    constructor(activityName: FlickerComponentName) : this(
+    constructor(activityName: IComponentMatcher) : this(
         activityName,
         windowName = activityName.toWindowName(),
         stackId = ActivityTaskManager.INVALID_STACK_ID,
@@ -68,7 +68,7 @@ data class WaitForValidActivityState(
         return sb.toString()
     }
 
-    class Builder constructor(internal var activityName: FlickerComponentName? = null) {
+    class Builder constructor(internal var activityName: IComponentMatcher? = null) {
         internal var windowName: String? = activityName?.toWindowName()
         internal var stackId = ActivityTaskManager.INVALID_STACK_ID
         internal var windowingMode = WindowConfiguration.WINDOWING_MODE_UNDEFINED
@@ -110,9 +110,6 @@ data class WaitForValidActivityState(
                 WindowConfiguration.WINDOWING_MODE_UNDEFINED -> "UNDEFINED"
                 WindowConfiguration.WINDOWING_MODE_FULLSCREEN -> "FULLSCREEN"
                 WindowConfiguration.WINDOWING_MODE_PINNED -> "PINNED"
-                WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY -> "SPLIT_SCREEN_PRIMARY"
-                WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY ->
-                    "SPLIT_SCREEN_SECONDARY"
                 WindowConfiguration.WINDOWING_MODE_FREEFORM -> "FREEFORM"
                 else -> throw IllegalArgumentException("Unknown WINDOWING_MODE_: $windowingMode")
             }

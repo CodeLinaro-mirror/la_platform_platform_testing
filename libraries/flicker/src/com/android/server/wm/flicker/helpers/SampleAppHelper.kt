@@ -20,7 +20,8 @@ import android.app.Instrumentation
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
-import com.android.server.wm.traces.common.FlickerComponentName
+import com.android.server.wm.traces.common.ComponentMatcher
+import com.android.server.wm.traces.common.IComponentMatcher
 
 /**
  * Helper to launch the default browser app (compatible with AOSP)
@@ -34,13 +35,10 @@ class SampleAppHelper(
     instrumentation: Instrumentation,
     private val pkgManager: PackageManager = instrumentation.context.packageManager
 ) : StandardAppHelper(
-    instrumentation,
-    "SampleApp",
-    getBrowserComponent(pkgManager)
+    instrumentation, "SampleApp", getBrowserComponent(pkgManager)
 ) {
-    override fun getOpenAppIntent(): Intent =
-        pkgManager.getLaunchIntentForPackage(component.packageName)
-            ?: error("Unable to find intent for browser")
+    override fun getOpenAppIntent(): Intent = pkgManager.getLaunchIntentForPackage(packageName)
+        ?: error("Unable to find intent for browser")
 
     companion object {
         private fun getBrowserIntent(): Intent {
@@ -49,11 +47,11 @@ class SampleAppHelper(
             return intent
         }
 
-        private fun getBrowserComponent(pkgManager: PackageManager): FlickerComponentName {
+        private fun getBrowserComponent(pkgManager: PackageManager): IComponentMatcher {
             val intent = getBrowserIntent()
             val resolveInfo = pkgManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)
-                    ?: error("Unable to resolve browser activity")
-            return FlickerComponentName(resolveInfo.activityInfo.packageName, className = "")
+                ?: error("Unable to resolve browser activity")
+            return ComponentMatcher(resolveInfo.activityInfo.packageName, className = "")
         }
     }
 }

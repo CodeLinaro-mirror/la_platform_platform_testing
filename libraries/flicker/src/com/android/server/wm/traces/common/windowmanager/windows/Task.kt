@@ -16,6 +16,7 @@
 
 package com.android.server.wm.traces.common.windowmanager.windows
 
+import com.android.server.wm.traces.common.IComponentMatcher
 import com.android.server.wm.traces.common.Rect
 
 /**
@@ -74,32 +75,50 @@ open class Task(
         return result.toTypedArray()
     }
 
+    /**
+     * @return The first [Task] matching [predicate], or null otherwise
+     */
     fun getTask(predicate: (Task) -> Boolean) =
         tasks.firstOrNull { predicate(it) } ?: if (predicate(this)) this else null
 
-    fun getTask(taskId: Int) = getTask { t -> t.taskId == taskId }
-
-    fun getActivityWithTask(predicate: (Task, Activity) -> Boolean): Activity? {
-        return activities.firstOrNull { predicate(this, it) }
-            ?: tasks.flatMap { task -> task.activities.filter { predicate(task, it) } }
-                .firstOrNull()
-    }
-
-    fun forAllTasks(consumer: (Task) -> Any) {
-        tasks.forEach { consumer(it) }
-    }
-
+    /**
+     * @return the first [Activity] matching [predicate], or null otherwise
+     */
     fun getActivity(predicate: (Activity) -> Boolean): Activity? {
-        return activities.firstOrNull { predicate(it) }
-            ?: tasks.flatMap { it.activities.toList() }
-                .firstOrNull { predicate(it) }
+        var activity: Activity? = activities.firstOrNull { predicate(it) }
+        if (activity != null) {
+            return activity
+        }
+        for (task in tasks) {
+            activity = task.getActivity(predicate)
+            if (activity != null) {
+                return activity
+            }
+        }
+        for (taskFragment in taskFragments) {
+            activity = taskFragment.getActivity(predicate)
+            if (activity != null) {
+                return activity
+            }
+        }
+        return null
     }
 
-    fun getActivity(activityName: String): Activity? {
-        return getActivity { activity -> activity.title.contains(activityName) }
-    }
+    /**
+     * @return the first [Activity] matching [componentMatcher], or null otherwise
+     *
+     * @param componentMatcher Components to search
+     */
+    fun getActivity(componentMatcher: IComponentMatcher): Activity? =
+        getActivity { activity -> componentMatcher.activityMatchesAnyOf(activity) }
 
-    fun containsActivity(activityName: String) = getActivity(activityName) != null
+    /**
+     * @return if any activity matches [componentMatcher]
+     *
+     * @param componentMatcher Components to search
+     */
+    fun containsActivity(componentMatcher: IComponentMatcher) =
+        getActivity(componentMatcher) != null
 
     override fun toString(): String {
         return "${this::class.simpleName}: {$token $title} id=$taskId bounds=$bounds"
