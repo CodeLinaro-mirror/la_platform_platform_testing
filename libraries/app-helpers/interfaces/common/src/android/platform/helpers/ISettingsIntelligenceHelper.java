@@ -16,6 +16,7 @@
 
 package android.platform.helpers;
 
+/** Extends for Settings Intelligence */
 public interface ISettingsIntelligenceHelper extends IAppHelper {
 
     /**
@@ -94,4 +95,7 @@ public interface ISettingsIntelligenceHelper extends IAppHelper {
      * <p>This method opens search page.
      */
     void openSearch();
+
+    /** This method opens Settings homepage */
+    void goToHome();
 }

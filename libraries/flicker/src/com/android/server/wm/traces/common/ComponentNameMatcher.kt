@@ -47,6 +47,11 @@ class ComponentNameMatcher(
         }
     }
 
+    override fun componentNameMatcherToString(): String {
+        return "ComponentNameMatcher(\"${this.packageName}\", " +
+            "\"${this.className}\")"
+    }
+
     /** {@inheritDoc} */
     override fun windowMatchesAnyOf(windows: Array<WindowState>): Boolean =
         matchesAnyOf(windows,
@@ -115,6 +120,9 @@ class ComponentNameMatcher(
         @JsName("LAUNCHER")
         val LAUNCHER = ComponentNameMatcher("com.google.android.apps.nexuslauncher",
                 "com.google.android.apps.nexuslauncher.NexusLauncherActivity")
+        @JsName("AOSP_LAUNCHER")
+        val AOSP_LAUNCHER = ComponentNameMatcher("com.android.launcher3",
+            "com.android.launcher3.uioverrides.QuickstepLauncher")
         @JsName("SPLIT_DIVIDER")
         val SPLIT_DIVIDER = ComponentNameMatcher("", "StageCoordinatorSplitDivider")
 
