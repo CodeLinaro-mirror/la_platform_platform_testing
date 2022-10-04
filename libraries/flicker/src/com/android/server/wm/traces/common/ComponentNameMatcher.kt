@@ -34,6 +34,8 @@ class ComponentNameMatcher(
     constructor(packageName: String, className: String) :
         this(ComponentName(packageName, className))
 
+    constructor(className: String) : this("", className)
+
     @JsName("matchesAnyOf")
     private fun <T> matchesAnyOf(
         values: Array<T>,
@@ -71,6 +73,12 @@ class ComponentNameMatcher(
             { it.name },
             { it.toLayerNameRegex() }
         )
+
+    /** {@inheritDoc} */
+    override fun check(
+        layers: Collection<Layer>,
+        condition: (Collection<Layer>) -> Boolean
+    ): Boolean = condition(layers.filter { layerMatchesAnyOf(it) })
 
     /** {@inheritDoc} */
     override fun toActivityIdentifier(): String = component.toActivityName()

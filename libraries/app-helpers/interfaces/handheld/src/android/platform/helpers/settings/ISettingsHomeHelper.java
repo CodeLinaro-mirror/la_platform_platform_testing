@@ -26,6 +26,9 @@ public interface ISettingsHomeHelper extends ISettingsIntelligenceHelper {
      */
     void flingHome(Direction direction);
 
+    /** This method opens Settings > Accessibility page */
+    void goToAccessibility();
+
     /**
      * Setup expectations: Settings homepage is open
      *
