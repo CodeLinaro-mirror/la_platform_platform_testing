@@ -135,8 +135,10 @@ class Layer private constructor(
                 reasons.add("Effect layer does not have color fill, shadow or blur")
             }
             if (_occludedBy.isNotEmpty()) {
-                val occludedByIds = _occludedBy.joinToString(", ") { it.id.toString() }
-                reasons.add("Layer is occluded by: $occludedByIds")
+                val occludedByLayers = _occludedBy.joinToString(", ") {
+                    "${it.name} (${it.id})"
+                }
+                reasons.add("Layer is occluded by: $occludedByLayers")
             }
             if (visibleRegion?.isEmpty == true) {
                 reasons.add("Visible region calculated by Composition Engine is empty")
@@ -234,7 +236,6 @@ class Layer private constructor(
         if (stableId != other.stableId) return false
         if (zOrderRelativeOf != other.zOrderRelativeOf) return false
         if (zOrderRelativeParentOf != other.zOrderRelativeParentOf) return false
-        if (_children != other._children) return false
         if (_occludedBy != other._occludedBy) return false
         if (_partiallyOccludedBy != other._partiallyOccludedBy) return false
         if (_coveredBy != other._coveredBy) return false
@@ -304,7 +305,6 @@ class Layer private constructor(
         result = 31 * result + z
         result = 31 * result + currFrame.hashCode()
         result = 31 * result + stableId.hashCode()
-        result = 31 * result + (parent?.hashCode() ?: 0)
         result = 31 * result + (zOrderRelativeOf?.hashCode() ?: 0)
         result = 31 * result + zOrderRelativeParentOf
         result = 31 * result + _children.hashCode()
