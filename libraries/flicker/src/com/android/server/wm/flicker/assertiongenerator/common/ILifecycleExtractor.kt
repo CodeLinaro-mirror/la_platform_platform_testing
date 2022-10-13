@@ -24,5 +24,7 @@ interface ILifecycleExtractor
      * Extracts the map of lifecycles corresponding to each single element
      * key: element id, value: element lifecycle
      */
-    fun extract(traceDump: DeviceTraceDump): ITraceLifecycle?
+    fun extract(
+        traceDump: DeviceTraceDump
+    ): ITraceLifecycle?
 }
