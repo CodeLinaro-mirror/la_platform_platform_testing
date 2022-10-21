@@ -1,5 +1,6 @@
 package com.android.server.wm.flicker.assertiongenerator
 
+import com.android.server.wm.flicker.assertiongenerator.AssertionGenConfigTestConst.Companion.emptyDeviceTraceConfiguration
 import com.android.server.wm.flicker.assertiongenerator.layers.LayersComponentLifecycle
 import com.android.server.wm.flicker.assertiongenerator.layers.LayersLifecycleExtractor
 import com.android.server.wm.flicker.assertiongenerator.layers.LayersTraceLifecycle
@@ -23,18 +24,17 @@ class LayersLifecycleExtractorTest(
 ) {
     @Test
     fun extract() {
-        val layersTrace = ElementLifecycleExtractorTestConst.createTrace_arg(
-            layersTraceFlattenedLayers
-        )
+        val layersTrace =
+            ElementLifecycleExtractorTestConst.createTrace_arg(layersTraceFlattenedLayers)
         val traceDump = DeviceTraceDump(null, layersTrace)
         val layersLifecycleExtractor = LayersLifecycleExtractor()
-        val elementLifecycles = layersLifecycleExtractor.extract(
-            traceDump
-        )
+        val elementLifecycles =
+            layersLifecycleExtractor.extract(traceDump, emptyDeviceTraceConfiguration)
         val expectedElementLifecycles = LayersTraceLifecycle(expectedElementLifecyclesMap)
         elementLifecycles?.run {
             Truth.assertThat(elementLifecycles).isEqualTo(expectedElementLifecycles)
-        } ?: throw RuntimeException("Element lifecycles unexpectedly null")
+        }
+            ?: throw RuntimeException("Element lifecycles unexpectedly null")
     }
 
     companion object {

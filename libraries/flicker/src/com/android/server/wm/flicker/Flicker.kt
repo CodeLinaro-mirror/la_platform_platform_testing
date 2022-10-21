@@ -28,8 +28,7 @@ import com.android.server.wm.traces.common.windowmanager.WindowManagerTrace
 import com.android.server.wm.traces.parser.windowmanager.WindowManagerStateHelper
 import java.nio.file.Path
 
-@DslMarker
-annotation class FlickerDslMarker
+@DslMarker annotation class FlickerDslMarker
 
 /**
  * Defines the runner for the flicker tests. This component is responsible for running the flicker
@@ -38,65 +37,44 @@ annotation class FlickerDslMarker
  */
 @FlickerDslMarker
 class Flicker(
-    /**
-     * Instrumentation to run the tests
-     */
+    /** Instrumentation to run the tests */
     @JvmField val instrumentation: Instrumentation,
-    /**
-     * Test automation component used to interact with the device
-     */
+    /** Test automation component used to interact with the device */
     @JvmField val device: UiDevice,
-    /**
-     * Strategy used to interact with the launcher
-     */
+    /** Strategy used to interact with the launcher */
     @JvmField val launcherStrategy: ILauncherStrategy,
-    /**
-     * Output directory for test results
-     */
+    /** Output directory for test results */
     @JvmField val outputDir: Path,
-    /**
-     * Test name used to store the test results
-     */
+    /** Test name used to store the test results */
     @JvmField val testName: String,
-    /**
-     * Enabled tracing monitors
-     */
+    /** Enabled tracing monitors */
     @JvmField val traceMonitors: List<ITransitionMonitor>,
-    /**
-     * Commands to be executed before the transition
-     */
+    /** Commands to be executed before the transition */
     @JvmField val transitionSetup: List<Flicker.() -> Any>,
-    /**
-     * Test commands
-     */
+    /** Test commands */
     @JvmField val transitions: List<Flicker.() -> Any>,
-    /**
-     * Commands to be executed after the transition
-     */
+    /** Commands to be executed after the transition */
     @JvmField val transitionTeardown: List<Flicker.() -> Any>,
-    /**
-     * Runner to execute the test transitions
-     */
+    /** Runner to execute the test transitions */
     @JvmField val runner: TransitionRunner,
-    /**
-     * Helper object for WM Synchronization
-     */
+    /** Helper object for WM Synchronization */
     val wmHelper: WindowManagerStateHelper,
-    /**
-     * Whether or not to run Flicker as a Service on the collected transition traces
-     */
+    /** Whether to run Flicker as a Service on the collected transition traces */
     @JvmField val faasEnabled: Boolean = false,
     /**
      * Defines properties we allow on traces (e.g. is it valid for a transition to not have any
      * changed in the WM and Layers states)
      */
-    @JvmField val traceConfigs: TraceConfigs = DEFAULT_TRACE_CONFIG
+    @JvmField val traceConfigs: TraceConfigs = DEFAULT_TRACE_CONFIG,
+    /**
+     * Whether the transition needs to be executed or if the trace monitors will just return the
+     * traces without needing to run anything on device.
+     */
+    @JvmField val usingExistingTraces: Boolean = false
 ) {
     internal val faasTracesCollector = LegacyFlickerTraceCollector()
-    internal val faas = FlickerServiceResultsCollector(
-        outputDir,
-        tracesCollector = faasTracesCollector
-    )
+    internal val faas =
+        FlickerServiceResultsCollector(outputDir, tracesCollector = faasTracesCollector)
 
     var result: FlickerResult? = null
 
@@ -133,7 +111,8 @@ class Flicker(
                 // Any execution errors that lead to having no successful runs will be reported
                 // appropriately by the FlickerBlockJUnit4ClassRunner.
                 if (result.transitionExecutionError == null) {
-                    // If there are no execution errors we want to throw an error here since we won't
+                    // If there are no execution errors we want to throw an error here since we
+                    // won't
                     // fail later in the FlickerBlockJUnit4ClassRunner.
                     throw Exception("No transition runs were executed! Can't check assertion.")
                 }
@@ -151,9 +130,7 @@ class Flicker(
         }
     }
 
-    /**
-     * Saves the traces files assertions were run on, clears the cached runner results.
-     */
+    /** Saves the traces files assertions were run on, clears the cached runner results. */
     fun clear() {
         Log.v(FLICKER_TAG, "Cleaning up spec $testName")
         runner.cleanUp()

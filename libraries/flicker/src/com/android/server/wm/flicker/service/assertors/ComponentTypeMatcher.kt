@@ -17,44 +17,80 @@
 package com.android.server.wm.flicker.service.assertors
 
 import com.android.server.wm.flicker.Utils
+import com.android.server.wm.flicker.assertiongenerator.DeviceTraceConfiguration
 import com.android.server.wm.traces.common.ComponentName
 import com.android.server.wm.traces.common.ComponentNameMatcher
 import com.android.server.wm.traces.common.transition.Transition
 
-class ComponentTypeMatcher(
-    val name: String
-) : ComponentNameMatcher(
-    ComponentName("", "")
-) {
-    var initialized = false
-    val componentBuilder: ComponentBuilder
-        get() {
-            Components.byName[name]?.run{
-                return this
-            } ?: run {
-                throw RuntimeException("Component builder with type $name does not exist")
-            }
-        }
-
-    fun earlyInitialize() {
-        Utils.componentNameMatcherHardcoded(name)
-            ?.run{
-                this@ComponentTypeMatcher.component = this.component
-                initialized = true
-            }
-            ?: throw RuntimeException("ComponentMatcher with name " +
-                "$name cannot be initialized early")
+/**
+ * ComponentMatcher based on type (e.g. open/close app) It is initialized late based on the
+ * transition passed through the execute function of the assertion
+ */
+class ComponentTypeMatcher(val name: String) : ComponentNameMatcher(ComponentName("", "")) {
+    constructor(name: String, componentBuilder: ComponentBuilder) : this(name) {
+        this.componentBuilder = componentBuilder
     }
 
+    var initialized = false
+    override var component: ComponentName = super.component
+        get() {
+            if (!initialized) {
+                throw RuntimeException("Component was not initialized yet")
+            }
+            return field
+        }
+
+    var componentBuilder: ComponentBuilder = Components.EMPTY
+
     fun initialize(transition: Transition) {
-        this.initialized = true
-        Utils.componentNameMatcherHardcoded(name)
-            ?. run { this@ComponentTypeMatcher.component = this.component }
+        Utils.componentNameMatcherHardcoded(name)?.run {
+            this@ComponentTypeMatcher.component = this.component
+        }
             ?: run {
                 // safe cast because both openingAppFrom and closingAppFrom
                 // in Components return ComponentNameMatcher
                 val componentMatcher = componentBuilder.build(transition) as ComponentNameMatcher
                 this.component = componentMatcher.component
             }
+        this.initialized = true
+    }
+
+    override fun toString(): String {
+        return "Components.$componentBuilder"
+    }
+
+    override fun equals(other: Any?): Boolean {
+        return other is ComponentTypeMatcher &&
+            name == other.name &&
+            componentBuilder == other.componentBuilder
+    }
+
+    override fun hashCode(): Int {
+        var result = name.hashCode()
+        result = 31 * result + componentBuilder.hashCode()
+        return result
+    }
+
+    companion object {
+        fun componentMatcherFromName(
+            name: String,
+            traceConfiguration: DeviceTraceConfiguration
+        ): ComponentNameMatcher? {
+            Utils.componentNameMatcherHardcoded(name)?.run {
+                return ComponentNameMatcher(this.component)
+            }
+                ?: run {
+                    val componentMatcher = ComponentTypeMatcher(name)
+                    if (traceConfiguration.componentToTypeMap[name] != null) {
+                        componentMatcher.componentBuilder =
+                            traceConfiguration.componentToTypeMap[name]!!
+                        return componentMatcher
+                    } else {
+                        return null
+                    }
+                }
+        }
     }
 }
+
+class ConfigException(message: String) : Exception(message)

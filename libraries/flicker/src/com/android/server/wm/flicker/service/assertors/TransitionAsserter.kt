@@ -25,9 +25,7 @@ import com.android.server.wm.traces.common.service.ScenarioInstance
 import com.android.server.wm.traces.common.transition.Transition
 import com.android.server.wm.traces.common.windowmanager.WindowManagerTrace
 
-/**
- * Class that runs FASS assertions.
- */
+/** Class that runs FASS assertions. */
 class TransitionAsserter(
     internal val assertions: List<AssertionData>,
     private val logger: (String) -> Unit
@@ -55,8 +53,12 @@ class TransitionAsserter(
 
         logger.invoke("Running assertions...")
         return runAssertionsOnSubjects(
-            scenarioInstance, wmTraceForTransition, layersTraceForTransition,
-            wmTrace, layersTrace, assertions
+            scenarioInstance,
+            wmTraceForTransition,
+            layersTraceForTransition,
+            wmTrace,
+            layersTrace,
+            assertions
         )
     }
 
@@ -74,16 +76,18 @@ class TransitionAsserter(
             val assertion = it.assertionBuilder
             logger.invoke("Running assertion $assertion for ${it.scenario}")
             val faasFacts = FaasData(scenarioInstance, entireWmTrace, entireLayersTrace).toFacts()
-            val wmSubject = if (wmTraceToAssert != null) {
-                WindowManagerTraceSubject.assertThat(wmTraceToAssert, facts = faasFacts)
-            } else {
-                null
-            }
-            val layersSubject = if (layersTraceToAssert != null) {
-                LayersTraceSubject.assertThat(layersTraceToAssert, facts = faasFacts)
-            } else {
-                null
-            }
+            val wmSubject =
+                if (wmTraceToAssert != null) {
+                    WindowManagerTraceSubject.assertThat(wmTraceToAssert, facts = faasFacts)
+                } else {
+                    null
+                }
+            val layersSubject =
+                if (layersTraceToAssert != null) {
+                    LayersTraceSubject.assertThat(layersTraceToAssert, facts = faasFacts)
+                } else {
+                    null
+                }
             val result = assertion.evaluate(scenarioInstance, wmSubject, layersSubject, it.scenario)
             results.add(result)
         }
@@ -122,27 +126,25 @@ class TransitionAsserter(
         return FilteredTraces(filteredWmTrace, filteredLayersTrace)
     }
 
-    data class FilteredTraces(
-        val wmTrace: WindowManagerTrace?,
-        val layersTrace: LayersTrace?
-    )
+    data class FilteredTraces(val wmTrace: WindowManagerTrace?, val layersTrace: LayersTrace?)
 }
+
+data class TraceIndices(val startIndex: Int, val endIndex: Int)
 
 /**
  * Return a new trace contains only the entries that were applied during the transition's execution.
  */
-private fun WindowManagerTrace.scenarioInstanceSlice(
+public fun WindowManagerTrace.scenarioInstanceSlice(
     scenarioInstance: ScenarioInstance
 ): WindowManagerTrace {
     return slice(scenarioInstance.startTimestamp, scenarioInstance.endTimestamp)
 }
 
 /**
- * Return a new trace contains only the entries that were applied during the transition's execution.
+ * Return the start and end indices where the layersTrace needs to be trimmed to match only the
+ * entries that were applied during the transition's execution.
  */
-private fun LayersTrace.scenarioInstanceSlice(
-    scenarioInstance: ScenarioInstance
-): LayersTrace? {
+fun LayersTrace.scenarioInstanceSliceIndices(scenarioInstance: ScenarioInstance): TraceIndices? {
     var startIndex = -1
     var prevVsyncId = -1L
     for (i in entries.indices) {
@@ -161,16 +163,18 @@ private fun LayersTrace.scenarioInstanceSlice(
     }
 
     var endIndex = -1
-    prevVsyncId = if (startIndex < 1) {
-        -1L
-    } else {
-        entries[startIndex - 1].vSyncId
-    }
+    prevVsyncId =
+        if (startIndex < 1) {
+            -1L
+        } else {
+            entries[startIndex - 1].vSyncId
+        }
     for (i in startIndex until entries.size) {
         val currentVsyncId = entries[i].vSyncId
 
-        if (scenarioInstance.finishTransaction.appliedVSyncId
-                in (prevVsyncId + 1)..currentVsyncId) {
+        if (
+            scenarioInstance.finishTransaction.appliedVSyncId in (prevVsyncId + 1)..currentVsyncId
+        ) {
             endIndex = i
         }
 
@@ -186,5 +190,14 @@ private fun LayersTrace.scenarioInstanceSlice(
         Log.w(FLICKER_TAG, "Start and end of $scenarioInstance happen in same entry.")
     }
 
-    return LayersTrace(this.entries.slice(startIndex..endIndex).toTypedArray())
+    return TraceIndices(startIndex, endIndex)
+}
+
+/**
+ * Return a new trace contains only the entries that were applied during the transition's execution.
+ */
+fun LayersTrace.scenarioInstanceSlice(scenarioInstance: ScenarioInstance): LayersTrace? {
+    return scenarioInstanceSliceIndices(scenarioInstance)?.let {
+        LayersTrace(entries.slice(it.startIndex..it.endIndex).toTypedArray())
+    }
 }

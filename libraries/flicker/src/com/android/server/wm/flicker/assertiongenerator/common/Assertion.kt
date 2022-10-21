@@ -14,12 +14,9 @@ interface Assertion {
     var assertionString: String
 
     // transition can be null only for testing purposes
-    fun execute(newTrace: ITrace<out ITraceEntry>, transition: Transition? = null)
+    fun execute(newTrace: ITrace<out ITraceEntry>, transition: Transition)
 
-    fun execute(
-        traceSubject: FlickerTraceSubject<out FlickerSubject>,
-        transition: Transition? = null
-    )
+    fun execute(traceSubject: FlickerTraceSubject<out FlickerSubject>, transition: Transition)
 
     fun toString(newTrace: String): String
 
