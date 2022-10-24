@@ -44,7 +44,7 @@ open class Color3(val r: Float, val g: Float, val b: Float) {
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is Color) return false
+        if (other !is Color3) return false
 
         if (r != other.r) return false
         if (g != other.g) return false
@@ -62,6 +62,7 @@ open class Color3(val r: Float, val g: Float, val b: Float) {
 
     companion object {
         @JsName("EMPTY")
-        val EMPTY: Color3 get() = withCache { Color3(r = -1f, g = -1f, b = -1f) }
+        val EMPTY: Color3
+            get() = withCache { Color3(r = -1f, g = -1f, b = -1f) }
     }
 }

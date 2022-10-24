@@ -17,7 +17,7 @@
 package com.android.server.wm.traces.common.service.processors
 
 import com.android.server.wm.traces.common.DeviceStateDump
-import com.android.server.wm.traces.common.service.Scenario
+import com.android.server.wm.traces.common.service.ScenarioType
 import com.android.server.wm.traces.common.tags.Tag
 
 /**
@@ -25,37 +25,37 @@ import com.android.server.wm.traces.common.tags.Tag
  * @param logger logs by invoking any event messages
  */
 class AppLaunchProcessor(logger: (String) -> Unit) : TransitionProcessor(logger) {
-    override val scenario = Scenario.APP_LAUNCH
-    private val windowsBecomeVisible =
-            HashMap<Int, DeviceStateDump>()
+    override val scenarioType = ScenarioType.APP_LAUNCH
+    private val windowsBecomeVisible = HashMap<Int, DeviceStateDump>()
 
     override fun getInitialState(tags: MutableMap<Long, MutableList<Tag>>) =
-            WaitUntilWindowIsInVisibleActivity(tags)
+        WaitUntilWindowIsInVisibleActivity(tags)
 
     /**
-     * FSM state that stores any newly visible window activities (start tag)
-     * and when their layers stop scaling (end tag).
+     * FSM state that stores any newly visible window activities (start tag) and when their layers
+     * stop scaling (end tag).
      */
-    inner class WaitUntilWindowIsInVisibleActivity(
-            tags: MutableMap<Long, MutableList<Tag>>
-    ) : BaseState(tags) {
+    inner class WaitUntilWindowIsInVisibleActivity(tags: MutableMap<Long, MutableList<Tag>>) :
+        BaseState(tags) {
         override fun doProcessState(
-                previous: DeviceStateDump?,
-                current: DeviceStateDump,
-                next: DeviceStateDump
+            previous: DeviceStateDump?,
+            current: DeviceStateDump,
+            next: DeviceStateDump
         ): FSMState {
             if (previous == null) return this
             val prevVisibleWindows = previous.wmState.visibleWindows
-            val newlyVisibleWindows = current.wmState.visibleWindows.filterNot { window ->
-                prevVisibleWindows.any { it.token == window.token }
-            }
+            val newlyVisibleWindows =
+                current.wmState.visibleWindows.filterNot { window ->
+                    prevVisibleWindows.any { it.token == window.token }
+                }
 
             // Wait until layer is no longer scaling
-            val appLaunchedLayers = windowsBecomeVisible.filterKeys { layerId ->
-                val currDumpLayer = current.layerState.getLayerById(layerId)
-                (previous.layerState.getLayerById(layerId)?.isScaling == true &&
+            val appLaunchedLayers =
+                windowsBecomeVisible.filterKeys { layerId ->
+                    val currDumpLayer = current.layerState.getLayerById(layerId)
+                    (previous.layerState.getLayerById(layerId)?.isScaling == true &&
                         currDumpLayer?.isScaling == false)
-            }
+                }
 
             // Only want to tag when one app is being launched.
             // Other scenarios like app pairs enter are ignored.
@@ -64,13 +64,17 @@ class AppLaunchProcessor(logger: (String) -> Unit) : TransitionProcessor(logger)
             } else if (appLaunchedLayers.isNotEmpty()) {
                 val firstDump = appLaunchedLayers.entries.first()
                 val layerId = firstDump.key
-                addStartTransitionTag(firstDump.value, scenario,
-                        layerId = layerId,
-                        timestamp = firstDump.value.layerState.timestamp
+                addStartTransitionTag(
+                    firstDump.value,
+                    scenarioType,
+                    layerId = layerId,
+                    timestamp = firstDump.value.layerState.timestamp
                 )
-                addEndTransitionTag(current, scenario,
-                        layerId = layerId,
-                        timestamp = current.layerState.timestamp
+                addEndTransitionTag(
+                    current,
+                    scenarioType,
+                    layerId = layerId,
+                    timestamp = current.layerState.timestamp
                 )
                 windowsBecomeVisible.clear()
             }

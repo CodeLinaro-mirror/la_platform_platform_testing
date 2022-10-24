@@ -16,8 +16,10 @@
 
 package com.android.server.wm.flicker
 
-import android.os.SystemClock
+import android.app.Instrumentation
+import android.os.Bundle
 import android.util.Log
+import androidx.test.platform.app.InstrumentationRegistry
 import com.android.server.wm.flicker.FlickerRunResult.Companion.RunStatus
 import com.android.server.wm.flicker.monitor.IFileGeneratingMonitor
 import com.android.server.wm.flicker.monitor.ITransitionMonitor
@@ -27,29 +29,25 @@ import com.android.server.wm.traces.common.WindowManagerConditionsFactory
 import com.android.server.wm.traces.parser.getCurrentState
 import java.io.IOException
 import java.nio.file.Files
-import java.util.concurrent.TimeUnit
+import kotlin.system.measureTimeMillis
 import org.junit.runner.Description
 
 /**
  * Runner to execute the transitions of a flicker test
  *
- * The commands are executed in the following order:
- * 1) [Flicker.transitionSetup]
- * 2) Start monitors
- * 3) [Flicker.transitions]
- * 4) Stop monitors
- * 5) [Flicker.transitionTeardown]
+ * The commands are executed in the following order: 1) [Flicker.transitionSetup] 2) Start monitors
+ * 3) [Flicker.transitions] 4) Stop monitors 5) [Flicker.transitionTeardown]
  *
  * If the tests were already executed, reuse the previous results
- *
  */
 open class TransitionRunner {
     private val tags = mutableSetOf<String>()
     private var _result: FlickerRunResult? = null
-    private val result: FlickerRunResult get() {
-        requireNotNull(_result) { "Result not initialized" }
-        return _result!!
-    }
+    private val result: FlickerRunResult
+        get() {
+            requireNotNull(_result) { "Result not initialized" }
+            return _result!!
+        }
 
     /**
      * Executes the setup, transitions and teardown defined in [flicker]
@@ -75,7 +73,7 @@ open class TransitionRunner {
     }
 
     private fun onlyHasNoTraceMonitors(flicker: Flicker) =
-            flicker.traceMonitors.all { it is NoTraceMonitor }
+        flicker.traceMonitors.all { it is NoTraceMonitor }
 
     open fun cleanUp() {
         tags.clear()
@@ -97,24 +95,40 @@ open class TransitionRunner {
                 flicker.faas.testStarted(description)
             }
 
-            Log.d(FLICKER_TAG, "${flicker.testName} - Starting traces")
-            flicker.traceMonitors.forEach { it.start() }
+            progressUpdate("${flicker.testName} - Starting traces")
+            measureTimeMillis { flicker.traceMonitors.forEach { it.start() } }
+                .also { progressUpdate("\tTook ${it}ms to start traces") }
 
-            Log.d(FLICKER_TAG, "${flicker.testName} - Running transition setup")
-            runTransitionSetup(flicker)
-            Log.d(FLICKER_TAG, "${flicker.testName} - Running transition")
-            runTransition(flicker)
-            Log.d(FLICKER_TAG, "${flicker.testName} - Running transition teardown")
-            runTransitionTeardown(flicker)
+            if (flicker.usingExistingTraces) {
+                // No need to run anything the trace monitor will return the trace data
+                // Set the start and finish times to min and max respectively to avoid any cropping
+                // TODO: We might want to refactor this to use the start and end tags in the future
+                runResult.transitionStartTime = FlickerRunResult.TraceTime.MIN
+                runResult.transitionEndTime = FlickerRunResult.TraceTime.MAX
+            } else {
+                progressUpdate("${flicker.testName} - Running transition setup")
+                measureTimeMillis { runTransitionSetup(flicker) }
+                    .also { progressUpdate("\tTook ${it}ms to run transition setup") }
 
-            Log.d(FLICKER_TAG, "${flicker.testName} - Stopping traces")
-            flicker.traceMonitors.forEach { it.tryStop() }
+                progressUpdate("${flicker.testName} - Running transition")
+                measureTimeMillis { runTransition(flicker) }
+                    .also { progressUpdate("\tTook ${it}ms to run transition") }
 
-            Log.d(FLICKER_TAG, "${flicker.testName} - Processing transition traces")
-            processRunTraces(flicker, RunStatus.ASSERTION_SUCCESS)
+                progressUpdate("${flicker.testName} - Running transition teardown")
+                measureTimeMillis { runTransitionTeardown(flicker) }
+                    .also { progressUpdate("\tTook ${it}ms to run transition teardown") }
+
+                progressUpdate("${flicker.testName} - Stopping traces")
+                measureTimeMillis { flicker.traceMonitors.forEach { it.tryStop() } }
+                    .also { progressUpdate("\tTook ${it}ms to stop traces") }
+            }
+
+            progressUpdate("${flicker.testName} - Processing transition traces")
+            measureTimeMillis { processRunTraces(flicker, RunStatus.ASSERTION_SUCCESS) }
+                .also { progressUpdate("\tTook ${it}ms to process traces") }
+
             if (flicker.faasEnabled) {
-                Log.d(FLICKER_TAG, "${flicker.testName} - " +
-                        "Notifying FaaS of finished transition")
+                progressUpdate("${flicker.testName} - " + "Notifying FaaS of finished transition")
                 flicker.faas.testFinished(description)
                 if (flicker.faas.executionErrors.isNotEmpty()) {
                     runResult.setFaasExecutionError(flicker.faas.executionErrors[0])
@@ -167,13 +181,13 @@ open class TransitionRunner {
             }
 
             when (e) {
-                is TransitionSetupFailure, is TransitionExecutionFailure -> {
+                is TransitionSetupFailure,
+                is TransitionExecutionFailure -> {
                     // If we fail on the setup or transition we simply want to run the teardown.
-                    safeExecution(flicker, true) {
-                        runTransitionTeardown(flicker)
-                    }
+                    safeExecution(flicker, true) { runTransitionTeardown(flicker) }
                 }
-                is TransitionTeardownFailure, is TraceProcessingFailure -> {
+                is TransitionTeardownFailure,
+                is TraceProcessingFailure -> {
                     // Nothing to do & considered handled
                 }
                 else -> {
@@ -186,15 +200,11 @@ open class TransitionRunner {
 
     /**
      * Parses the traces collected by the monitors to generate FlickerRunResults containing the
-     * parsed trace and information about the status of the run.
-     * The run results are added to the resultBuilders list which is then used to run Flicker
-     * assertions on.
+     * parsed trace and information about the status of the run. The run results are added to the
+     * resultBuilders list which is then used to run Flicker assertions on.
      */
     @Throws(TraceProcessingFailure::class)
-    private fun processRunTraces(
-        flicker: Flicker,
-        status: RunStatus
-    ) {
+    private fun processRunTraces(flicker: Flicker, status: RunStatus) {
         try {
             result.setStatus(status)
             setMonitorResults(flicker, result)
@@ -229,9 +239,7 @@ open class TransitionRunner {
     private fun runTransitionSetup(flicker: Flicker) {
         try {
             flicker.transitionSetup.forEach { it.invoke(flicker) }
-            flicker.wmHelper.StateSyncBuilder()
-                .add(UI_STABLE_CONDITIONS)
-                .waitFor()
+            flicker.wmHelper.StateSyncBuilder().add(UI_STABLE_CONDITIONS).waitFor()
         } catch (e: Throwable) {
             throw TransitionSetupFailure(e)
         }
@@ -240,26 +248,12 @@ open class TransitionRunner {
     @Throws(TransitionExecutionFailure::class)
     private fun runTransition(flicker: Flicker) {
         try {
-            result.transitionStartTime = FlickerRunResult.TraceTime(
-                elapsedRealtimeNanos = SystemClock.elapsedRealtimeNanos(),
-                systemTime = SystemClock.uptimeNanos(),
-                unixTimeNanos = TimeUnit.NANOSECONDS.convert(
-                    System.currentTimeMillis(), TimeUnit.MILLISECONDS),
-            )
-
+            result.notifyTransitionStarting()
 
             flicker.transitions.forEach { it.invoke(flicker) }
-            flicker.wmHelper.StateSyncBuilder()
-                    .add(UI_STABLE_CONDITIONS)
-                    .waitFor()
+            flicker.wmHelper.StateSyncBuilder().add(UI_STABLE_CONDITIONS).waitFor()
 
-
-            result.transitionEndTime = FlickerRunResult.TraceTime(
-                elapsedRealtimeNanos = SystemClock.elapsedRealtimeNanos(),
-                systemTime = SystemClock.uptimeNanos(),
-                unixTimeNanos = TimeUnit.NANOSECONDS.convert(
-                    System.currentTimeMillis(), TimeUnit.MILLISECONDS),
-            )
+            result.notifyTransitionEnded()
         } catch (e: Throwable) {
             throw TransitionExecutionFailure(e)
         }
@@ -269,6 +263,7 @@ open class TransitionRunner {
     private fun runTransitionTeardown(flicker: Flicker) {
         try {
             flicker.transitionTeardown.forEach { it.invoke(flicker) }
+            flicker.wmHelper.StateSyncBuilder().add(UI_STABLE_CONDITIONS).waitFor()
         } catch (e: Throwable) {
             throw TransitionTeardownFailure(e)
         }
@@ -279,9 +274,7 @@ open class TransitionRunner {
         result: FlickerRunResult,
     ): FlickerRunResult {
 
-        flicker.traceMonitors.forEach {
-            result.setResultsFromMonitor(it)
-        }
+        flicker.traceMonitors.forEach { result.setResultsFromMonitor(it) }
 
         return result
     }
@@ -302,11 +295,10 @@ open class TransitionRunner {
     /**
      * Captures a snapshot of the device state and associates it with a new tag.
      *
-     * This tag can be used to make assertions about the state of the device when the
-     * snapshot is collected.
+     * This tag can be used to make assertions about the state of the device when the snapshot is
+     * collected.
      *
-     * [tag] is used as part of the trace file name, thus, only valid letters and digits
-     * can be used
+     * [tag] is used as part of the trace file name, thus, only valid letters and digits can be used
      *
      * @param flicker test specification
      * @throws IllegalArgumentException If [tag] contains invalid characters
@@ -319,14 +311,11 @@ open class TransitionRunner {
 
         val deviceStateBytes = getCurrentState(flicker.instrumentation.uiAutomation)
         try {
-            val wmDumpFile = flicker.outputDir.resolve(
-                getTaggedFilePath(flicker, tag, "wm_dump")
-            )
+            val wmDumpFile = flicker.outputDir.resolve(getTaggedFilePath(flicker, tag, "wm_dump"))
             Files.write(wmDumpFile, deviceStateBytes.first)
 
-            val layersDumpFile = flicker.outputDir.resolve(
-                getTaggedFilePath(flicker, tag, "layers_dump")
-            )
+            val layersDumpFile =
+                flicker.outputDir.resolve(getTaggedFilePath(flicker, tag, "layers_dump"))
             Files.write(layersDumpFile, deviceStateBytes.second)
 
             result.addTaggedState(
@@ -340,16 +329,26 @@ open class TransitionRunner {
     }
 
     companion object {
+        private fun progressUpdate(msg: String) {
+            Log.d(FLICKER_TAG, msg)
+
+            val instrumentation: Instrumentation = InstrumentationRegistry.getInstrumentation()
+            val results = Bundle()
+            results.putString(Instrumentation.REPORT_KEY_STREAMRESULT, "$msg\n")
+            instrumentation.sendStatus(1, results)
+        }
+
         /**
          * Conditions that determine when the UI is in a stable stable and no windows or layers are
          * animating or changing state.
          */
-        private val UI_STABLE_CONDITIONS = ConditionList(
-            listOf(
-                WindowManagerConditionsFactory.isWMStateComplete(),
-                WindowManagerConditionsFactory.hasLayersAnimating().negate()
+        val UI_STABLE_CONDITIONS =
+            ConditionList(
+                listOf(
+                    WindowManagerConditionsFactory.isWMStateComplete(),
+                    WindowManagerConditionsFactory.hasLayersAnimating().negate()
+                )
             )
-        )
 
         open class ExecutionError(private val inner: Throwable) : Throwable(inner) {
             init {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,14 @@
  * limitations under the License.
  */
 
-package com.android.server.wm.flicker.annotation
+package com.android.server.wm.flicker.assertiongenerator
 
-/**
- * The group annotations enable to run tests in parallel according to the arguments of test runner.
- */
-@Retention(AnnotationRetention.RUNTIME)
-@Target(AnnotationTarget.FUNCTION, AnnotationTarget.CLASS)
-annotation class Group3
+import com.android.server.wm.traces.common.DeviceTraceDump
+import com.android.server.wm.traces.common.service.ScenarioType
+
+data class ScenarioConfig(
+    val deviceTraceDumps: Array<DeviceTraceDump>,
+    val traceConfigurations: Array<DeviceTraceConfiguration>
+)
+
+data class AssertionGeneratorConfig(val er: Map<ScenarioType, Array<DeviceTraceDump>?>?)

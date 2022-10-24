@@ -19,6 +19,7 @@ package com.android.server.wm.flicker.dsl
 import android.app.Instrumentation
 import android.support.test.launcherhelper.ILauncherStrategy
 import android.support.test.launcherhelper.LauncherStrategyFactory
+import androidx.annotation.VisibleForTesting
 import androidx.test.uiautomator.UiDevice
 import com.android.server.wm.flicker.DEFAULT_TRACE_CONFIG
 import com.android.server.wm.flicker.Flicker
@@ -43,11 +44,10 @@ import com.android.server.wm.traces.parser.windowmanager.WindowManagerStateHelpe
 import java.io.File
 import java.nio.file.Path
 
-/**
- * Build Flicker tests using Flicker DSL
- */
+/** Build Flicker tests using Flicker DSL */
 @FlickerDslMarker
-class FlickerBuilder private constructor(
+class FlickerBuilder
+private constructor(
     internal val instrumentation: Instrumentation,
     private val launcherStrategy: ILauncherStrategy,
     private val outputDir: Path,
@@ -63,33 +63,21 @@ class FlickerBuilder private constructor(
 ) {
     private var usingExistingTraces = false
 
-    /**
-     * Default flicker builder constructor
-     */
+    /** Default flicker builder constructor */
     @JvmOverloads
     constructor(
-        /**
-         * Instrumentation to run the tests
-         */
+        /** Instrumentation to run the tests */
         instrumentation: Instrumentation,
-        /**
-         * Strategy used to interact with the launcher
-         */
-        launcherStrategy: ILauncherStrategy = LauncherStrategyFactory
-            .getInstance(instrumentation).launcherStrategy,
-        /**
-         * Output directory for the test results
-         */
+        /** Strategy used to interact with the launcher */
+        launcherStrategy: ILauncherStrategy =
+            LauncherStrategyFactory.getInstance(instrumentation).launcherStrategy,
+        /** Output directory for the test results */
         outputDir: Path = getDefaultFlickerOutputDir(),
-        /**
-         * Helper object for WM Synchronization
-         */
-        wmHelper: WindowManagerStateHelper = WindowManagerStateHelper(
-            instrumentation,
-            clearCacheAfterParsing = false
-        ),
-        traceMonitors: MutableList<ITransitionMonitor> = mutableListOf<ITransitionMonitor>()
-            .also {
+        /** Helper object for WM Synchronization */
+        wmHelper: WindowManagerStateHelper =
+            WindowManagerStateHelper(instrumentation, clearCacheAfterParsing = false),
+        traceMonitors: MutableList<ITransitionMonitor> =
+            mutableListOf<ITransitionMonitor>().also {
                 it.add(WindowManagerTraceMonitor(outputDir))
                 it.add(LayersTraceMonitor(outputDir))
                 if (isShellTransitionsEnabled) {
@@ -113,10 +101,10 @@ class FlickerBuilder private constructor(
         traceMonitors = traceMonitors
     )
 
-    /**
-     * Copy constructor
-     */
-    constructor(otherBuilder: FlickerBuilder) : this(
+    /** Copy constructor */
+    constructor(
+        otherBuilder: FlickerBuilder
+    ) : this(
         otherBuilder.instrumentation,
         otherBuilder.launcherStrategy,
         otherBuilder.outputDir.toAbsolutePath(),
@@ -138,25 +126,21 @@ class FlickerBuilder private constructor(
     fun withTestName(testName: () -> String): FlickerBuilder = apply {
         val name = testName()
         require(!name.contains(" ")) {
-            "The test tag can not contain spaces since it is a part of the file name"
+            "The test name can not contain spaces since it is a part of the file name"
         }
         this.testName = name
     }
 
-    /**
-     * Disable [WindowManagerTraceMonitor].
-     */
-    fun withoutWindowManagerTracing(): FlickerBuilder = apply {
-        withWindowManagerTracing { null }
-    }
+    /** Disable [WindowManagerTraceMonitor]. */
+    fun withoutWindowManagerTracing(): FlickerBuilder = apply { withWindowManagerTracing { null } }
 
     /**
      * Configure a [WindowManagerTraceMonitor] to obtain [WindowManagerTrace]
      *
      * By default the tracing is always active. To disable tracing return null
      *
-     * If this tracing is disabled, the assertions for [WindowManagerTrace] and
-     * [WindowManagerState] will not be executed
+     * If this tracing is disabled, the assertions for [WindowManagerTrace] and [WindowManagerState]
+     * will not be executed
      */
     fun withWindowManagerTracing(
         traceMonitor: (Path) -> WindowManagerTraceMonitor?
@@ -165,74 +149,56 @@ class FlickerBuilder private constructor(
         addMonitor(traceMonitor(outputDir))
     }
 
-    /**
-     * Disable [LayersTraceMonitor].
-     */
-    fun withoutLayerTracing(): FlickerBuilder = apply {
-        withLayerTracing { null }
-    }
+    /** Disable [LayersTraceMonitor]. */
+    fun withoutLayerTracing(): FlickerBuilder = apply { withLayerTracing { null } }
 
     /**
      * Configure a [LayersTraceMonitor] to obtain [LayersTrace].
      *
      * By default the tracing is always active. To disable tracing return null
      *
-     * If this tracing is disabled, the assertions for [LayersTrace] and [BaseLayerTraceEntry]
-     * will not be executed
+     * If this tracing is disabled, the assertions for [LayersTrace] and [BaseLayerTraceEntry] will
+     * not be executed
      */
-    fun withLayerTracing(
-        traceMonitor: (Path) -> LayersTraceMonitor?
-    ): FlickerBuilder = apply {
+    fun withLayerTracing(traceMonitor: (Path) -> LayersTraceMonitor?): FlickerBuilder = apply {
         traceMonitors.removeIf { it is LayersTraceMonitor }
         addMonitor(traceMonitor(outputDir))
     }
 
-    /**
-     * Disable [TransitionsTraceMonitor].
-     */
-    fun withoutTransitionTracing(): FlickerBuilder = apply {
-        withTransitionTracing { null }
-    }
+    /** Disable [TransitionsTraceMonitor]. */
+    fun withoutTransitionTracing(): FlickerBuilder = apply { withTransitionTracing { null } }
 
     /**
      * Configure a [TransitionsTraceMonitor] to obtain [TransitionsTrace].
      *
      * By default shell transition tracing is disabled.
      */
-    fun withTransitionTracing(
-        traceMonitor: (Path) -> TransitionsTraceMonitor?
-    ): FlickerBuilder = apply {
-        traceMonitors.removeIf { it is TransitionsTraceMonitor }
-        addMonitor(traceMonitor(outputDir))
-    }
+    fun withTransitionTracing(traceMonitor: (Path) -> TransitionsTraceMonitor?): FlickerBuilder =
+        apply {
+            traceMonitors.removeIf { it is TransitionsTraceMonitor }
+            addMonitor(traceMonitor(outputDir))
+        }
 
-    /**
-     * Disable [TransactionsTraceMonitor].
-     */
-    fun withoutTransactionsTracing(): FlickerBuilder = apply {
-        withTransactionsTracing { null }
-    }
+    /** Disable [TransactionsTraceMonitor]. */
+    fun withoutTransactionsTracing(): FlickerBuilder = apply { withTransactionsTracing { null } }
 
     /**
      * Configure a [TransactionsTraceMonitor] to obtain [TransactionsTrace].
      *
      * By default shell transition tracing is disabled.
      */
-    fun withTransactionsTracing(
-        traceMonitor: (Path) -> TransactionsTraceMonitor?
-    ): FlickerBuilder = apply {
-        traceMonitors.removeIf { it is TransactionsTraceMonitor }
-        addMonitor(traceMonitor(outputDir))
-    }
+    fun withTransactionsTracing(traceMonitor: (Path) -> TransactionsTraceMonitor?): FlickerBuilder =
+        apply {
+            traceMonitors.removeIf { it is TransactionsTraceMonitor }
+            addMonitor(traceMonitor(outputDir))
+        }
 
     /**
      * Configure a [ScreenRecorder].
      *
      * By default the tracing is always active. To disable tracing return null
      */
-    fun withScreenRecorder(
-        screenRecorder: (Path) -> ScreenRecorder?
-    ): FlickerBuilder = apply {
+    fun withScreenRecorder(screenRecorder: (Path) -> ScreenRecorder?): FlickerBuilder = apply {
         traceMonitors.removeIf { it is ScreenRecorder }
         addMonitor(screenRecorder(outputDir))
     }
@@ -242,24 +208,20 @@ class FlickerBuilder private constructor(
     }
 
     /**
-     * Defines the test ([TestCommandsBuilder.testCommands]) and run ([TestCommandsBuilder.runCommands])
-     * commands executed before the [transitions] to test
+     * Defines the test ([TestCommandsBuilder.testCommands]) and run (
+     * [TestCommandsBuilder.runCommands]) commands executed before the [transitions] to test
      */
-    fun setup(commands: Flicker.() -> Unit): FlickerBuilder = apply {
-        setupCommands.add(commands)
-    }
+    fun setup(commands: Flicker.() -> Unit): FlickerBuilder = apply { setupCommands.add(commands) }
 
     /**
-     * Defines the test ([TestCommandsBuilder.testCommands]) and run ([TestCommandsBuilder.runCommands])
-     * commands executed after the [transitions] to test
+     * Defines the test ([TestCommandsBuilder.testCommands]) and run (
+     * [TestCommandsBuilder.runCommands]) commands executed after the [transitions] to test
      */
     fun teardown(commands: Flicker.() -> Unit): FlickerBuilder = apply {
         teardownCommands.add(commands)
     }
 
-    /**
-     * Defines the commands that trigger the behavior to test
-     */
+    /** Defines the commands that trigger the behavior to test */
     fun transitions(command: Flicker.() -> Unit): FlickerBuilder = apply {
         require(!usingExistingTraces) {
             "Can't update transition after calling usingExistingTraces"
@@ -274,9 +236,7 @@ class FlickerBuilder private constructor(
         val transitions: File
     )
 
-    /**
-     * Use pre-executed results instead of running transitions to get the traces
-     */
+    /** Use pre-executed results instead of running transitions to get the traces */
     fun usingExistingTraces(_traceFiles: () -> TraceFiles): FlickerBuilder = apply {
         val traceFiles = _traceFiles()
         // Remove all trace monitor and use only monitor that read from existing trace file
@@ -290,19 +250,27 @@ class FlickerBuilder private constructor(
         this.transitionCommands.clear()
 
         this.usingExistingTraces = true
+        this.traceConfigs.applyToAll { it.usingExistingTraces = true }
     }
 
-    fun allowNoWmChange(): FlickerBuilder = apply {
-        this.traceConfigs.wmTrace.allowNoChange = true
+    @VisibleForTesting
+    fun allowNoopTransition(): FlickerBuilder = apply {
+        allowNoWmChange()
+        allowNoLayersChange()
+        allowNoTransitions()
     }
+
+    fun allowNoWmChange(): FlickerBuilder = apply { this.traceConfigs.wmTrace.allowNoChange = true }
 
     fun allowNoLayersChange(): FlickerBuilder = apply {
         this.traceConfigs.layersTrace.allowNoChange = true
     }
 
-    /**
-     * Creates a new Flicker runner based on the current builder configuration
-     */
+    fun allowNoTransitions(): FlickerBuilder = apply {
+        this.traceConfigs.transitionsTrace.allowNoChange = true
+    }
+
+    /** Creates a new Flicker runner based on the current builder configuration */
     @JvmOverloads
     fun build(runner: TransitionRunner = TransitionRunner()): Flicker {
         require(testName.isNotEmpty()) {
@@ -322,13 +290,12 @@ class FlickerBuilder private constructor(
             runner,
             wmHelper,
             faasEnabled = faasEnabled,
-            traceConfigs = traceConfigs
+            traceConfigs = traceConfigs,
+            usingExistingTraces = usingExistingTraces
         )
     }
 
-    /**
-     * Returns a copy of the current builder with the changes of [block] applied
-     */
+    /** Returns a copy of the current builder with the changes of [block] applied */
     fun copy(block: FlickerBuilder.() -> Unit) = FlickerBuilder(this).apply(block)
 
     private fun addMonitor(newMonitor: ITransitionMonitor?) {

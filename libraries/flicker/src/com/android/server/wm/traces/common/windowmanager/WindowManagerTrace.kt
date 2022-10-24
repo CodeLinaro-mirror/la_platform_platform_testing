@@ -18,6 +18,7 @@ package com.android.server.wm.traces.common.windowmanager
 
 import com.android.server.wm.traces.common.ITrace
 import com.android.server.wm.traces.common.Utils.Companion.sliceEntriesByTimestamp
+import com.android.server.wm.traces.common.service.PlatformConsts
 import kotlin.js.JsName
 
 /**
@@ -26,17 +27,15 @@ import kotlin.js.JsName
  *
  * Each entry is parsed into a list of [WindowManagerState] objects.
  *
- * This is a generic object that is reused by both Flicker and Winscope and cannot
- * access internal Java/Android functionality
- *
+ * This is a generic object that is reused by both Flicker and Winscope and cannot access internal
+ * Java/Android functionality
  */
-data class WindowManagerTrace(
-    override val entries: Array<WindowManagerState>
-) : ITrace<WindowManagerState>,
-    List<WindowManagerState> by entries.toList() {
+data class WindowManagerTrace(override val entries: Array<WindowManagerState>) :
+    ITrace<WindowManagerState>, List<WindowManagerState> by entries.toList() {
 
     @JsName("isTablet")
-    val isTablet: Boolean get() = entries.any { it.isTablet }
+    val isTablet: Boolean
+        get() = entries.any { it.isTablet }
 
     override fun toString(): String {
         return "WindowManagerTrace(Start: ${entries.firstOrNull()}, " +
@@ -65,7 +64,16 @@ data class WindowManagerTrace(
      */
     @JsName("slice")
     fun slice(from: Long, to: Long, addInitialEntry: Boolean = false): WindowManagerTrace {
-        return WindowManagerTrace(
-            sliceEntriesByTimestamp(this.entries, from, to, addInitialEntry))
+        return WindowManagerTrace(sliceEntriesByTimestamp(this.entries, from, to, addInitialEntry))
+    }
+
+    /** Get the initial rotation */
+    fun getInitialRotation(): PlatformConsts.Rotation {
+        if (entries.isEmpty()) {
+            throw RuntimeException("WindowManager Trace has no entries")
+        }
+        val firstWmState = entries[0]
+        return firstWmState.policy?.rotation?.let { PlatformConsts.Rotation.getByValue(it) }
+            ?: run { throw RuntimeException("Wm state has no policy") }
     }
 }

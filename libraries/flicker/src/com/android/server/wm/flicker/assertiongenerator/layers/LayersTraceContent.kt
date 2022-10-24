@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package com.android.server.wm.flicker.annotation
+package com.android.server.wm.flicker.assertiongenerator.layers
 
-/**
- * The group annotations enable to run tests in parallel according to the arguments of test runner.
- * By default, the test without group annotation are considered to be in this group.
- */
-@Retention(AnnotationRetention.RUNTIME)
-@Target(AnnotationTarget.FUNCTION, AnnotationTarget.CLASS)
-annotation class Group1
+import com.android.server.wm.flicker.assertiongenerator.DeviceTraceConfiguration
+import com.android.server.wm.flicker.assertiongenerator.common.TraceContent
+
+data class LayersTraceContent(
+    override val traceLifecycle: LayersTraceLifecycle,
+    override val traceConfiguration: DeviceTraceConfiguration
+) : TraceContent(traceLifecycle, traceConfiguration)

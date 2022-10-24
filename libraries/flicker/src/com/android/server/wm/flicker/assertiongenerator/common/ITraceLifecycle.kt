@@ -23,13 +23,11 @@ interface ITraceLifecycle {
 
     val size: Int
 
-    // ComponentNameMatcher instead of id
     val elementIds: Set<IComponentMatcher>
 
     operator fun get(elementId: Any): IComponentLifecycle?
 
     operator fun set(elementId: Any, elementLifecycles: IComponentLifecycle)
 
-    fun getOrPut(elementId: Any, elementLifecycles: IComponentLifecycle):
-            IComponentLifecycle
+    fun getOrPut(elementId: Any, elementLifecycles: IComponentLifecycle): IComponentLifecycle
 }
