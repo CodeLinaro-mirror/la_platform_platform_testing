@@ -21,6 +21,7 @@ import android.device.collectors.BaseMetricListener
 import android.device.collectors.DataRecord
 import android.util.Log
 import androidx.test.platform.app.InstrumentationRegistry
+import com.android.server.wm.flicker.FLICKER_TAG
 import com.android.server.wm.flicker.TransitionRunner.Companion.ExecutionError
 import com.android.server.wm.flicker.service.assertors.AssertionResult
 import com.android.server.wm.traces.common.service.AssertionInvocationGroup
@@ -38,6 +39,8 @@ class FlickerServiceResultsCollector(
     private val tracesCollector: ITracesCollector = FlickerServiceTracesCollector(outputDir),
     instrumentation: Instrumentation = InstrumentationRegistry.getInstrumentation()
 ) : BaseMetricListener() {
+    private val WINSCOPE_FILE_PATH_KEY = "winscope_file_path"
+
     private var collectMetricsPerTest = true
 
     private val _executionErrors = mutableListOf<ExecutionError>()
@@ -48,14 +51,6 @@ class FlickerServiceResultsCollector(
 
     init {
         setInstrumentation(instrumentation)
-    }
-
-    private fun errorReportingBlock(function: () -> Unit) {
-        try {
-            function()
-        } catch (e: Throwable) {
-            _executionErrors.add(ExecutionError(e))
-        }
     }
 
     override fun onTestRunStart(runData: DataRecord, description: Description) {
@@ -103,6 +98,8 @@ class FlickerServiceResultsCollector(
         tracesCollector.stop()
         Log.i(LOG_TAG, "Stopped trace collection")
         val collectedTraces = tracesCollector.getCollectedTraces()
+        val traceArchivePath = tracesCollector.getCollectedTracesPath()
+        dataRecord.addStringMetric(WINSCOPE_FILE_PATH_KEY, traceArchivePath.toString())
         val flickerService = FlickerService()
         Log.i(LOG_TAG, "Processing traces")
         val results =
@@ -147,6 +144,15 @@ class FlickerServiceResultsCollector(
     private fun getKeyForAssertionResult(result: AssertionResult): String {
         val assertionName = "${result.scenario}#${result.assertionName}"
         return "$FAAS_METRICS_PREFIX::$assertionName"
+    }
+
+    private fun errorReportingBlock(function: () -> Unit) {
+        try {
+            function()
+        } catch (e: Throwable) {
+            Log.e(FLICKER_TAG, "Error executing in FlickerServiceResultsCollector", e)
+            _executionErrors.add(ExecutionError(e))
+        }
     }
 
     companion object {
