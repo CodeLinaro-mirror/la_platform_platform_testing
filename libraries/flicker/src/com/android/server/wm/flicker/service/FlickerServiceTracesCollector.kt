@@ -31,8 +31,15 @@ import com.android.server.wm.traces.parser.layers.LayersTraceParser
 import com.android.server.wm.traces.parser.transaction.TransactionsTraceParser
 import com.android.server.wm.traces.parser.transition.TransitionsTraceParser
 import com.android.server.wm.traces.parser.windowmanager.WindowManagerTraceParser
+import java.io.BufferedOutputStream
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.nio.channels.Channels
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
+import kotlin.io.path.deleteIfExists
 
 class FlickerServiceTracesCollector(val outputDir: Path) : ITracesCollector {
 
@@ -47,39 +54,60 @@ class FlickerServiceTracesCollector(val outputDir: Path) : ITracesCollector {
     private var wmTrace: WindowManagerTrace? = null
     private var layersTrace: LayersTrace? = null
     private var transitionsTrace: TransitionsTrace? = null
+    private var tracePath: Path? = null
 
     override fun start() {
-        reset()
-        traceMonitors.forEach { it.start() }
+        reportErrorsBlock("Failed to start traces") {
+            reset()
+            traceMonitors.forEach { it.start() }
+        }
     }
 
     override fun stop() {
-        Log.v(LOG_TAG, "Creating output directory for trace files")
-        Files.createDirectories(outputDir)
+        reportErrorsBlock("Failed to stop traces") {
+            Log.v(LOG_TAG, "Creating output directory for trace files")
+            Files.createDirectories(outputDir)
 
-        Log.v(LOG_TAG, "Stopping trace monitors")
-        traceMonitors.forEach { it.stop() }
+            Log.v(LOG_TAG, "Stopping trace monitors")
+            traceMonitors.forEach { it.stop() }
 
-        Log.v(LOG_TAG, "Processing wmTrace from file")
-        wmTrace =
-            getWindowManagerTraceFromFile(FlickerService.getFassFilePath(outputDir, "wm_trace"))
-        Log.v(LOG_TAG, "Processing layers trace from file")
-        layersTrace =
-            getLayersTraceFromFile(FlickerService.getFassFilePath(outputDir, "layers_trace"))
-        Log.v(LOG_TAG, "Processing transitions trace from file")
-        transitionsTrace =
-            getTransitionsTraceFromFile(
-                FlickerService.getFassFilePath(outputDir, "transition_trace"),
+            val wmTraceFilePath = FlickerService.getFassFilePath(outputDir, "wm_trace")
+            val layersTraceFilePath = FlickerService.getFassFilePath(outputDir, "layers_trace")
+            val transitionsTracePath = FlickerService.getFassFilePath(outputDir, "transition_trace")
+            val transactionsTracePath =
                 FlickerService.getFassFilePath(outputDir, "transactions_trace")
-            )
+
+            Log.v(LOG_TAG, "Processing wmTrace from file")
+            wmTrace = getWindowManagerTraceFromFile(wmTraceFilePath)
+            Log.v(LOG_TAG, "Processing layers trace from file")
+            layersTrace = getLayersTraceFromFile(layersTraceFilePath)
+            Log.v(LOG_TAG, "Processing transitions trace from file")
+            transitionsTrace =
+                getTransitionsTraceFromFile(transitionsTracePath, transactionsTracePath)
+
+            tracePath =
+                createTraceArchiveOf(
+                    wmTraceFilePath,
+                    layersTraceFilePath,
+                    transitionsTracePath,
+                    transactionsTracePath
+                )
+        }
     }
 
     override fun getCollectedTraces(): Traces {
-        val wmTrace = wmTrace ?: error("Make sure tracing was stopped before calling this")
-        val layersTrace = layersTrace ?: error("Make sure tracing was stopped before calling this")
-        val transitionsTrace =
-            transitionsTrace ?: error("Make sure tracing was stopped before calling this")
-        return Traces(wmTrace, layersTrace, transitionsTrace)
+        return reportErrorsBlock("Failed to get collected traces") {
+            val wmTrace = wmTrace ?: error("Make sure tracing was stopped before calling this")
+            val layersTrace =
+                layersTrace ?: error("Make sure tracing was stopped before calling this")
+            val transitionsTrace =
+                transitionsTrace ?: error("Make sure tracing was stopped before calling this")
+            Traces(wmTrace, layersTrace, transitionsTrace)
+        }
+    }
+
+    override fun getCollectedTracesPath(): Path {
+        return this.tracePath ?: error("Make sure tracing was stopped before calling this")
     }
 
     private fun reset() {
@@ -157,7 +185,44 @@ class FlickerServiceTracesCollector(val outputDir: Path) : ITracesCollector {
         return TransactionsTraceParser.parseFromTrace(transactionsTraceByteArray)
     }
 
+    private fun <T : Any> reportErrorsBlock(msg: String, block: () -> T): T {
+        try {
+            return block()
+        } catch (e: Throwable) {
+            Log.e(LOG_TAG, msg, e)
+            throw e
+        }
+    }
+
+    private fun createTraceArchiveOf(vararg files: Path): Path {
+        val archivePath = outputDir.resolve("faas_traces_${java.util.UUID.randomUUID()}.zip")
+        archivePath.toFile().createNewFile()
+        val zipOutputStream =
+            ZipOutputStream(
+                BufferedOutputStream(FileOutputStream(archivePath.toFile()), BUFFER_SIZE)
+            )
+        val destChannel = Channels.newChannel(zipOutputStream)
+
+        for (file in files) {
+            val entry = ZipEntry(file.fileName.toString())
+            zipOutputStream.putNextEntry(entry)
+
+            val sourceChannel = FileInputStream(file.toString()).channel
+            sourceChannel.transferTo(0, sourceChannel.size(), destChannel)
+
+            sourceChannel.close()
+            zipOutputStream.closeEntry()
+            file.deleteIfExists()
+        }
+
+        destChannel.close()
+        zipOutputStream.close()
+
+        return archivePath
+    }
+
     companion object {
         private val LOG_TAG = "FlickerTracesCollector"
+        private const val BUFFER_SIZE = 2048
     }
 }
