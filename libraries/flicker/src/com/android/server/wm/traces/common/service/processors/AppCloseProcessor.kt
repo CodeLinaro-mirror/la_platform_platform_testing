@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,11 @@ import com.android.server.wm.traces.common.DeviceStateDump
 import com.android.server.wm.traces.common.WindowManagerConditionsFactory
 import com.android.server.wm.traces.common.WindowManagerConditionsFactory.isLayerTransformFlagSet
 import com.android.server.wm.traces.common.WindowManagerConditionsFactory.isLayerTransformIdentity
-import com.android.server.wm.traces.common.layers.BaseLayerTraceEntry
 import com.android.server.wm.traces.common.layers.Transform
 import com.android.server.wm.traces.common.service.PlatformConsts.TYPE_APPLICATION_STARTING
 import com.android.server.wm.traces.common.service.PlatformConsts.TYPE_BASE_APPLICATION
+import com.android.server.wm.traces.common.service.Scenario
 import com.android.server.wm.traces.common.tags.Tag
-import com.android.server.wm.traces.common.tags.Transition
-import com.android.server.wm.traces.common.windowmanager.WindowManagerState
 import com.android.server.wm.traces.common.windowmanager.windows.WindowState
 
 /**
@@ -34,39 +32,39 @@ import com.android.server.wm.traces.common.windowmanager.windows.WindowState
  * @param logger logs by invoking any event messages
  */
 class AppCloseProcessor(logger: (String) -> Unit) : TransitionProcessor(logger) {
-    override val transition = Transition.APP_CLOSE
+    override val scenario = Scenario.APP_CLOSE
     private val areLayersAnimating = WindowManagerConditionsFactory.hasLayersAnimating()
     private val wmStateIdle = WindowManagerConditionsFactory
-        .isAppTransitionIdle(/* default display */ 0)
+            .isAppTransitionIdle(/* default display */ 0)
     private val wmStateComplete = WindowManagerConditionsFactory.isWMStateComplete()
     private val translatingWindows =
-        HashMap<String, DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>>()
+            HashMap<String, DeviceStateDump>()
 
     override fun getInitialState(tags: MutableMap<Long, MutableList<Tag>>) =
-        RetrieveClosingAppLayerId(tags)
+            RetrieveClosingAppLayerId(tags)
 
     /**
      * Initial FSM state that passes the current app launch activity if any to the next state.
      * Closing app is also not transforming and has transform identity
      */
     inner class RetrieveClosingAppLayerId(
-        tags: MutableMap<Long, MutableList<Tag>>
+            tags: MutableMap<Long, MutableList<Tag>>
     ) : BaseState(tags) {
         override fun doProcessState(
-            previous: DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>?,
-            current: DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>,
-            next: DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>
+                previous: DeviceStateDump?,
+                current: DeviceStateDump,
+                next: DeviceStateDump
         ): FSMState {
             val isStableState = wmStateIdle.isSatisfied(current) ||
-                wmStateComplete.isSatisfied(current) ||
-                areLayersAnimating.negate().isSatisfied(current)
+                    wmStateComplete.isSatisfied(current) ||
+                    areLayersAnimating.negate().isSatisfied(current)
             val currentAppWindows = current.wmState.rootTasks.flatMap { task ->
                 // No app launch activities and only resuming activities
                 val activities = task.activities.filter { activity ->
                     activity.state == "RESUMED" && activity.isVisible &&
-                    activity.children.filterIsInstance<WindowState>().none { window ->
-                        window.attributes.type == TYPE_APPLICATION_STARTING
-                    }
+                            activity.children.filterIsInstance<WindowState>().none { window ->
+                                window.attributes.type == TYPE_APPLICATION_STARTING
+                            }
                 }
                 activities.flatMap { activity ->
                     activity.children.filterIsInstance<WindowState>().filter { window ->
@@ -78,7 +76,7 @@ class AppCloseProcessor(logger: (String) -> Unit) : TransitionProcessor(logger) 
             // Only one closing app. This processor ignores app pairs situations.
             if (currentAppWindows.size == 1 && isStableState) {
                 val isNotTransforming = isLayerTransformIdentity(currentAppWindows.first().layerId)
-                    .isSatisfied(current)
+                        .isSatisfied(current)
                 if (isNotTransforming) {
                     return WaitLayerAnimationComplete(tags, currentAppWindows.first())
                 }
@@ -91,39 +89,39 @@ class AppCloseProcessor(logger: (String) -> Unit) : TransitionProcessor(logger) 
      * FSM State that waits until the closing app has finished and stopped transforming.
      */
     inner class WaitLayerAnimationComplete(
-        tags: MutableMap<Long, MutableList<Tag>>,
-        private val appWindow: WindowState
+            tags: MutableMap<Long, MutableList<Tag>>,
+            private val appWindow: WindowState
     ) : BaseState(tags) {
         private val layerId = appWindow.layerId
         private val isTranslating = isLayerTransformFlagSet(layerId, Transform.TRANSLATE_VAL)
 
         override fun doProcessState(
-            previous: DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>?,
-            current: DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>,
-            next: DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>
+                previous: DeviceStateDump?,
+                current: DeviceStateDump,
+                next: DeviceStateDump
         ): FSMState {
             if (previous == null) return this
             val startedTransforming = isTranslating.isSatisfied(current) &&
-                isTranslating.negate().isSatisfied(previous)
+                    isTranslating.negate().isSatisfied(previous)
             val isStableState = wmStateIdle.isSatisfied(current) ||
-                wmStateComplete.isSatisfied(current) ||
-                areLayersAnimating.negate().isSatisfied(current)
+                    wmStateComplete.isSatisfied(current) ||
+                    areLayersAnimating.negate().isSatisfied(current)
 
             val finishedClosing = isLayerTransformIdentity(layerId).isSatisfied(current) &&
-                current.layerState.getLayerById(layerId)?.isHiddenByParent ?: false
+                    current.layerState.getLayerById(layerId)?.isHiddenByParent ?: false
 
             if (startedTransforming) {
                 translatingWindows[appWindow.token] = current
             } else if (finishedClosing && isStableState) {
                 val deviceStateDump = translatingWindows[appWindow.token]
                 if (deviceStateDump != null) {
-                    addStartTransitionTag(deviceStateDump, transition,
-                        layerId = layerId,
-                        windowToken = appWindow.token
+                    addStartTransitionTag(deviceStateDump, scenario,
+                            layerId = layerId,
+                            windowToken = appWindow.token
                     )
-                    addEndTransitionTag(current, transition,
-                        layerId = layerId,
-                        windowToken = appWindow.token
+                    addEndTransitionTag(current, scenario,
+                            layerId = layerId,
+                            windowToken = appWindow.token
                     )
                     return RetrieveClosingAppLayerId(tags)
                 }

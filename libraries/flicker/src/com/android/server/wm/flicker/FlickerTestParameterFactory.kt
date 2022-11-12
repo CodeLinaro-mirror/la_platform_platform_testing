@@ -18,6 +18,7 @@ package com.android.server.wm.flicker
 
 import android.view.Surface
 import android.view.WindowManagerPolicyConstants
+import com.android.server.wm.flicker.helpers.IS_FAAS_ENABLED
 
 /**
  * Factory for creating JUnit4 compatible tests based on the flicker DSL
@@ -35,12 +36,14 @@ open class FlickerTestParameterFactory {
         supportedRotations: List<Int> = listOf(Surface.ROTATION_0, Surface.ROTATION_90),
         supportedNavigationModes: List<String> = listOf(
             WindowManagerPolicyConstants.NAV_BAR_MODE_3BUTTON_OVERLAY,
-            WindowManagerPolicyConstants.NAV_BAR_MODE_GESTURAL_OVERLAY),
-        repetitions: Int = 1
+            WindowManagerPolicyConstants.NAV_BAR_MODE_GESTURAL_OVERLAY
+        ),
+        repetitions: Int = 1,
+        faasEnabled: Boolean = false
     ): List<FlickerTestParameter> {
         return supportedNavigationModes.flatMap { navBarMode ->
             supportedRotations.map { rotation ->
-                createParam(repetitions, navBarMode, rotation)
+                createParam(repetitions, navBarMode, rotation, faasEnabled = faasEnabled)
             }
         }
     }
@@ -55,16 +58,18 @@ open class FlickerTestParameterFactory {
         supportedRotations: List<Int> = listOf(Surface.ROTATION_0, Surface.ROTATION_90),
         supportedNavigationModes: List<String> = listOf(
             WindowManagerPolicyConstants.NAV_BAR_MODE_3BUTTON_OVERLAY,
-            WindowManagerPolicyConstants.NAV_BAR_MODE_GESTURAL_OVERLAY),
-        repetitions: Int = 1
+            WindowManagerPolicyConstants.NAV_BAR_MODE_GESTURAL_OVERLAY
+        ),
+        repetitions: Int = 1,
+        faasEnabled: Boolean = false
     ): List<FlickerTestParameter> {
         return supportedNavigationModes.flatMap { navBarMode ->
             supportedRotations
-            .flatMap { start -> supportedRotations.map { end -> start to end } }
-            .filter { (start, end) -> start != end }
-            .map { (start, end) ->
-                createParam(repetitions, navBarMode, start, end)
-            }
+                .flatMap { start -> supportedRotations.map { end -> start to end } }
+                .filter { (start, end) -> start != end }
+                .map { (start, end) ->
+                    createParam(repetitions, navBarMode, start, end, faasEnabled)
+                }
         }
     }
 
@@ -72,13 +77,15 @@ open class FlickerTestParameterFactory {
         repetitions: Int,
         navBarMode: String,
         startRotation: Int,
-        endRotation: Int = startRotation
+        endRotation: Int = startRotation,
+        faasEnabled: Boolean = false
     ) = FlickerTestParameter(
         mutableMapOf(
             FlickerTestParameter.NAV_BAR_MODE to navBarMode,
             FlickerTestParameter.START_ROTATION to startRotation,
             FlickerTestParameter.END_ROTATION to endRotation,
-            FlickerTestParameter.REPETITIONS to repetitions
+            FlickerTestParameter.REPETITIONS to repetitions,
+            FlickerTestParameter.FAAS_ENABLED to (faasEnabled && IS_FAAS_ENABLED)
         )
     )
 

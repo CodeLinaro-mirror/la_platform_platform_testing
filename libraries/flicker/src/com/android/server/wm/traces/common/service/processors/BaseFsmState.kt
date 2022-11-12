@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,8 @@
 package com.android.server.wm.traces.common.service.processors
 
 import com.android.server.wm.traces.common.DeviceStateDump
-import com.android.server.wm.traces.common.layers.BaseLayerTraceEntry
+import com.android.server.wm.traces.common.service.Scenario
 import com.android.server.wm.traces.common.tags.Tag
-import com.android.server.wm.traces.common.tags.Transition
-import com.android.server.wm.traces.common.windowmanager.WindowManagerState
 
 /**
  * Base state for the FSM, check if there are more WM and SF states to process
@@ -30,18 +28,18 @@ import com.android.server.wm.traces.common.windowmanager.WindowManagerState
 abstract class BaseFsmState(
     tags: MutableMap<Long, MutableList<Tag>>,
     internal val logger: (String) -> Unit,
-    internal val transition: Transition
+    internal val scenario: Scenario
 ) : FSMState(tags) {
     protected abstract fun doProcessState(
-        previous: DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>?,
-        current: DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>,
-        next: DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>
+        previous: DeviceStateDump?,
+        current: DeviceStateDump,
+        next: DeviceStateDump
     ): FSMState
 
     override fun process(
-        previous: DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>?,
-        current: DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>,
-        next: DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>?
+        previous: DeviceStateDump?,
+        current: DeviceStateDump,
+        next: DeviceStateDump?
     ): FSMState? {
         return if (next == null) {
             // last state
@@ -49,7 +47,7 @@ abstract class BaseFsmState(
             logger.invoke("($timestamp) Trace has reached the end")
             if (hasOpenTag()) {
                 logger.invoke("($timestamp) Has an open tag, closing it on the last SF state")
-                addEndTransitionTag(current, transition)
+                addEndTransitionTag(current, scenario)
             }
             null
         } else {

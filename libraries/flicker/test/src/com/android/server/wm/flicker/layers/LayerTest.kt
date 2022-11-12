@@ -17,12 +17,15 @@
 package com.android.server.wm.flicker.layers
 
 import com.android.server.wm.traces.common.ActiveBuffer
+import com.android.server.wm.traces.common.Cache
 import com.android.server.wm.traces.common.Color
 import com.android.server.wm.traces.common.Rect
 import com.android.server.wm.traces.common.RectF
 import com.android.server.wm.traces.common.layers.Layer
 import com.android.server.wm.traces.common.layers.Transform
+import com.android.server.wm.traces.common.region.Region
 import com.google.common.truth.Truth.assertThat
+import org.junit.Before
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
@@ -32,6 +35,11 @@ import org.junit.runners.MethodSorters
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class LayerTest {
+    @Before
+    fun before() {
+        Cache.clear()
+    }
+
     @Test
     fun hasVerboseFlagsProperty() {
         assertThat(makeLayerWithFlags(0x0).verboseFlags)
@@ -63,11 +71,13 @@ class LayerTest {
     }
 
     private fun makeLayerWithFlags(flags: Int): Layer {
-        return Layer("", 0, 0, 0, null, ActiveBuffer.EMPTY, flags,
+        return Layer.from(
+            "", 0, 0, 0, Region.EMPTY, ActiveBuffer.EMPTY, flags,
             RectF.EMPTY, Color.EMPTY, false, -1f, -1f,
-            "", null, Transform.EMPTY, RectF.EMPTY, -1,
+            "", RectF.EMPTY, Transform.EMPTY, RectF.EMPTY, -1,
             -1, Transform.EMPTY, -1, RectF.EMPTY, Rect.EMPTY,
             -1, null, false, -1, -1,
-            Transform.EMPTY, Color.EMPTY, RectF.EMPTY, Transform.EMPTY, null)
+            Transform.EMPTY, Color.EMPTY, RectF.EMPTY, Transform.EMPTY, null
+        )
     }
 }

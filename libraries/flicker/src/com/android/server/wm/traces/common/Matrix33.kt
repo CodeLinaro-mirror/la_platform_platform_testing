@@ -16,6 +16,8 @@
 
 package com.android.server.wm.traces.common
 
+import kotlin.js.JsName
+
 /**
  * Representation of a matrix 3x3 used for layer transforms
  *
@@ -24,13 +26,15 @@ package com.android.server.wm.traces.common
  *          |0    0     1 |
  */
 class Matrix33(
-    dsdx: Float,
-    dtdx: Float,
-    val tx: Float,
+    dsdx: Float = 0F,
+    dtdx: Float = 0F,
+    @JsName("tx")
+    val tx: Float = 0F,
 
-    dsdy: Float,
-    dtdy: Float,
-    val ty: Float
+    dsdy: Float = 0F,
+    dtdy: Float = 0F,
+    @JsName("ty")
+    val ty: Float = 0F
 ) : Matrix22(dsdx, dtdx, dsdy, dtdy) {
     override fun prettyPrint(): String {
         val parentPrint = super.prettyPrint()
@@ -58,27 +62,32 @@ class Matrix33(
     }
 
     companion object {
-        val EMPTY: Matrix33 = Matrix33(0f, 0f, 0f, 0f, 0f, 0f)
-        private val IDENTITY: Matrix33 = buildIdentity(0f, 0f)
-        private val ROT_270: Matrix33 = buildIdentity(0f, 0f)
-        private val ROT_180: Matrix33 = buildIdentity(0f, 0f)
-        private val ROT_90: Matrix33 = buildIdentity(0f, 0f)
+        val EMPTY: Matrix33
+            get() = withCache {
+                Matrix33(
+                    dsdx = 0f,
+                    dtdx = 0f,
+                    tx = 0f,
+                    dsdy = 0f,
+                    dtdy = 0f,
+                    ty = 0f
+                )
+            }
 
-        private fun buildIdentity(x: Float, y: Float): Matrix33 = Matrix33(1f, 0f, x, 0f, 1f, y)
-        private fun buildRot270(x: Float, y: Float): Matrix33 = Matrix33(1f, 0f, x, 0f, 1f, y)
-        private fun buildRot180(x: Float, y: Float): Matrix33 = Matrix33(1f, 0f, x, 0f, 1f, y)
-        private fun buildRot90(x: Float, y: Float): Matrix33 = Matrix33(1f, 0f, x, 0f, 1f, y)
-
+        @JsName("identity")
         internal fun identity(x: Float, y: Float): Matrix33 =
-            if (x == 0f && y == 0f) IDENTITY else buildIdentity(x, y)
+            withCache { Matrix33(dsdx = 1f, dtdx = 0f, x, dsdy = 0f, dtdy = 1f, y) }
 
+        @JsName("rot270")
         internal fun rot270(x: Float, y: Float): Matrix33 =
-            if (x == 0f && y == 0f) ROT_270 else buildRot270(x, y)
+            withCache { Matrix33(dsdx = 0f, dtdx = -1f, x, dsdy = 1f, dtdy = 0f, y) }
 
+        @JsName("rot180")
         internal fun rot180(x: Float, y: Float): Matrix33 =
-            if (x == 0f && y == 0f) ROT_180 else buildRot180(x, y)
+            withCache { Matrix33(dsdx = -1f, dtdx = 0f, x, dsdy = 0f, dtdy = -1f, y) }
 
+        @JsName("rot90")
         internal fun rot90(x: Float, y: Float): Matrix33 =
-            if (x == 0f && y == 0f) ROT_90 else buildRot90(x, y)
+            withCache { Matrix33(dsdx = 0f, dtdx = 1f, x, dsdy = -1f, dtdy = 0f, y) }
     }
 }

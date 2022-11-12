@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,12 +23,10 @@ import com.android.server.wm.traces.common.WindowManagerConditionsFactory.hasPip
 import com.android.server.wm.traces.common.WindowManagerConditionsFactory.isAppTransitionIdle
 import com.android.server.wm.traces.common.WindowManagerConditionsFactory.isPipWindowLayerSizeMatch
 import com.android.server.wm.traces.common.layers.Layer
-import com.android.server.wm.traces.common.layers.BaseLayerTraceEntry
 import com.android.server.wm.traces.common.layers.Transform
 import com.android.server.wm.traces.common.service.PlatformConsts
+import com.android.server.wm.traces.common.service.Scenario
 import com.android.server.wm.traces.common.tags.Tag
-import com.android.server.wm.traces.common.tags.Transition
-import com.android.server.wm.traces.common.windowmanager.WindowManagerState
 
 /**
  * Processor to detect PIP mode enter.
@@ -37,7 +35,7 @@ import com.android.server.wm.traces.common.windowmanager.WindowManagerState
  * Tags transition end when window and layer stop animating and their sizes match.
  */
 class PipEnterProcessor(logger: (String) -> Unit) : TransitionProcessor(logger) {
-    override val transition = Transition.PIP_ENTER
+    override val scenario = Scenario.PIP_ENTER
     private val allScalingLayers = mutableMapOf<Int, Long>()
 
     override fun getInitialState(tags: MutableMap<Long, MutableList<Tag>>) =
@@ -54,7 +52,7 @@ class PipEnterProcessor(logger: (String) -> Unit) : TransitionProcessor(logger) 
     ) : BaseState(tags) {
 
         private fun getScalingLayers(
-            current: DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>
+            current: DeviceStateDump
         ): List<Layer> = current.layerState.flattenedLayers.filter {
             WindowManagerConditionsFactory.isLayerTransformFlagSet(
                 it.id,
@@ -63,9 +61,9 @@ class PipEnterProcessor(logger: (String) -> Unit) : TransitionProcessor(logger) 
         }
 
         override fun doProcessState(
-            previous: DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>?,
-            current: DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>,
-            next: DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>
+            previous: DeviceStateDump?,
+            current: DeviceStateDump,
+            next: DeviceStateDump
         ): FSMState {
             if (previous == null) return this
 
@@ -92,7 +90,7 @@ class PipEnterProcessor(logger: (String) -> Unit) : TransitionProcessor(logger) 
         }
 
         private fun processPipEnterStart(
-            current: DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>
+            current: DeviceStateDump
         ): FSMState {
             val pipWindow = current.wmState.pinnedWindows.first()
             val startTimestamp = allScalingLayers[pipWindow.layerId]
@@ -100,14 +98,14 @@ class PipEnterProcessor(logger: (String) -> Unit) : TransitionProcessor(logger) 
             if (startTimestamp != null) {
                 addStartTransitionTag(
                     current,
-                    transition,
+                    scenario,
                     layerId = pipWindow.layerId,
                     timestamp = startTimestamp
                 )
             } else {
                 addStartTransitionTag(
                     current,
-                    transition,
+                    scenario,
                     layerId = pipWindow.layerId
                 )
             }
@@ -128,14 +126,14 @@ class PipEnterProcessor(logger: (String) -> Unit) : TransitionProcessor(logger) 
         private val layerId: Int
     ) : BaseState(tags) {
         override fun doProcessState(
-            previous: DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>?,
-            current: DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>,
-            next: DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>
+            previous: DeviceStateDump?,
+            current: DeviceStateDump,
+            next: DeviceStateDump
         ): FSMState {
             return if (isPipEnterFinished.isSatisfied(current)) {
                 // tag on the last complete state at the start
                 logger.invoke("(${current.wmState.timestamp}) PIP enter finished.")
-                addEndTransitionTag(current, transition, layerId = layerId)
+                addEndTransitionTag(current, scenario, layerId = layerId)
 
                 // return to start to wait for a second PIP enter
                 WaitPipEnterStart(tags)

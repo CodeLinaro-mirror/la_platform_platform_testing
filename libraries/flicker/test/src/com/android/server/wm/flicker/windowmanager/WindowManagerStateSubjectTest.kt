@@ -26,15 +26,16 @@ import com.android.server.wm.flicker.readWmTraceFromFile
 import com.android.server.wm.flicker.traces.FlickerSubjectException
 import com.android.server.wm.flicker.traces.windowmanager.WindowManagerStateSubject
 import com.android.server.wm.flicker.traces.windowmanager.WindowManagerTraceSubject.Companion.assertThat
-import com.android.server.wm.traces.common.ComponentMatcher
+import com.android.server.wm.traces.common.Cache
+import com.android.server.wm.traces.common.ComponentNameMatcher
 import com.android.server.wm.traces.common.region.Region
 import com.android.server.wm.traces.common.windowmanager.WindowManagerState
-import com.android.server.wm.traces.common.windowmanager.WindowManagerTrace
 import com.android.server.wm.traces.common.windowmanager.windows.ConfigurationContainer
 import com.android.server.wm.traces.common.windowmanager.windows.KeyguardControllerState
 import com.android.server.wm.traces.common.windowmanager.windows.RootWindowContainer
 import com.android.server.wm.traces.common.windowmanager.windows.WindowContainer
 import com.google.common.truth.Truth
+import org.junit.Before
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
@@ -45,7 +46,7 @@ import org.junit.runners.MethodSorters
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class WindowManagerStateSubjectTest {
-    private val trace: WindowManagerTrace by lazy { readWmTraceFromFile("wm_trace_openchrome.pb") }
+    private val trace get() = readWmTraceFromFile("wm_trace_openchrome.pb")
     // Launcher is visible in fullscreen in the first frame of the trace
     private val traceFirstFrameTimestamp = 9213763541297
     // The first frame where the chrome splash screen is shown
@@ -55,6 +56,11 @@ class WindowManagerStateSubjectTest {
     // The region covered by the status bar in the trace
     private val statusBarRegion = Region.from(0, 0, 1440, 171)
 
+    @Before
+    fun before() {
+        Cache.clear()
+    }
+
     @Test
     fun exceptionContainsDebugInfo() {
         val error = assertThrows(AssertionError::class.java) {
@@ -62,7 +68,7 @@ class WindowManagerStateSubjectTest {
         }
         assertThatErrorContainsDebugInfo(error)
         Truth.assertThat(error).hasMessageThat()
-            .contains(TestComponents.IMAGINARY.classNames.first())
+            .contains(TestComponents.IMAGINARY.className)
         Truth.assertThat(error).hasMessageThat().contains(FlickerSubject.ASSERTION_TAG)
     }
 
@@ -70,9 +76,9 @@ class WindowManagerStateSubjectTest {
     fun canDetectAboveAppWindowVisibility_isVisible() {
         assertThat(trace)
             .entry(traceFirstFrameTimestamp)
-            .containsAboveAppWindow(ComponentMatcher.NAV_BAR)
+            .containsAboveAppWindow(ComponentNameMatcher.NAV_BAR)
             .containsAboveAppWindow(TestComponents.SCREEN_DECOR_OVERLAY)
-            .containsAboveAppWindow(ComponentMatcher.STATUS_BAR)
+            .containsAboveAppWindow(ComponentNameMatcher.STATUS_BAR)
     }
 
     @Test
@@ -85,8 +91,8 @@ class WindowManagerStateSubjectTest {
         assertFailure(failure).factValue("Is Invisible").contains("pip-dismiss-overlay")
 
         failure = assertThrows(AssertionError::class.java) {
-            subject.containsAboveAppWindow(ComponentMatcher.NAV_BAR)
-                .isNonAppWindowInvisible(ComponentMatcher.NAV_BAR)
+            subject.containsAboveAppWindow(ComponentNameMatcher.NAV_BAR)
+                .isNonAppWindowInvisible(ComponentNameMatcher.NAV_BAR)
         }
         assertFailure(failure).factValue("Is Visible").contains("NavigationBar")
     }
@@ -96,7 +102,7 @@ class WindowManagerStateSubjectTest {
         val entry = assertThat(trace)
             .entry(traceFirstFrameTimestamp)
 
-        entry.visibleRegion(ComponentMatcher.STATUS_BAR)
+        entry.visibleRegion(ComponentNameMatcher.STATUS_BAR)
             .coversAtLeast(statusBarRegion)
         entry.visibleRegion(TestComponents.LAUNCHER)
             .coversAtLeast(displayBounds)
@@ -106,7 +112,7 @@ class WindowManagerStateSubjectTest {
     fun canDetectWindowCoversAtLeastRegion_smallerRegion() {
         val entry = assertThat(trace)
             .entry(traceFirstFrameTimestamp)
-        entry.visibleRegion(ComponentMatcher.STATUS_BAR)
+        entry.visibleRegion(ComponentNameMatcher.STATUS_BAR)
             .coversAtLeast(Region.from(0, 0, 100, 100))
         entry.visibleRegion(TestComponents.LAUNCHER)
             .coversAtLeast(Region.from(0, 0, 100, 100))
@@ -116,7 +122,7 @@ class WindowManagerStateSubjectTest {
     fun canDetectWindowCoversAtLeastRegion_largerRegion() {
         val subject = assertThat(trace).entry(traceFirstFrameTimestamp)
         var failure = assertThrows(FlickerSubjectException::class.java) {
-            subject.visibleRegion(ComponentMatcher.STATUS_BAR)
+            subject.visibleRegion(ComponentNameMatcher.STATUS_BAR)
                 .coversAtLeast(Region.from(0, 0, 1441, 171))
         }
         assertFailure(failure).factValue("Uncovered region").contains("SkRegion((1440,0,1441,171))")
@@ -134,7 +140,7 @@ class WindowManagerStateSubjectTest {
         val entry = assertThat(trace)
             .entry(traceFirstFrameTimestamp)
 
-        entry.visibleRegion(ComponentMatcher.STATUS_BAR)
+        entry.visibleRegion(ComponentNameMatcher.STATUS_BAR)
             .coversExactly(statusBarRegion)
         entry.visibleRegion(TestComponents.LAUNCHER)
             .coversExactly(displayBounds)
@@ -144,7 +150,7 @@ class WindowManagerStateSubjectTest {
     fun canDetectWindowCoversExactlyRegion_smallerRegion() {
         val subject = assertThat(trace).entry(traceFirstFrameTimestamp)
         var failure = assertThrows(FlickerSubjectException::class.java) {
-            subject.visibleRegion(ComponentMatcher.STATUS_BAR)
+            subject.visibleRegion(ComponentNameMatcher.STATUS_BAR)
                 .coversAtMost(Region.from(0, 0, 100, 100))
         }
         assertFailure(failure).factValue("Out-of-bounds region")
@@ -162,7 +168,7 @@ class WindowManagerStateSubjectTest {
     fun canDetectWindowCoversExactlyRegion_largerRegion() {
         val subject = assertThat(trace).entry(traceFirstFrameTimestamp)
         var failure = assertThrows(FlickerSubjectException::class.java) {
-            subject.visibleRegion(ComponentMatcher.STATUS_BAR)
+            subject.visibleRegion(ComponentNameMatcher.STATUS_BAR)
                 .coversAtLeast(Region.from(0, 0, 1441, 171))
         }
         assertFailure(failure).factValue("Uncovered region").contains("SkRegion((1440,0,1441,171))")
@@ -179,7 +185,7 @@ class WindowManagerStateSubjectTest {
     fun canDetectWindowCoversAtMostRegion_extactSize() {
         val entry = assertThat(trace)
             .entry(traceFirstFrameTimestamp)
-        entry.visibleRegion(ComponentMatcher.STATUS_BAR)
+        entry.visibleRegion(ComponentNameMatcher.STATUS_BAR)
             .coversAtMost(statusBarRegion)
         entry.visibleRegion(TestComponents.LAUNCHER)
             .coversAtMost(displayBounds)
@@ -189,7 +195,7 @@ class WindowManagerStateSubjectTest {
     fun canDetectWindowCoversAtMostRegion_smallerRegion() {
         val subject = assertThat(trace).entry(traceFirstFrameTimestamp)
         var failure = assertThrows(FlickerSubjectException::class.java) {
-            subject.visibleRegion(ComponentMatcher.STATUS_BAR)
+            subject.visibleRegion(ComponentNameMatcher.STATUS_BAR)
                 .coversAtMost(Region.from(0, 0, 100, 100))
         }
         assertFailure(failure).factValue("Out-of-bounds region")
@@ -208,7 +214,7 @@ class WindowManagerStateSubjectTest {
         val entry = assertThat(trace)
             .entry(traceFirstFrameTimestamp)
 
-        entry.visibleRegion(ComponentMatcher.STATUS_BAR)
+        entry.visibleRegion(ComponentNameMatcher.STATUS_BAR)
             .coversAtMost(Region.from(0, 0, 1441, 171))
         entry.visibleRegion(TestComponents.LAUNCHER)
             .coversAtMost(Region.from(0, 0, 1440, 2961))
@@ -275,7 +281,7 @@ class WindowManagerStateSubjectTest {
                 .containsNonAppWindow(TestComponents.IMAGINARY)
         }
         assertFailure(failure).hasMessageThat()
-            .contains(TestComponents.IMAGINARY.packageNames.first())
+            .contains(TestComponents.IMAGINARY.packageName)
     }
 
     @Test
@@ -283,11 +289,11 @@ class WindowManagerStateSubjectTest {
         val failure = assertThrows(FlickerSubjectException::class.java) {
             assertThat(trace)
                 .entry(traceFirstFrameTimestamp)
-                .containsNonAppWindow(ComponentMatcher.IME)
-                .isNonAppWindowVisible(ComponentMatcher.IME)
+                .containsNonAppWindow(ComponentNameMatcher.IME)
+                .isNonAppWindowVisible(ComponentNameMatcher.IME)
         }
         assertFailure(failure).factValue("Is Invisible")
-            .contains(ComponentMatcher.IME.packageNames.first())
+            .contains(ComponentNameMatcher.IME.packageName)
     }
 
     @Test
@@ -309,7 +315,7 @@ class WindowManagerStateSubjectTest {
         }
         assertFailure(failure)
             .factValue("Found")
-            .contains(TestComponents.LAUNCHER.packageNames.first())
+            .contains(TestComponents.LAUNCHER.packageName)
     }
 
     @Test
@@ -344,14 +350,14 @@ class WindowManagerStateSubjectTest {
             isDisplayFrozen = false,
             _pendingActivities = emptyArray(),
             root = emptyRootContainer,
-            keyguardControllerState = KeyguardControllerState(
+            keyguardControllerState = KeyguardControllerState.from(
                 isAodShowing = false,
                 isKeyguardShowing = false,
                 keyguardOccludedStates = mapOf()
             )
         )
 
-        val mockComponent = ComponentMatcher("", "Mock")
+        val mockComponent = ComponentNameMatcher("", "Mock")
 
         val failure = assertThrows(FlickerSubjectException::class.java) {
             WindowManagerStateSubject
@@ -404,6 +410,6 @@ class WindowManagerStateSubjectTest {
         // There's only one entry in dump file.
         val entry = assertThat(trace).first()
         // Verify that the taskbar is visible
-        entry.isNonAppWindowVisible(ComponentMatcher.TASK_BAR)
+        entry.isNonAppWindowVisible(ComponentNameMatcher.TASK_BAR)
     }
 }

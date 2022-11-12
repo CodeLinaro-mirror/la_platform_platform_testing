@@ -24,8 +24,10 @@ import com.android.server.wm.flicker.readWmTraceFromFile
 import com.android.server.wm.flicker.traces.FlickerSubjectException
 import com.android.server.wm.flicker.traces.windowmanager.WindowManagerTraceSubject
 import com.android.server.wm.flicker.traces.windowmanager.WindowManagerTraceSubject.Companion.assertThat
-import com.android.server.wm.traces.common.ComponentMatcher
+import com.android.server.wm.traces.common.Cache
+import com.android.server.wm.traces.common.ComponentNameMatcher
 import com.google.common.truth.Truth
+import org.junit.Before
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
@@ -36,8 +38,13 @@ import org.junit.runners.MethodSorters
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class WindowManagerTraceSubjectTest {
-    private val chromeTrace by lazy { readWmTraceFromFile("wm_trace_openchrome.pb") }
-    private val imeTrace by lazy { readWmTraceFromFile("wm_trace_ime.pb") }
+    private val chromeTrace get() = readWmTraceFromFile("wm_trace_openchrome.pb")
+    private val imeTrace get() = readWmTraceFromFile("wm_trace_ime.pb")
+
+    @Before
+    fun before() {
+        Cache.clear()
+    }
 
     @Test
     fun testVisibleAppWindowForRange() {
@@ -81,7 +88,7 @@ class WindowManagerTraceSubjectTest {
         val subject = assertThat(trace)
         subject.isAppWindowOnTop(TestComponents.LAUNCHER)
                 .then()
-                .isAppWindowOnTop(ComponentMatcher.SNAPSHOT)
+                .isAppWindowOnTop(ComponentNameMatcher.SNAPSHOT)
                 .then()
                 .isAppWindowOnTop(TestComponents.CHROME_FIRST_RUN)
     }
@@ -135,17 +142,17 @@ class WindowManagerTraceSubjectTest {
     fun testCanTransitionNonAppWindow() {
         assertThat(imeTrace)
             .skipUntilFirstAssertion()
-            .isNonAppWindowInvisible(ComponentMatcher.IME)
+            .isNonAppWindowInvisible(ComponentNameMatcher.IME)
             .then()
-            .isNonAppWindowVisible(ComponentMatcher.IME)
+            .isNonAppWindowVisible(ComponentNameMatcher.IME)
             .forAllEntries()
     }
 
     @Test(expected = AssertionError::class)
     fun testCanDetectOverlappingWindows() {
         assertThat(imeTrace)
-            .doNotOverlap(ComponentMatcher.IME,
-                ComponentMatcher.NAV_BAR,
+            .doNotOverlap(ComponentNameMatcher.IME,
+                ComponentNameMatcher.NAV_BAR,
                 TestComponents.IME_ACTIVITY)
             .forAllEntries()
     }
@@ -154,9 +161,9 @@ class WindowManagerTraceSubjectTest {
     fun testCanTransitionAboveAppWindow() {
         assertThat(imeTrace)
             .skipUntilFirstAssertion()
-            .isAboveAppWindowInvisible(ComponentMatcher.IME)
+            .isAboveAppWindowInvisible(ComponentNameMatcher.IME)
             .then()
-            .isAboveAppWindowVisible(ComponentMatcher.IME)
+            .isAboveAppWindowVisible(ComponentNameMatcher.IME)
             .forAllEntries()
     }
 
@@ -179,7 +186,7 @@ class WindowManagerTraceSubjectTest {
 
     @Test
     fun testCanAssertWindowStateSequence() {
-        val componentMatcher = ComponentMatcher.unflattenFromString(
+        val componentMatcher = ComponentNameMatcher.unflattenFromString(
             "com.android.chrome/org.chromium.chrome.browser.firstrun.FirstRunActivity"
         )
         val windowStates = assertThat(chromeTrace).windowStates(componentMatcher)
@@ -204,9 +211,9 @@ class WindowManagerTraceSubjectTest {
     @Test
     fun testCanDetectSnapshotStartingWindow() {
         val trace = readWmTraceFromFile("quick_switch_to_app_killed_in_background_trace.pb")
-        val app1 = ComponentMatcher("com.android.server.wm.flicker.testapp",
+        val app1 = ComponentNameMatcher("com.android.server.wm.flicker.testapp",
             "com.android.server.wm.flicker.testapp.ImeActivity")
-        val app2 = ComponentMatcher("com.android.server.wm.flicker.testapp",
+        val app2 = ComponentNameMatcher("com.android.server.wm.flicker.testapp",
             "com.android.server.wm.flicker.testapp.SimpleActivity")
         assertThat(trace).isAppWindowVisible(app1)
             .then()

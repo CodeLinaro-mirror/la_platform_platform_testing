@@ -23,18 +23,18 @@ import android.os.SystemClock
 import android.util.Log
 import android.view.Display
 import androidx.test.platform.app.InstrumentationRegistry
-import com.android.server.wm.traces.common.ComponentMatcher
-import com.android.server.wm.traces.common.ComponentMatcher.Companion.IME
-import com.android.server.wm.traces.common.ComponentMatcher.Companion.LAUNCHER
-import com.android.server.wm.traces.common.ComponentMatcher.Companion.SNAPSHOT
-import com.android.server.wm.traces.common.ComponentMatcher.Companion.SPLASH_SCREEN
+import com.android.server.wm.traces.common.ComponentNameMatcher
+import com.android.server.wm.traces.common.ComponentNameMatcher.Companion.IME
+import com.android.server.wm.traces.common.ComponentNameMatcher.Companion.LAUNCHER
+import com.android.server.wm.traces.common.ComponentNameMatcher.Companion.SNAPSHOT
+import com.android.server.wm.traces.common.ComponentNameMatcher.Companion.SPLASH_SCREEN
+import com.android.server.wm.traces.common.ComponentNameMatcher.Companion.SPLIT_DIVIDER
 import com.android.server.wm.traces.common.Condition
-import com.android.server.wm.traces.common.DUMP
 import com.android.server.wm.traces.common.DeviceStateDump
 import com.android.server.wm.traces.common.IComponentMatcher
 import com.android.server.wm.traces.common.WaitCondition
 import com.android.server.wm.traces.common.WindowManagerConditionsFactory
-import com.android.server.wm.traces.common.layers.BaseLayerTraceEntry
+import com.android.server.wm.traces.common.layers.LayerTraceEntry
 import com.android.server.wm.traces.common.layers.LayersTrace
 import com.android.server.wm.traces.common.region.Region
 import com.android.server.wm.traces.common.windowmanager.WindowManagerState
@@ -45,19 +45,22 @@ import com.android.server.wm.traces.common.windowmanager.windows.WindowState
 import com.android.server.wm.traces.parser.LOG_TAG
 import com.android.server.wm.traces.parser.getCurrentStateDump
 
+/**
+ * Helper class to wait on [WindowManagerState] or [LayerTraceEntry] conditions
+ */
 open class WindowManagerStateHelper @JvmOverloads constructor(
     /**
      * Instrumentation to run the tests
      */
     private val instrumentation: Instrumentation = InstrumentationRegistry.getInstrumentation(),
+    private val clearCacheAfterParsing: Boolean = true,
     /**
      * Predicate to supply a new UI information
      */
-    private val deviceDumpSupplier: () -> DUMP = {
-        val currState = getCurrentStateDump(instrumentation.uiAutomation)
-        DeviceStateDump(
-            currState.wmState ?: error("Unable to parse WM trace"),
-            currState.layerState ?: error("Unable to parse Layers trace")
+    private val deviceDumpSupplier: () -> DeviceStateDump = {
+        getCurrentStateDump(
+            instrumentation.uiAutomation,
+            clearCacheAfterParsing = clearCacheAfterParsing
         )
     },
     /**
@@ -69,12 +72,12 @@ open class WindowManagerStateHelper @JvmOverloads constructor(
      */
     private val retryIntervalMs: Long = WaitCondition.DEFAULT_RETRY_INTERVAL_MS
 ) {
-    private var internalState: DUMP? = null
+    private var internalState: DeviceStateDump? = null
 
     /**
      * Queries the supplier for a new device state
      */
-    val currentState: DUMP
+    val currentState: DeviceStateDump
         get() {
             if (internalState == null) {
                 internalState = deviceDumpSupplier.invoke()
@@ -84,9 +87,7 @@ open class WindowManagerStateHelper @JvmOverloads constructor(
             return internalState ?: error("Unable to fetch an internal state")
         }
 
-    protected open fun updateCurrState(
-        value: DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>
-    ) {
+    protected open fun updateCurrState(value: DeviceStateDump) {
         internalState = value
     }
 
@@ -117,7 +118,7 @@ open class WindowManagerStateHelper @JvmOverloads constructor(
         private val conditionBuilder = createConditionBuilder()
         private var lastMessage = ""
 
-        private fun createConditionBuilder(): WaitCondition.Builder<DUMP> =
+        private fun createConditionBuilder(): WaitCondition.Builder<DeviceStateDump> =
             WaitCondition.Builder(deviceDumpSupplier, numRetries).onSuccess { updateCurrState(it) }
                 .onFailure { updateCurrState(it) }.onLog { msg, isError ->
                     lastMessage = msg
@@ -133,7 +134,7 @@ open class WindowManagerStateHelper @JvmOverloads constructor(
          *
          * @param condition to wait for
          */
-        fun add(condition: Condition<DUMP>): StateSyncBuilder = apply {
+        fun add(condition: Condition<DeviceStateDump>): StateSyncBuilder = apply {
             conditionBuilder.withCondition(condition)
         }
 
@@ -144,7 +145,7 @@ open class WindowManagerStateHelper @JvmOverloads constructor(
          * @param condition to wait for
          */
         @JvmOverloads
-        fun add(message: String = "", condition: (DUMP) -> Boolean): StateSyncBuilder =
+        fun add(message: String = "", condition: (DeviceStateDump) -> Boolean): StateSyncBuilder =
             add(Condition(message, condition))
 
         /**
@@ -200,6 +201,16 @@ open class WindowManagerStateHelper @JvmOverloads constructor(
                 .add(WindowManagerConditionsFactory.isLayerVisible(LAUNCHER))
 
         /**
+         * Waits until the split-screen divider is visible and nothing to be animating
+         *
+         * @param displayId of the target display
+         */
+        @JvmOverloads
+        fun withSplitDividerVisible(displayId: Int = Display.DEFAULT_DISPLAY) =
+            withAppTransitionIdle(displayId)
+                .add(WindowManagerConditionsFactory.isLayerVisible(SPLIT_DIVIDER))
+
+        /**
          * Waits until the home activity is visible and nothing to be animating
          *
          * @param displayId of the target display
@@ -228,13 +239,14 @@ open class WindowManagerStateHelper @JvmOverloads constructor(
          * @param activityState expected activity state
          */
         fun withActivityState(componentMatcher: IComponentMatcher, activityState: String) =
-            add(Condition("state of ${componentMatcher.toActivityName()} to be $activityState") {
+            add(Condition(
+                    "state of ${componentMatcher.toActivityIdentifier()} to be $activityState") {
                 it.wmState.hasActivityState(componentMatcher, activityState)
             })
 
         /**
-         * Waits until the [ComponentMatcher.NAV_BAR] or [ComponentMatcher.TASK_BAR] are visible
-         * (windows and layers)
+         * Waits until the [ComponentNameMatcher.NAV_BAR] or [ComponentNameMatcher.TASK_BAR] are
+         * visible (windows and layers)
          */
         fun withNavOrTaskBarVisible() = add(WindowManagerConditionsFactory.isNavOrTaskBarVisible())
 
@@ -330,7 +342,7 @@ open class WindowManagerStateHelper @JvmOverloads constructor(
          *
          * - wait until a window is pinned ([WindowManagerState.pinnedWindows])
          * - no layers animating
-         * - and [ComponentMatcher.PIP_CONTENT_OVERLAY] is no longer visible
+         * - and [ComponentNameMatcher.PIP_CONTENT_OVERLAY] is no longer visible
          *
          * @param displayId of the target display
          */
@@ -344,7 +356,7 @@ open class WindowManagerStateHelper @JvmOverloads constructor(
          *
          * - wait until there are no pinned ([WindowManagerState.pinnedWindows])
          * - no layers animating
-         * - and [ComponentMatcher.PIP_CONTENT_OVERLAY] is no longer visible
+         * - and [ComponentNameMatcher.PIP_CONTENT_OVERLAY] is no longer visible
          *
          * @param displayId of the target display
          */
@@ -370,6 +382,13 @@ open class WindowManagerStateHelper @JvmOverloads constructor(
          */
         fun withoutTopVisibleAppWindows() = add("noAppWindowsOnTop") {
             it.wmState.topVisibleAppWindow == null
+        }
+
+        /**
+         * Waits until the keyguard is showing
+         */
+        fun withKeyguardShowing() = add("withKeyguardShowing") {
+            it.wmState.isKeyguardShowing
         }
 
         /**
@@ -405,7 +424,7 @@ open class WindowManagerStateHelper @JvmOverloads constructor(
          * @return true if it should wait for some activities to become visible.
          */
         private fun shouldWaitForActivities(
-            state: DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>,
+            state: DeviceStateDump,
             vararg waitForActivitiesVisible: WaitForValidActivityState
         ): Boolean {
             if (waitForActivitiesVisible.isEmpty()) {
@@ -418,16 +437,17 @@ open class WindowManagerStateHelper @JvmOverloads constructor(
             var tasksInCorrectStacks = true
             for (activityState in waitForActivitiesVisible) {
                 val matchingWindowStates = state.wmState.getMatchingVisibleWindowState(
-                    activityState.activityName ?: error("Activity name missing in $activityState")
+                    activityState.activityMatcher
+                            ?: error("Activity name missing in $activityState")
                 )
                 val activityWindowVisible = matchingWindowStates.isNotEmpty()
 
                 if (!activityWindowVisible) {
-                    Log.i(LOG_TAG, "Activity window not visible: ${activityState.windowName}")
+                    Log.i(LOG_TAG, "Activity window not visible: ${activityState.windowIdentifier}")
                     allActivityWindowsVisible = false
-                } else if (!state.wmState.isActivityVisible(activityState.activityName)
+                } else if (!state.wmState.isActivityVisible(activityState.activityMatcher)
                 ) {
-                    Log.i(LOG_TAG, "Activity not visible: ${activityState.activityName}")
+                    Log.i(LOG_TAG, "Activity not visible: ${activityState.activityMatcher}")
                     allActivityWindowsVisible = false
                 } else {
                     // Check if window is already the correct state requested by test.

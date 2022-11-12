@@ -16,8 +16,8 @@
 
 package com.android.server.wm.traces.common.layers
 
-import com.android.server.wm.traces.common.Rect
 import com.android.server.wm.traces.common.RectF
+import kotlin.js.JsName
 
 /**
  * Represents a single Layer trace entry.
@@ -26,23 +26,20 @@ import com.android.server.wm.traces.common.RectF
  * access internal Java/Android functionality
  *
  **/
-open class LayerTraceEntry constructor(
+class LayerTraceEntry(
     override val timestamp: Long,
     override val hwcBlob: String,
     override val where: String,
     override val displays: Array<Display>,
+    override val vSyncId: Long,
     _rootLayers: Array<Layer>
 ) : BaseLayerTraceEntry() {
     override val flattenedLayers: Array<Layer> = fillFlattenedLayers(_rootLayers)
 
+    @JsName("fillFlattenedLayers")
     private fun fillFlattenedLayers(rootLayers: Array<Layer>): Array<Layer> {
-        val opaqueLayers = mutableListOf<Layer>()
-        val transparentLayers = mutableListOf<Layer>()
         val layers = mutableListOf<Layer>()
-        // some of the flickerlib traces are old and don't have the display data on the trace
-        val mainDisplaySize = displays.firstOrNull { !it.isVirtual }?.layerStackSpace ?: Rect.EMPTY
-        val roots = rootLayers.fillOcclusionState(
-            opaqueLayers, transparentLayers, mainDisplaySize.toRectF()).toMutableList()
+        val roots = rootLayers.fillOcclusionState().toMutableList()
         while (roots.isNotEmpty()) {
             val layer = roots.removeAt(0)
             layers.add(layer)
@@ -53,42 +50,55 @@ open class LayerTraceEntry constructor(
 
     private fun Array<Layer>.topDownTraversal(): List<Layer> {
         return this
-                .sortedBy { it.z }
-                .flatMap { it.topDownTraversal() }
+            .sortedBy { it.z }
+            .flatMap { it.topDownTraversal() }
     }
 
     private fun Layer.topDownTraversal(): List<Layer> {
         val traverseList = mutableListOf(this)
 
         this.children.sortedBy { it.z }
-                .forEach { childLayer ->
-                    traverseList.addAll(childLayer.topDownTraversal())
-                }
+            .forEach { childLayer ->
+                traverseList.addAll(childLayer.topDownTraversal())
+            }
 
         return traverseList
     }
 
-    private fun Array<Layer>.fillOcclusionState(
-        opaqueLayers: MutableList<Layer>,
-        transparentLayers: MutableList<Layer>,
-        displaySize: RectF
-    ): Array<Layer> {
+    @JsName("fillOcclusionState")
+    private fun Array<Layer>.fillOcclusionState(): Array<Layer> {
         val traversalList = topDownTraversal().reversed()
+
+        val opaqueLayers = mutableListOf<Layer>()
+        val transparentLayers = mutableListOf<Layer>()
 
         traversalList.forEach { layer ->
             val visible = layer.isVisible
+            val displaySize = displays
+                .firstOrNull { it.layerStackId == layer.stackId }
+                ?.layerStackSpace
+                ?.toRectF()
+                ?: RectF.EMPTY
 
             if (visible) {
                 val occludedBy = opaqueLayers
-                    .filter { it.contains(layer, displaySize) && !it.hasRoundedCorners }
+                    .filter {
+                        it.stackId == layer.stackId &&
+                            it.contains(layer, displaySize) &&
+                            !it.hasRoundedCorners
+                    }
                     .toTypedArray()
                 layer.addOccludedBy(occludedBy)
                 val partiallyOccludedBy = opaqueLayers
-                    .filter { it.overlaps(layer, displaySize) && it !in layer.occludedBy }
+                    .filter {
+                        it.stackId == layer.stackId &&
+                            it.overlaps(layer, displaySize) &&
+                            it !in layer.occludedBy
+                    }
                     .toTypedArray()
                 layer.addPartiallyOccludedBy(partiallyOccludedBy)
                 val coveredBy = transparentLayers
-                    .filter { it.overlaps(layer, displaySize) }
+                    .filter { it.stackId == layer.stackId && it.overlaps(layer, displaySize) }
                     .toTypedArray()
                 layer.addCoveredBy(coveredBy)
 

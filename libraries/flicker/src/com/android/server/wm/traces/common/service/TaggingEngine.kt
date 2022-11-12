@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +23,10 @@ import com.android.server.wm.traces.common.service.processors.ImeAppearProcessor
 import com.android.server.wm.traces.common.service.processors.ImeDisappearProcessor
 import com.android.server.wm.traces.common.service.processors.PipEnterProcessor
 import com.android.server.wm.traces.common.service.processors.PipExitProcessor
-import com.android.server.wm.traces.common.service.processors.PipExpandProcessor
-import com.android.server.wm.traces.common.service.processors.PipResizeProcessor
 import com.android.server.wm.traces.common.service.processors.RotationProcessor
 import com.android.server.wm.traces.common.tags.TagState
 import com.android.server.wm.traces.common.tags.TagTrace
+import com.android.server.wm.traces.common.transition.TransitionsTrace
 import com.android.server.wm.traces.common.windowmanager.WindowManagerTrace
 
 /**
@@ -44,9 +43,10 @@ import com.android.server.wm.traces.common.windowmanager.WindowManagerTrace
 class TaggingEngine(
     private val wmTrace: WindowManagerTrace,
     private val layersTrace: LayersTrace,
+    private val transitionsTrace: TransitionsTrace,
     private val logger: (String) -> Unit
 ) {
-    private val transitions = listOf(
+    private val tagGenerators = mutableListOf<ITagGenerator>(
         // TODO: Keep adding new transition processors to invoke
         RotationProcessor(logger),
         AppLaunchProcessor(logger),
@@ -54,18 +54,16 @@ class TaggingEngine(
         ImeAppearProcessor(logger),
         ImeDisappearProcessor(logger),
         PipEnterProcessor(logger),
-        PipResizeProcessor(logger),
-        PipExpandProcessor(logger),
         PipExitProcessor(logger)
-    )
+    ).also { it.addAll(Scenario.values()) }
 
     /**
      * Generate tags denoting start and end points for all [transitions] within traces
      */
     fun run(): TagTrace {
-        val allStates = transitions.flatMap {
+        val allStates = tagGenerators.flatMap {
             logger.invoke("Generating tags for ${it::class.simpleName}")
-            it.generateTags(wmTrace, layersTrace).entries.asList()
+            it.generateTags(wmTrace, layersTrace, transitionsTrace).entries.asList()
         }
 
         /**

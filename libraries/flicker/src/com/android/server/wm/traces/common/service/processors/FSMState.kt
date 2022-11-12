@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,9 @@
 package com.android.server.wm.traces.common.service.processors
 
 import com.android.server.wm.traces.common.DeviceStateDump
-import com.android.server.wm.traces.common.layers.BaseLayerTraceEntry
+import com.android.server.wm.traces.common.service.Scenario
+import com.android.server.wm.traces.common.service.TagIdGenerator
 import com.android.server.wm.traces.common.tags.Tag
-import com.android.server.wm.traces.common.tags.Transition
-import com.android.server.wm.traces.common.windowmanager.WindowManagerState
 import kotlin.math.max
 import kotlin.math.min
 
@@ -31,22 +30,22 @@ import kotlin.math.min
  */
 abstract class FSMState(protected val tags: MutableMap<Long, MutableList<Tag>>) {
     abstract fun process(
-        previous: DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>?,
-        current: DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>,
-        next: DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>?
+        previous: DeviceStateDump?,
+        current: DeviceStateDump,
+        next: DeviceStateDump?
     ): FSMState?
 
     protected fun addStartTransitionTag(
-        state: DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>,
-        transition: Transition,
+        state: DeviceStateDump,
+        scenario: Scenario,
         layerId: Int = 0,
         windowToken: String = "",
         taskId: Int = 0,
         timestamp: Long = min(state.wmState.timestamp, state.layerState.timestamp)
     ) {
-        val tagId = ++lastTagId
-        val startTag = Tag(id = tagId, transition, isStartTag = true, layerId = layerId,
-            windowToken = windowToken, taskId = taskId)
+        lastTagId = TagIdGenerator.getNext()
+        val startTag = Tag(id = lastTagId, scenario, isStartTag = true, layerId = layerId,
+                windowToken = windowToken, taskId = taskId)
         if (!tags.containsKey(timestamp)) {
             tags[timestamp] = mutableListOf()
         }
@@ -54,15 +53,15 @@ abstract class FSMState(protected val tags: MutableMap<Long, MutableList<Tag>>) 
     }
 
     protected fun addEndTransitionTag(
-        state: DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>,
-        transition: Transition,
+        state: DeviceStateDump,
+        transition: Scenario,
         layerId: Int = 0,
         windowToken: String = "",
         taskId: Int = 0,
         timestamp: Long = max(state.wmState.timestamp, state.layerState.timestamp)
     ) {
         val endTag = Tag(id = lastTagId, transition, isStartTag = false, layerId = layerId,
-            windowToken = windowToken, taskId = taskId)
+                windowToken = windowToken, taskId = taskId)
         if (!tags.containsKey(timestamp)) {
             tags[timestamp] = mutableListOf()
         }

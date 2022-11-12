@@ -16,6 +16,8 @@
 
 package com.android.server.wm.traces.common
 
+import kotlin.js.JsName
+
 /**
  * Wrapper for RectProto
  *     - frameworks/native/services/surfaceflinger/layerproto/common.proto and
@@ -23,34 +25,44 @@ package com.android.server.wm.traces.common
  *
  * This class is used by flicker and Winscope
  */
-open class Rect internal constructor(
+class Rect internal constructor(
+    @JsName("left")
     val left: Int = 0,
+    @JsName("top")
     val top: Int = 0,
+    @JsName("right")
     val right: Int = 0,
+    @JsName("bottom")
     val bottom: Int = 0
 ) {
+    @JsName("height")
     val height: Int get() = bottom - top
+    @JsName("width")
     val width: Int get() = right - left
+    @JsName("centerX")
     fun centerX(): Int = (left + right) / 2
+    @JsName("centerY")
     fun centerY(): Int = (top + bottom) / 2
     /**
      * Returns true if the rectangle is empty (left >= right or top >= bottom)
      */
-    val isEmpty: Boolean = width <= 0 || height <= 0
+    @JsName("isEmpty")
+    val isEmpty: Boolean get() = width <= 0 || height <= 0
 
-    val isNotEmpty: Boolean = !isEmpty
+    @JsName("isNotEmpty")
+    val isNotEmpty: Boolean get() = !isEmpty
 
     /**
      * Returns a [RectF] version fo this rectangle.
      */
+    @JsName("toRectF")
     fun toRectF(): RectF {
         return RectF.from(left.toFloat(), top.toFloat(), right.toFloat(), bottom.toFloat())
     }
 
-    open fun prettyPrint(): String =
+    @JsName("prettyPrint")
+    fun prettyPrint(): String =
         if (isEmpty) "[empty]" else "($left, $top) - ($right, $bottom)"
-
-    override fun equals(other: Any?): Boolean = other?.toString() == this.toString()
 
     /**
      * Returns true iff the specified rectangle r is inside or equal to this
@@ -71,6 +83,7 @@ open class Rect internal constructor(
      *
      * @param crop The crop that should be applied to this layer
      */
+    @JsName("crop")
     fun crop(crop: Rect): Rect {
         val newLeft = maxOf(left, crop.left)
         val newTop = maxOf(top, crop.top)
@@ -102,6 +115,7 @@ open class Rect internal constructor(
      * @param rect The rectangle being intersected with this rectangle.
      * @return A rectangle with the intersection coordinates
      */
+    @JsName("intersection")
     fun intersection(rect: Rect): Rect {
         val thisRect = toRectF()
         val otherRect = rect.toRectF()
@@ -118,20 +132,29 @@ open class Rect internal constructor(
 
     override fun toString(): String = prettyPrint()
 
+    @JsName("clone")
     fun clone(): Rect {
         return from(left, top, right, bottom)
     }
 
-    companion object {
-        val EMPTY: Rect = Rect()
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is Rect) return false
 
-        fun from(left: Int, top: Int, right: Int, bottom: Int): Rect {
-            val newRect = Rect(left, top, right, bottom)
-            return if (newRect.isEmpty) {
-                EMPTY
-            } else {
-                newRect
-            }
-        }
+        if (left != other.left) return false
+        if (top != other.top) return false
+        if (right != other.right) return false
+        if (bottom != other.bottom) return false
+
+        return true
+    }
+
+    companion object {
+        @JsName("EMPTY")
+        val EMPTY: Rect get() = withCache { Rect() }
+
+        @JsName("from")
+        fun from(left: Int, top: Int, right: Int, bottom: Int): Rect =
+            withCache { Rect(left, top, right, bottom) }
     }
 }

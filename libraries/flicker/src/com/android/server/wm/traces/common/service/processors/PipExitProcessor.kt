@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +23,9 @@ import com.android.server.wm.traces.common.WindowManagerConditionsFactory.isLaye
 import com.android.server.wm.traces.common.WindowManagerConditionsFactory.isLayerTransformFlagSet
 import com.android.server.wm.traces.common.WindowManagerConditionsFactory.isLayerVisible
 import com.android.server.wm.traces.common.WindowManagerConditionsFactory.isWMStateComplete
-import com.android.server.wm.traces.common.layers.BaseLayerTraceEntry
 import com.android.server.wm.traces.common.layers.Transform
+import com.android.server.wm.traces.common.service.Scenario
 import com.android.server.wm.traces.common.tags.Tag
-import com.android.server.wm.traces.common.tags.Transition
-import com.android.server.wm.traces.common.windowmanager.WindowManagerState
 
 /**
  * This processor creates tags when the pip window is exited directly to home screen or a
@@ -35,15 +33,15 @@ import com.android.server.wm.traces.common.windowmanager.WindowManagerState
  * @param logger logs by invoking any event messages
  */
 class PipExitProcessor(logger: (String) -> Unit) : TransitionProcessor(logger) {
-    override val transition = Transition.PIP_EXIT
+    override val scenario = Scenario.PIP_EXIT
     private val scalingWindows =
-        HashMap<String, DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>>()
+        HashMap<String, DeviceStateDump>()
     private val areLayersAnimating = hasLayersAnimating()
     private val wmStateIdle = isAppTransitionIdle(/* default display */ 0)
     private val wmStateComplete = isWMStateComplete()
 
     override fun getInitialState(tags: MutableMap<Long, MutableList<Tag>>) =
-            WaitPinnedWindowSwipedOrFading(tags)
+        WaitPinnedWindowSwipedOrFading(tags)
 
     /**
      * Initial FSM state which waits until the app window in pip mode starts to change opacity.
@@ -52,9 +50,9 @@ class PipExitProcessor(logger: (String) -> Unit) : TransitionProcessor(logger) {
         tags: MutableMap<Long, MutableList<Tag>>
     ) : BaseState(tags) {
         override fun doProcessState(
-            previous: DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>?,
-            current: DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>,
-            next: DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>
+            previous: DeviceStateDump?,
+            current: DeviceStateDump,
+            next: DeviceStateDump
         ): FSMState {
             if (previous == null) return this
             // There can only ever be one pinned window at a time
@@ -65,11 +63,11 @@ class PipExitProcessor(logger: (String) -> Unit) : TransitionProcessor(logger) {
                 val dump = scalingWindows[currPinnedWindow.token]
                 if (dump != null) {
                     // Pip app unpinned so let's tag.
-                    addStartTransitionTag(dump, transition,
+                    addStartTransitionTag(dump, scenario,
                         layerId = currPinnedWindow.layerId,
                         windowToken = currPinnedWindow.token
                     )
-                    addEndTransitionTag(previous, transition,
+                    addEndTransitionTag(previous, scenario,
                         layerId = currPinnedWindow.layerId,
                         windowToken = currPinnedWindow.token
                     )
@@ -95,7 +93,7 @@ class PipExitProcessor(logger: (String) -> Unit) : TransitionProcessor(logger) {
                     this
                 }
                 pinnedWindowFading -> {
-                    addStartTransitionTag(previous, transition,
+                    addStartTransitionTag(previous, scenario,
                         layerId = currPinnedWindow.layerId,
                         windowToken = currPinnedWindow.token
                     )
@@ -113,9 +111,9 @@ class PipExitProcessor(logger: (String) -> Unit) : TransitionProcessor(logger) {
         private val layerId: Int
     ) : BaseState(tags) {
         override fun doProcessState(
-            previous: DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>?,
-            current: DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>,
-            next: DeviceStateDump<WindowManagerState, BaseLayerTraceEntry>
+            previous: DeviceStateDump?,
+            current: DeviceStateDump,
+            next: DeviceStateDump
         ): FSMState {
             val layerInvisible = isLayerVisible(layerId).negate().isSatisfied(current)
             val layerColorAlphaOne = isLayerColorAlphaOne(layerId).isSatisfied(current)
@@ -124,7 +122,7 @@ class PipExitProcessor(logger: (String) -> Unit) : TransitionProcessor(logger) {
                 areLayersAnimating.negate().isSatisfied(current)
 
             return if (layerInvisible && layerColorAlphaOne && isStableState) {
-                addEndTransitionTag(current, transition, layerId = layerId)
+                addEndTransitionTag(current, scenario, layerId = layerId)
                 WaitPinnedWindowSwipedOrFading(tags)
             } else {
                 this
