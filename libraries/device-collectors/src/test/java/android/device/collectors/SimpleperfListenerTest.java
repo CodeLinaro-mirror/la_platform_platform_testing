@@ -17,6 +17,7 @@ package android.device.collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
@@ -26,6 +27,7 @@ import static org.mockito.Mockito.verify;
 
 import android.app.Instrumentation;
 import android.os.Bundle;
+import android.util.ArrayMap;
 
 import androidx.test.runner.AndroidJUnit4;
 import androidx.test.uiautomator.UiDevice;
@@ -34,7 +36,6 @@ import com.android.helpers.SimpleperfHelper;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -130,38 +131,31 @@ public class SimpleperfListenerTest {
     }
 
     private void testSampleReport() {
-        StringBuilder output = new StringBuilder();
-        Map.Entry<String, String>[] sampleTestOrder =
-                new Map.Entry[] {
-                    Map.entry("surfaceflinger", "680"), Map.entry("system_server", "1696")
-                };
-        for (Map.Entry<String, String> process : sampleTestOrder) {
-            output.append(
+        Map<String, String> processes =
+                Map.of(
+                        "surfaceflinger", "680",
+                        "system_server", "1696");
+
+        Map<String /*key*/, String /*eventCount*/> metrics = new ArrayMap<>();
+        for (Map.Entry<String, String> process : processes.entrySet()) {
+            metrics.putAll(
                     mSimpleperfHelper.getSimpleperfReport(
                             "/data/local/tmp/simpleperf/testdata/simpleperf_record_sample.data",
                             process,
-                            Set.of(
+                            Map.of(
                                     "android::Parcel::writeInt32(int)",
+                                    "writeInt32",
                                     "android::SurfaceFlinger::commit(long, long, long)",
-                                    "android::SurfaceFlinger::composite(long, long)")));
+                                    "commit",
+                                    "android::SurfaceFlinger::composite(",
+                                    "composite"),
+                            10));
         }
-        assertEquals(
-                "{instructions-surfaceflinger=1107121607,"
-                    + " instructions-surfaceflinger-android::SurfaceFlinger::composite(long,"
-                    + " long)=287851607,"
-                    + " cpu-cycles-surfaceflinger-android::Parcel::writeInt32(int)=1339066343,"
-                    + " cpu-cycles-surfaceflinger-android::SurfaceFlinger::composite(long,"
-                    + " long)=2040482064, "
-                    + "instructions-surfaceflinger-android::Parcel::writeInt32(int)=819270000,"
-                    + " cpu-cycles-surfaceflinger-android::SurfaceFlinger::commit(long, long,"
-                    + " long)=1657891653,"
-                    + " instructions-surfaceflinger-android::SurfaceFlinger::commit(long, long,"
-                    + " long)=88569727,"
-                    + " cpu-cycles-surfaceflinger=6376506592}{instructions-system_server=2391398998,"
-                    + " cpu-cycles-system_server=9080947163,"
-                    + " instructions-system_server-android::Parcel::writeInt32(int)=1554409292,"
-                    + " cpu-cycles-system_server-android::Parcel::writeInt32(int)=2905903027}",
-                output.toString());
+        // cherry-pick a few metrics to test
+        assertEquals(metrics.get("surfaceflinger-instructions"), "110712160");
+        assertEquals(metrics.get("surfaceflinger-composite-cpu-cycles-count"), "2043342");
+        assertEquals(metrics.get("surfaceflinger-writeInt32-instructions-percentage"), "0.74");
+        assertEquals(metrics.get("system_server-cpu-cycles"), "908094716");
     }
 
     /*
@@ -353,7 +347,7 @@ public class SimpleperfListenerTest {
         mListener.onTestRunEnd(mListener.createDataRecord(), new Result());
         verify(mSimpleperfHelperVisibleUidevice, times(1)).stopCollecting(anyString());
         verify(mSimpleperfHelperVisibleUidevice, times(2))
-                .getSimpleperfReport(anyString(), any(), any());
+                .getSimpleperfReport(anyString(), any(), any(), anyInt());
         testSampleReport();
     }
 
@@ -369,8 +363,8 @@ public class SimpleperfListenerTest {
         b.putString(SimpleperfListener.REPORT, "true");
         b.putString(
                 SimpleperfListener.REPORT_SYMBOLS,
-                "android::Parcel::writeInt32(int); android::SurfaceFlinger::commit(long, long,"
-                        + " long); android::SurfaceFlinger::composite(long, long)");
+                "writeInt32;android::Parcel::writeInt32(int);commit;android::SurfaceFlinger::commit(long,"
+                    + " long, long);composite;android::SurfaceFlinger::composite(long, long)");
         b.putString(SimpleperfListener.EVENTS, "instructions,cpu-cycles");
         mListener = initListener(b, mSimpleperfHelperVisibleUidevice);
         doReturn("680").when(mUiDevice).executeShellCommand(eq("pidof surfaceflinger"));
@@ -388,7 +382,7 @@ public class SimpleperfListenerTest {
         mListener.onTestEnd(mListener.createDataRecord(), mTest3Desc);
         verify(mSimpleperfHelperVisibleUidevice, times(1)).stopCollecting(anyString());
         verify(mSimpleperfHelperVisibleUidevice, times(2))
-                .getSimpleperfReport(anyString(), any(), any());
+                .getSimpleperfReport(anyString(), any(), any(), anyInt());
         testSampleReport();
     }
 

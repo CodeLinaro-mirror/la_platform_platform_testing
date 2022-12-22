@@ -19,13 +19,11 @@ package com.android.server.wm.flicker.traces.layers
 import com.android.server.wm.flicker.assertions.Assertion
 import com.android.server.wm.flicker.assertions.FlickerSubject
 import com.android.server.wm.flicker.traces.FlickerFailureStrategy
-import com.android.server.wm.flicker.traces.FlickerSubjectException
 import com.android.server.wm.flicker.traces.region.RegionSubject
 import com.android.server.wm.traces.common.IComponentMatcher
 import com.android.server.wm.traces.common.layers.BaseLayerTraceEntry
 import com.android.server.wm.traces.common.layers.Layer
 import com.android.server.wm.traces.common.layers.LayersTrace
-import com.google.common.truth.ExpectFailure
 import com.google.common.truth.Fact
 import com.google.common.truth.FailureMetadata
 import com.google.common.truth.FailureStrategy
@@ -37,69 +35,62 @@ import com.google.common.truth.Subject.Factory
  * Truth subject for [BaseLayerTraceEntry] objects, used to make assertions over behaviors that
  * occur on a single SurfaceFlinger state.
  *
- * To make assertions over a specific state from a trace it is recommended to create a subject
- * using [LayersTraceSubject.assertThat](myTrace) and select the specific state using:
+ * To make assertions over a specific state from a trace it is recommended to create a subject using
+ * [LayersTraceSubject.assertThat](myTrace) and select the specific state using:
+ * ```
  *     [LayersTraceSubject.first]
  *     [LayersTraceSubject.last]
  *     [LayersTraceSubject.entry]
- *
+ * ```
  * Alternatively, it is also possible to use [LayerTraceEntrySubject.assertThat](myState) or
  * Truth.assertAbout([LayerTraceEntrySubject.getFactory]), however they will provide less debug
  * information because it uses Truth's default [FailureStrategy].
  *
  * Example:
+ * ```
  *    val trace = LayersTraceParser.parseFromTrace(myTraceFile)
  *    val subject = LayersTraceSubject.assertThat(trace).first()
  *        .contains("ValidLayer")
  *        .notContains("ImaginaryLayer")
  *        .coversExactly(DISPLAY_AREA)
  *        .invoke { myCustomAssertion(this) }
+ * ```
  */
-class LayerTraceEntrySubject private constructor(
+class LayerTraceEntrySubject
+private constructor(
     fm: FailureMetadata,
     val entry: BaseLayerTraceEntry,
     val trace: LayersTrace?,
     override val parent: FlickerSubject?
-) : FlickerSubject(fm, entry),
-    ILayerSubject<LayerTraceEntrySubject, RegionSubject> {
-    override val timestamp: Long get() = entry.timestamp
+) : FlickerSubject(fm, entry), ILayerSubject<LayerTraceEntrySubject, RegionSubject> {
+    override val timestamp: Long
+        get() = entry.timestamp
     override val selfFacts = listOf(Fact.fact("SF State", entry))
 
     val subjects by lazy {
         entry.flattenedLayers.map { LayerSubject.assertThat(it, this, timestamp) }
     }
 
-    /**
-     * Executes a custom [assertion] on the current subject
-     */
-    operator fun invoke(assertion: Assertion<BaseLayerTraceEntry>): LayerTraceEntrySubject =
-        apply {
-            assertion(this.entry)
-        }
+    /** Executes a custom [assertion] on the current subject */
+    operator fun invoke(assertion: Assertion<BaseLayerTraceEntry>): LayerTraceEntrySubject = apply {
+        assertion(this.entry)
+    }
 
     /** {@inheritDoc} */
     override fun isEmpty(): LayerTraceEntrySubject = apply {
-        check("SF State")
-            .that(entry.flattenedLayers)
-            .isEmpty()
+        check("SF State").that(entry.flattenedLayers).isEmpty()
     }
 
     /** {@inheritDoc} */
     override fun isNotEmpty(): LayerTraceEntrySubject = apply {
-        check("SF State")
-            .that(entry.flattenedLayers)
-            .isNotEmpty()
+        check("SF State").that(entry.flattenedLayers).isNotEmpty()
     }
 
-    /**
-     * See [visibleRegion]
-     */
+    /** See [visibleRegion] */
     fun visibleRegion(): RegionSubject =
         visibleRegion(componentMatcher = null, useCompositionEngineRegionOnly = true)
 
-    /**
-     * See [visibleRegion]
-     */
+    /** See [visibleRegion] */
     fun visibleRegion(componentMatcher: IComponentMatcher): RegionSubject =
         visibleRegion(componentMatcher, useCompositionEngineRegionOnly = true)
 
@@ -108,12 +99,13 @@ class LayerTraceEntrySubject private constructor(
         componentMatcher: IComponentMatcher?,
         useCompositionEngineRegionOnly: Boolean
     ): RegionSubject {
-        val selectedLayers = if (componentMatcher == null) {
-            // No filters so use all subjects
-            subjects
-        } else {
-            subjects.filter { it.layer != null && componentMatcher.layerMatchesAnyOf(it.layer) }
-        }
+        val selectedLayers =
+            if (componentMatcher == null) {
+                // No filters so use all subjects
+                subjects
+            } else {
+                subjects.filter { it.layer != null && componentMatcher.layerMatchesAnyOf(it.layer) }
+            }
 
         if (selectedLayers.isEmpty()) {
             val str = componentMatcher?.toLayerIdentifier() ?: "<any>"
@@ -149,67 +141,75 @@ class LayerTraceEntrySubject private constructor(
 
     /** {@inheritDoc} */
     override fun notContains(componentMatcher: IComponentMatcher): LayerTraceEntrySubject = apply {
-        val foundEntry = subjects
-            .firstOrNull { it.layer != null && componentMatcher.layerMatchesAnyOf(it.layer) }
-        foundEntry?.fail(
-            Fact.fact(ASSERTION_TAG, "notContains(${componentMatcher.toLayerIdentifier()})"),
-            Fact.fact("Could find", foundEntry)
-        )
+        val layers = subjects.mapNotNull { it.layer }
+        val notContainsComponent =
+            componentMatcher.check(layers) { matchedLayers -> matchedLayers.isEmpty() }
+
+        if (notContainsComponent) {
+            return@apply
+        }
+
+        val failedEntries =
+            subjects.filter { it.layer != null && componentMatcher.layerMatchesAnyOf(it.layer) }
+        val failureFacts =
+            mutableListOf(
+                Fact.fact(ASSERTION_TAG, "notContains(${componentMatcher.toLayerIdentifier()})")
+            )
+        failedEntries.forEach { entry -> failureFacts.add(Fact.fact("Found", entry)) }
+        failedEntries.firstOrNull()?.fail(failureFacts)
     }
 
     /** {@inheritDoc} */
     override fun isVisible(componentMatcher: IComponentMatcher): LayerTraceEntrySubject = apply {
         contains(componentMatcher)
-        var target: FlickerSubject? = null
-        var reason = listOf<Fact>()
-        val filteredLayers = subjects
-            .filter { it.layer != null && componentMatcher.layerMatchesAnyOf(it.layer) }
-        for (layer in filteredLayers) {
-            if (layer.layer?.isHiddenByParent == true) {
-                reason = listOf(Fact.fact("Hidden by parent", layer.layer.parent?.name))
-                target = layer
-                continue
+        val layers = subjects.mapNotNull { it.layer }
+        val hasVisibleSubject =
+            componentMatcher.check(layers) { matchedLayers ->
+                matchedLayers.any { layer -> layer.isVisible }
             }
-            if (layer.isInvisible) {
-                reason = layer.layer?.visibilityReason
-                    ?.map { Fact.fact("Is Invisible", it) }
-                    ?: emptyList()
-                target = layer
-                continue
-            }
-            reason = emptyList()
-            target = null
-            break
+
+        if (hasVisibleSubject) {
+            return@apply
         }
 
-        if (reason.isNotEmpty()) {
-            target?.fail(
-                Fact.fact(ASSERTION_TAG, "isVisible(${componentMatcher.toLayerIdentifier()})"),
-                *reason.toTypedArray()
+        val matchingSubjects =
+            subjects.filter { it.layer != null && componentMatcher.layerMatchesAnyOf(it.layer) }
+        val failedEntries = matchingSubjects.filter { it.isInvisible }
+        val failureFacts =
+            mutableListOf(
+                Fact.fact(ASSERTION_TAG, "isVisible(${componentMatcher.toLayerIdentifier()})")
             )
+
+        failedEntries.forEach { entry ->
+            failureFacts.add(Fact.fact("Is Invisible", entry))
+            failureFacts.addAll(entry.visibilityReason.map { Fact.fact("Invisibility reason", it) })
         }
+        failedEntries.firstOrNull()?.fail(failureFacts)
     }
 
     /** {@inheritDoc} */
     override fun isInvisible(componentMatcher: IComponentMatcher): LayerTraceEntrySubject = apply {
-        try {
-            isVisible(componentMatcher)
-        } catch (e: FlickerSubjectException) {
-            val cause = e.cause
-            require(cause is AssertionError)
-            ExpectFailure.assertThat(cause).factKeys().isNotEmpty()
+        val layers = subjects.mapNotNull { it.layer }
+        val hasInvisibleComponent =
+            componentMatcher.check(layers) { componentLayers ->
+                componentLayers.all { layer ->
+                    subjects.first { subject -> subject.layer == layer }.isInvisible
+                }
+            }
+
+        if (hasInvisibleComponent) {
             return@apply
         }
-        val foundEntry = subjects
-            .firstOrNull {
-                it.layer != null &&
-                componentMatcher.layerMatchesAnyOf(it.layer) &&
-                it.isVisible
-            }
-        foundEntry?.fail(
-            Fact.fact(ASSERTION_TAG, "isInvisible(${componentMatcher.toLayerIdentifier()})"),
-            Fact.fact("Is visible", foundEntry)
-        )
+
+        val matchingSubjects =
+            subjects.filter { it.layer != null && componentMatcher.layerMatchesAnyOf(it.layer) }
+        val failedEntries = matchingSubjects.filter { it.isVisible }
+        val failureFacts =
+            mutableListOf(
+                Fact.fact(ASSERTION_TAG, "isInvisible(${componentMatcher.toLayerIdentifier()})")
+            )
+        failureFacts.addAll(failedEntries.map { Fact.fact("Is Visible", it) })
+        failedEntries.firstOrNull()?.fail(failureFacts)
     }
 
     /** {@inheritDoc} */
@@ -219,32 +219,31 @@ class LayerTraceEntrySubject private constructor(
         var target: FlickerSubject? = null
         var reason: Fact? = null
 
-        val matchingLayer = subjects.mapNotNull { it.layer }.filter {
-            componentMatcher.layerMatchesAnyOf(it)
-        }
-        val matchingActivityRecords = matchingLayer.mapNotNull {
-            getActivityRecordFor(it)
-        }
+        val matchingLayer =
+            subjects.mapNotNull { it.layer }.filter { componentMatcher.layerMatchesAnyOf(it) }
+        val matchingActivityRecords = matchingLayer.mapNotNull { getActivityRecordFor(it) }
 
         if (matchingActivityRecords.isEmpty()) {
             fail(
-                Fact.fact(ASSERTION_TAG,
-                    "isSplashScreenVisibleFor(${componentMatcher.toLayerIdentifier()})"),
-                Fact.fact("Could not find Activity Record layer",
-                        componentMatcher.toLayerIdentifier())
+                Fact.fact(
+                    ASSERTION_TAG,
+                    "isSplashScreenVisibleFor(${componentMatcher.toLayerIdentifier()})"
+                ),
+                Fact.fact(
+                    "Could not find Activity Record layer",
+                    componentMatcher.toLayerIdentifier()
+                )
             )
             return this
         }
 
         // Check the matched activity record layers for containing splash screens
         for (layer in matchingActivityRecords) {
-            val splashScreenContainers =
-                layer.children.filter { it.name.contains("Splash Screen") }
-            val splashScreenLayers = splashScreenContainers.flatMap {
-                it.children.filter { childLayer ->
-                    childLayer.name.contains("Splash Screen")
+            val splashScreenContainers = layer.children.filter { it.name.contains("Splash Screen") }
+            val splashScreenLayers =
+                splashScreenContainers.flatMap {
+                    it.children.filter { childLayer -> childLayer.name.contains("Splash Screen") }
                 }
-            }
 
             if (splashScreenLayers.all { it.isHiddenByParent || !it.isVisible }) {
                 reason = Fact.fact("No splash screen visible for", layer.name)
@@ -258,34 +257,30 @@ class LayerTraceEntrySubject private constructor(
 
         reason?.run {
             target?.fail(
-                Fact.fact(ASSERTION_TAG,
-                    "isSplashScreenVisibleFor(${componentMatcher.toLayerIdentifier()})"),
+                Fact.fact(
+                    ASSERTION_TAG,
+                    "isSplashScreenVisibleFor(${componentMatcher.toLayerIdentifier()})"
+                ),
                 reason
             )
         }
     }
 
-    /**
-     * See [layer]
-     */
+    /** See [layer] */
     fun layer(componentMatcher: IComponentMatcher): LayerSubject {
-        return layer {
-            componentMatcher.layerMatchesAnyOf(it)
-        }
+        return layer { componentMatcher.layerMatchesAnyOf(it) }
     }
 
     /** {@inheritDoc} */
     override fun layer(name: String, frameNumber: Long): LayerSubject {
-        return layer(name) {
-            it.name.contains(name) && it.currFrame == frameNumber
-        }
+        return layer(name) { it.name.contains(name) && it.currFrame == frameNumber }
     }
 
     /**
      * Obtains a [LayerSubject] for the first occurrence of a [Layer] matching [predicate]
      *
-     * Always returns a subject, event when the layer doesn't exist. To verify if layer
-     * actually exists in the hierarchy use [LayerSubject.exists] or [LayerSubject.doesNotExist]
+     * Always returns a subject, event when the layer doesn't exist. To verify if layer actually
+     * exists in the hierarchy use [LayerSubject.exists] or [LayerSubject.doesNotExist]
      *
      * @param predicate to search for a layer
      * @param name Name of the subject to use when not found (optional)
@@ -294,9 +289,8 @@ class LayerTraceEntrySubject private constructor(
      */
     @JvmOverloads
     fun layer(name: String = "", predicate: (Layer) -> Boolean): LayerSubject {
-        return subjects.firstOrNull {
-            it.layer?.run { predicate(this) } ?: false
-        } ?: LayerSubject.assertThat(name, this, timestamp)
+        return subjects.firstOrNull { it.layer?.run { predicate(this) } ?: false }
+            ?: LayerSubject.assertThat(name, this, timestamp)
     }
 
     private fun getActivityRecordFor(layer: Layer): Layer? {
@@ -312,18 +306,17 @@ class LayerTraceEntrySubject private constructor(
     }
 
     companion object {
-        /**
-         * Boilerplate Subject.Factory for LayersTraceSubject
-         */
+        /** Boilerplate Subject.Factory for LayersTraceSubject */
         private fun getFactory(
             trace: LayersTrace?,
             parent: FlickerSubject?
-        ): Factory<Subject, BaseLayerTraceEntry> =
-            Factory { fm, subject -> LayerTraceEntrySubject(fm, subject, trace, parent) }
+        ): Factory<Subject, BaseLayerTraceEntry> = Factory { fm, subject ->
+            LayerTraceEntrySubject(fm, subject, trace, parent)
+        }
 
         /**
-         * Creates a [LayerTraceEntrySubject] to representing a SurfaceFlinger state[entry],
-         * which can be used to make assertions.
+         * Creates a [LayerTraceEntrySubject] to representing a SurfaceFlinger state[entry], which
+         * can be used to make assertions.
          *
          * @param entry SurfaceFlinger trace entry
          * @param parent Trace that contains this entry (optional)
@@ -336,16 +329,15 @@ class LayerTraceEntrySubject private constructor(
             parent: FlickerSubject? = null
         ): LayerTraceEntrySubject {
             val strategy = FlickerFailureStrategy()
-            val subject = StandardSubjectBuilder.forCustomFailureStrategy(strategy)
-                .about(getFactory(trace, parent))
-                .that(entry) as LayerTraceEntrySubject
+            val subject =
+                StandardSubjectBuilder.forCustomFailureStrategy(strategy)
+                    .about(getFactory(trace, parent))
+                    .that(entry) as LayerTraceEntrySubject
             strategy.init(subject)
             return subject
         }
 
-        /**
-         * Static method for getting the subject factory (for use with assertAbout())
-         */
+        /** Static method for getting the subject factory (for use with assertAbout()) */
         @JvmStatic
         @JvmOverloads
         fun entries(

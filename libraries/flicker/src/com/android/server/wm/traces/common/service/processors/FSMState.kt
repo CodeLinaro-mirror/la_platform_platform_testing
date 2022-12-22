@@ -17,7 +17,7 @@
 package com.android.server.wm.traces.common.service.processors
 
 import com.android.server.wm.traces.common.DeviceStateDump
-import com.android.server.wm.traces.common.service.Scenario
+import com.android.server.wm.traces.common.service.ScenarioType
 import com.android.server.wm.traces.common.service.TagIdGenerator
 import com.android.server.wm.traces.common.tags.Tag
 import kotlin.math.max
@@ -37,15 +37,22 @@ abstract class FSMState(protected val tags: MutableMap<Long, MutableList<Tag>>) 
 
     protected fun addStartTransitionTag(
         state: DeviceStateDump,
-        scenario: Scenario,
+        scenarioType: ScenarioType,
         layerId: Int = 0,
         windowToken: String = "",
         taskId: Int = 0,
         timestamp: Long = min(state.wmState.timestamp, state.layerState.timestamp)
     ) {
         lastTagId = TagIdGenerator.getNext()
-        val startTag = Tag(id = lastTagId, scenario, isStartTag = true, layerId = layerId,
-                windowToken = windowToken, taskId = taskId)
+        val startTag =
+            Tag(
+                id = lastTagId,
+                scenarioType,
+                isStartTag = true,
+                layerId = layerId,
+                windowToken = windowToken,
+                taskId = taskId
+            )
         if (!tags.containsKey(timestamp)) {
             tags[timestamp] = mutableListOf()
         }
@@ -54,14 +61,21 @@ abstract class FSMState(protected val tags: MutableMap<Long, MutableList<Tag>>) 
 
     protected fun addEndTransitionTag(
         state: DeviceStateDump,
-        transition: Scenario,
+        transition: ScenarioType,
         layerId: Int = 0,
         windowToken: String = "",
         taskId: Int = 0,
         timestamp: Long = max(state.wmState.timestamp, state.layerState.timestamp)
     ) {
-        val endTag = Tag(id = lastTagId, transition, isStartTag = false, layerId = layerId,
-                windowToken = windowToken, taskId = taskId)
+        val endTag =
+            Tag(
+                id = lastTagId,
+                transition,
+                isStartTag = false,
+                layerId = layerId,
+                windowToken = windowToken,
+                taskId = taskId
+            )
         if (!tags.containsKey(timestamp)) {
             tags[timestamp] = mutableListOf()
         }

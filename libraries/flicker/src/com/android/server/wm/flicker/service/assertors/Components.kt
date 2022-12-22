@@ -23,10 +23,16 @@ import com.android.server.wm.traces.common.transition.Transition
 import com.android.server.wm.traces.common.transition.Transition.Companion.Type.CLOSE
 import com.android.server.wm.traces.common.transition.Transition.Companion.Type.OPEN
 
-data class ComponentBuilder(
-    val name: String,
-    val build: (t: Transition) -> IComponentMatcher
-)
+data class ComponentBuilder(val name: String, val build: (t: Transition) -> IComponentMatcher) {
+    override fun equals(other: Any?): Boolean {
+        return other is ComponentBuilder && name == other.name
+    }
+
+    override fun hashCode(): Int {
+        var result = name.hashCode()
+        return result
+    }
+}
 
 object Components {
 
@@ -36,6 +42,8 @@ object Components {
 
     val OPENING_APP = ComponentBuilder("OPENING_APP") { t: Transition -> openingAppFrom(t) }
     val CLOSING_APP = ComponentBuilder("CLOSING_APP") { t: Transition -> closingAppFrom(t) }
+
+    val EMPTY = ComponentBuilder("") { ComponentNameMatcher("", "") }
 
     // TODO: Extract out common code between two functions below
     private fun openingAppFrom(transition: Transition): IComponentMatcher {
@@ -80,4 +88,7 @@ object Components {
 
         return ComponentNameMatcher(closeWindowPackage, closeWindowClass)
     }
+
+    val byType: Map<String, ComponentBuilder> =
+        mapOf("OPENING_APP" to OPENING_APP, "CLOSING_APP" to CLOSING_APP)
 }

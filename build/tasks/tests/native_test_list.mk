@@ -13,6 +13,7 @@
 # limitations under the License.
 
 native_tests := \
+    aaudio_test_mmap_path \
     adbd_test \
     android_logger_test_src_lib \
     android_logger_test_tests_config_log_level \
@@ -30,7 +31,6 @@ native_tests := \
     anyhow_test_tests_test_repr \
     anyhow_test_tests_test_source \
     audio_health_tests \
-    backtrace_test \
     bionic-unit-tests \
     bionic-unit-tests-static \
     bluetoothtbd_test \
@@ -41,7 +41,6 @@ native_tests := \
     bsdiff_unittest \
     buffer_hub-test \
     buffer_hub_queue-test \
-    buffer_hub_queue_producer-test \
     bugreportz_test \
     bytes_test_tests_test_buf \
     bytes_test_tests_test_buf_mut \
@@ -63,9 +62,6 @@ native_tests := \
     dumpstate_test \
     dumpstate_test_fixture \
     dumpsys_test \
-    dvr_api-test \
-    dvr_buffer_queue-test \
-    dvr_display-test \
     gpuservice_unittest \
     gwp_asan_unittest \
     hello_world_test \

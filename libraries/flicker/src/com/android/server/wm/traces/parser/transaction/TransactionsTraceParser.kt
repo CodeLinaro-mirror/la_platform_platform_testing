@@ -16,8 +16,8 @@
 
 package com.android.server.wm.traces.parser.transaction
 
-import android.surfaceflinger.proto.nano.Transactions.TransactionState
-import android.surfaceflinger.proto.nano.Transactions.TransactionTraceFile
+import android.surfaceflinger.proto.Transactions.TransactionState
+import android.surfaceflinger.proto.Transactions.TransactionTraceFile
 import android.util.Log
 import com.android.server.wm.traces.common.transactions.Transaction
 import com.android.server.wm.traces.common.transactions.TransactionsTrace
@@ -27,14 +27,12 @@ import com.android.server.wm.traces.parser.LOG_TAG
 import kotlin.math.max
 import kotlin.system.measureTimeMillis
 
-/**
- * Parser for [TransitionsTrace] objects
- **/
+/** Parser for [TransitionsTrace] objects */
 class TransactionsTraceParser {
     companion object {
         /**
-         * Parses [TransitionsTrace] from [data] and uses the proto to generates a list
-         * of trace entries.
+         * Parses [TransitionsTrace] from [data] and uses the proto to generates a list of trace
+         * entries.
          *
          * @param data binary proto data
          */
@@ -42,17 +40,12 @@ class TransactionsTraceParser {
         fun parseFromTrace(data: ByteArray): TransactionsTrace {
             var fileProto: TransactionTraceFile?
             try {
-                measureTimeMillis {
-                    fileProto = TransactionTraceFile.parseFrom(data)
-                }.also {
-                    Log.v(LOG_TAG, "Parsing proto (Transactions Trace): ${it}ms")
-                }
+                measureTimeMillis { fileProto = TransactionTraceFile.parseFrom(data) }
+                    .also { Log.v(LOG_TAG, "Parsing proto (Transactions Trace): ${it}ms") }
             } catch (e: Throwable) {
                 throw RuntimeException(e)
             }
-            return fileProto?.let {
-                parseFromTrace(it)
-            } ?: error("Unable to read trace file")
+            return fileProto?.let { parseFromTrace(it) } ?: error("Unable to read trace file")
         }
 
         /**
@@ -64,13 +57,16 @@ class TransactionsTraceParser {
         fun parseFromTrace(proto: TransactionTraceFile): TransactionsTrace {
             val transactionsTraceEntries = mutableListOf<TransactionsTraceEntry>()
             var traceParseTime = 0L
-            for (entry in proto.entry) {
+            for (entry in proto.entryList) {
                 val entryParseTime = measureTimeMillis {
-                    val transactionsTraceEntry = TransactionsTraceEntry(
-                        entry.elapsedRealtimeNanos,
-                        entry.vsyncId,
-                        parseTransactionsProto(entry.transactions)
-                    )
+                    val transactions = parseTransactionsProto(entry.transactionsList)
+                    val transactionsTraceEntry =
+                        TransactionsTraceEntry(
+                            entry.elapsedRealtimeNanos,
+                            entry.vsyncId,
+                            transactions
+                        )
+                    transactions.forEach { it.appliedInEntry = transactionsTraceEntry }
                     transactionsTraceEntries.add(transactionsTraceEntry)
                 }
                 traceParseTime += entryParseTime
@@ -85,17 +81,18 @@ class TransactionsTraceParser {
         }
 
         private fun parseTransactionsProto(
-            transactionStates: Array<TransactionState>
+            transactionStates: List<TransactionState>
         ): Array<Transaction> {
             val transactions = mutableListOf<Transaction>()
             for (state in transactionStates) {
-                val transaction = Transaction(
-                    state.pid,
-                    state.uid,
-                    state.vsyncId,
-                    state.postTime,
-                    state.transactionId
-                )
+                val transaction =
+                    Transaction(
+                        state.pid,
+                        state.uid,
+                        state.vsyncId,
+                        state.postTime,
+                        state.transactionId
+                    )
                 transactions.add(transaction)
             }
 

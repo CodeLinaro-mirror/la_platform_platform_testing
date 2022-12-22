@@ -21,6 +21,7 @@ import android.device.collectors.BaseMetricListener
 import android.device.collectors.DataRecord
 import android.util.Log
 import androidx.test.platform.app.InstrumentationRegistry
+import com.android.server.wm.flicker.FLICKER_TAG
 import com.android.server.wm.flicker.TransitionRunner.Companion.ExecutionError
 import com.android.server.wm.flicker.service.assertors.AssertionResult
 import com.android.server.wm.traces.common.service.AssertionInvocationGroup
@@ -30,8 +31,8 @@ import org.junit.runner.Result
 import org.junit.runner.notification.Failure
 
 /**
- * Collects all the Flicker Service's metrics which are then uploaded for analysis and monitoring
- * to the CrystalBall database.
+ * Collects all the Flicker Service's metrics which are then uploaded for analysis and monitoring to
+ * the CrystalBall database.
  */
 class FlickerServiceResultsCollector(
     val outputDir: Path,
@@ -41,20 +42,13 @@ class FlickerServiceResultsCollector(
     private var collectMetricsPerTest = true
 
     private val _executionErrors = mutableListOf<ExecutionError>()
-    val executionErrors: List<ExecutionError> get() = _executionErrors
+    val executionErrors: List<ExecutionError>
+        get() = _executionErrors
 
     internal val assertionResults = mutableListOf<AssertionResult>()
 
     init {
         setInstrumentation(instrumentation)
-    }
-
-    private fun errorReportingBlock(function: () -> Unit) {
-        try {
-            function()
-        } catch (e: Throwable) {
-            _executionErrors.add(ExecutionError(e))
-        }
     }
 
     override fun onTestRunStart(runData: DataRecord, description: Description) {
@@ -76,9 +70,7 @@ class FlickerServiceResultsCollector(
     }
 
     override fun onTestFail(testData: DataRecord, description: Description, failure: Failure) {
-        errorReportingBlock {
-            Log.i(LOG_TAG, "onTestFail")
-        }
+        errorReportingBlock { Log.i(LOG_TAG, "onTestFail") }
     }
 
     override fun onTestEnd(testData: DataRecord, description: Description) {
@@ -106,11 +98,12 @@ class FlickerServiceResultsCollector(
         val collectedTraces = tracesCollector.getCollectedTraces()
         val flickerService = FlickerService()
         Log.i(LOG_TAG, "Processing traces")
-        val results = flickerService.process(
-            collectedTraces.wmTrace,
-            collectedTraces.layersTrace,
-            collectedTraces.transitionsTrace
-        )
+        val results =
+            flickerService.process(
+                collectedTraces.wmTrace,
+                collectedTraces.layersTrace,
+                collectedTraces.transitionsTrace
+            )
         Log.i(LOG_TAG, "Got ${results.size} results")
         assertionResults.addAll(results)
         val aggregatedResults = processFlickerResults(results)
@@ -147,6 +140,15 @@ class FlickerServiceResultsCollector(
     private fun getKeyForAssertionResult(result: AssertionResult): String {
         val assertionName = "${result.scenario}#${result.assertionName}"
         return "$FAAS_METRICS_PREFIX::$assertionName"
+    }
+
+    private fun errorReportingBlock(function: () -> Unit) {
+        try {
+            function()
+        } catch (e: Throwable) {
+            Log.e(FLICKER_TAG, "Error executing in FlickerServiceResultsCollector", e)
+            _executionErrors.add(ExecutionError(e))
+        }
     }
 
     companion object {

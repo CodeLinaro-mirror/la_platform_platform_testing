@@ -19,19 +19,39 @@ package com.android.server.wm.traces.common.transactions
 import kotlin.js.JsName
 
 data class Transaction(
-    @JsName("pid")
-    val pid: Int,
-    @JsName("uid")
-    val uid: Int,
-    @JsName("vSyncId")
-    val vSyncId: Long,
-    @JsName("postTime")
-    val postTime: Long,
-    @JsName("id")
-    val id: Long,
+    @JsName("pid") val pid: Int,
+    @JsName("uid") val uid: Int,
+    @JsName("requestedVSyncId") val requestedVSyncId: Long,
+    @JsName("postTime") val postTime: Long,
+    @JsName("id") val id: Long,
 ) {
+    constructor(
+        pid: Int,
+        uid: Int,
+        requestedVSyncId: Long,
+        appliedInEntry: TransactionsTraceEntry,
+        postTime: Long,
+        id: Long
+    ) : this(pid, uid, requestedVSyncId, postTime, id) {
+        this.appliedInEntry = appliedInEntry
+    }
+
+    lateinit var appliedInEntry: TransactionsTraceEntry
+        internal set
+
+    val appliedVSyncId: Long
+        get() = appliedInEntry.vSyncId
+
     override fun toString(): String {
-        return "Transaction#${hashCode()}" +
-                "(pid=$pid, uid=$uid, vSyncId=$vSyncId, postTime=$postTime, id=$id)"
+        return "Transaction#${hashCode().toString(16)}" +
+            "(pid=$pid, uid=$uid, requestedVSyncId=$requestedVSyncId, postTime=$postTime, " +
+            "id=$id)"
+    }
+
+    companion object {
+        @JsName("emptyTransaction")
+        fun emptyTransaction(): Transaction {
+            return Transaction(0, 0, 0, 0, 0)
+        }
     }
 }

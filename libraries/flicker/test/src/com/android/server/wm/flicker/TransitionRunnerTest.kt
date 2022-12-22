@@ -16,11 +16,14 @@
 
 package com.android.server.wm.flicker
 
+import android.app.Instrumentation
 import android.view.WindowManagerGlobal
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.compatibility.common.util.SystemUtil
 import com.android.server.wm.flicker.FlickerRunResult.Companion.RunStatus
 import com.android.server.wm.flicker.dsl.FlickerBuilder
+import com.android.server.wm.flicker.helpers.BrowserAppHelper
+import com.android.server.wm.flicker.helpers.MessagingAppHelper
 import com.google.common.truth.Truth
 import java.lang.RuntimeException
 import org.junit.After
@@ -47,9 +50,11 @@ class TransitionRunnerTest {
     fun assertTracingStopped() {
         val windowManager = WindowManagerGlobal.getWindowManagerService()
         Truth.assertWithMessage("Layers Trace not stopped")
-                .that(windowManager.isLayerTracing).isFalse()
+            .that(windowManager.isLayerTracing)
+            .isFalse()
         Truth.assertWithMessage("WM Trace not stopped")
-                .that(windowManager.isWindowTraceEnabled).isFalse()
+            .that(windowManager.isWindowTraceEnabled)
+            .isFalse()
     }
 
     @Before
@@ -61,104 +66,63 @@ class TransitionRunnerTest {
     fun canRunTransition() {
         val runner = TransitionRunner()
         var executed = false
-        val iterations = 1
-        val flicker = FlickerBuilder(instrumentation)
-            .withTestName { TEST_NAME }
-            .repeat { iterations }
-            .apply {
-                transitions {
-                    executed = true
-                }
-            }.build(runner)
+        val flicker =
+            FlickerBuilder(instrumentation)
+                .withTestName { TEST_NAME }
+                .apply { transitions { executed = true } }
+                .build(runner)
         Truth.assertThat(executed).isFalse()
         val result = runner.execute(flicker)
         runner.cleanUp()
         Truth.assertThat(executed).isTrue()
-        Truth.assertThat(result.executionErrors).isEmpty()
-        Truth.assertThat(result.successfulRuns).hasSize(iterations)
+        Truth.assertThat(result.transitionExecutionError).isNull()
+        Truth.assertThat(result.ranSuccessfully).isTrue()
     }
 
     @Test
     fun storesTransitionExecutionErrors() {
         val runner = TransitionRunner()
-        val flicker = FlickerBuilder(instrumentation)
-            .withTestName { TEST_NAME }
-            .apply {
-                transitions {
-                    throw RuntimeException("Failed to execute transition")
-                }
-            }.build(runner)
-        val result = runner.execute(flicker)
-        runner.cleanUp()
-        Truth.assertThat(result.executionErrors).isNotEmpty()
-    }
-
-    @Test
-    fun keepsSuccessfulTransitionExecutions() {
-        val repetitions = 3
-        var transitionRunCounter = 0
-
-        val runner = TransitionRunner()
-        val flicker = FlickerBuilder(instrumentation)
+        val flicker =
+            FlickerBuilder(instrumentation)
                 .withTestName { TEST_NAME }
-                .apply {
-                    transitions {
-                        transitionRunCounter++
-                        if (transitionRunCounter == repetitions) {
-                            // fail on last transition repetition
-                            throw RuntimeException("Failed to execute transition")
-                        }
-                    }
-                }.repeat { repetitions }.build(runner)
+                .apply { transitions { throw RuntimeException("Failed to execute transition") } }
+                .build(runner)
         val result = runner.execute(flicker)
         runner.cleanUp()
-        Truth.assertThat(result.executionErrors).isNotEmpty()
-        // One for each monitor for each repetition expect the last one
-        // for which the transition failed to execute
-        val expectedResultCount = repetitions - 1
-        Truth.assertThat(result.successfulRuns.size).isEqualTo(expectedResultCount)
+        Truth.assertThat(result.transitionExecutionError).isNotNull()
     }
 
     @Test
     fun storesSuccessExecutionStatusInRunResult() {
         val runner = TransitionRunner()
-        val flicker = FlickerBuilder(instrumentation)
+        val flicker =
+            FlickerBuilder(instrumentation)
                 .withTestName { TEST_NAME }
-                .apply {
-                    transitions {}
-                }.repeat { 3 }.build(runner)
-        val results = runner.execute(flicker).runResults
-        for (result in results) {
-            Truth.assertThat(result.status).isEqualTo(RunStatus.ASSERTION_SUCCESS)
-        }
+                .apply { transitions {} }
+                .build(runner)
+        val result = runner.execute(flicker)
+        Truth.assertThat(result.status).isEqualTo(RunStatus.ASSERTION_SUCCESS)
     }
 
     @Test
     fun storesFailedExecutionStatusInRunResult() {
         val runner = TransitionRunner()
-        val flicker = FlickerBuilder(instrumentation)
+        val flicker =
+            FlickerBuilder(instrumentation)
                 .withTestName { TEST_NAME }
-                .apply {
-                    transitions {
-                        throw RuntimeException("Failed to execute transition")
-                    }
-                }.repeat { 3 }.build(runner)
-        val results = runner.execute(flicker).runResults
-        for (result in results) {
-            Truth.assertThat(result.status).isEqualTo(RunStatus.RUN_FAILED)
-        }
+                .apply { transitions { throw RuntimeException("Failed to execute transition") } }
+                .build(runner)
+        val result = runner.execute(flicker)
+        Truth.assertThat(result.status).isEqualTo(RunStatus.RUN_FAILED)
     }
 
     @Test
     fun savesTraceOnTransitionExecutionErrors() {
         val runner = TransitionRunner()
-        val flicker = FlickerBuilder(instrumentation)
+        val flicker =
+            FlickerBuilder(instrumentation)
                 .withTestName { TEST_NAME }
-                .apply {
-                    transitions {
-                        throw Throwable()
-                    }
-                }
+                .apply { transitions { throw Throwable() } }
                 .build(runner)
         runner.execute(flicker)
 
@@ -168,15 +132,12 @@ class TransitionRunnerTest {
     @Test
     fun savesTraceOnRunCleanupErrors() {
         val runner = TransitionRunner()
-        val flicker = FlickerBuilder(instrumentation)
+        val flicker =
+            FlickerBuilder(instrumentation)
                 .withTestName { TEST_NAME }
                 .apply {
                     transitions {}
-                    teardown {
-                        eachRun {
-                            throw RuntimeException("Fail on run teardown")
-                        }
-                    }
+                    teardown { throw RuntimeException("Fail on run teardown") }
                 }
                 .build(runner)
         runner.execute(flicker)
@@ -187,19 +148,170 @@ class TransitionRunnerTest {
     @Test
     fun savesTraceOnTestCleanupErrors() {
         val runner = TransitionRunner()
-        val flicker = FlickerBuilder(instrumentation)
+        val flicker =
+            FlickerBuilder(instrumentation)
                 .withTestName { TEST_NAME }
                 .apply {
                     transitions {}
-                    teardown {
-                        test {
-                            throw RuntimeException("Fail on test teardown")
-                        }
-                    }
+                    teardown { throw RuntimeException("Fail on test teardown") }
                 }
                 .build(runner)
         runner.execute(flicker)
 
         assertArchiveContainsAllTraces(runStatus = RunStatus.RUN_FAILED, testName = TEST_NAME)
+    }
+
+    @Test
+    fun savesTraceOnTestSetupErrors() {
+        val runner = TransitionRunner()
+        val flicker =
+            FlickerBuilder(instrumentation)
+                .withTestName { TEST_NAME }
+                .apply {
+                    setup { throw RuntimeException("Fail on test setup") }
+                    transitions {}
+                    teardown {}
+                }
+                .build(runner)
+        runner.execute(flicker)
+
+        assertArchiveContainsAllTraces(runStatus = RunStatus.RUN_FAILED, testName = TEST_NAME)
+    }
+
+    @Test
+    fun savesTraceOnTestTransitionErrors() {
+        val runner = TransitionRunner()
+        val flicker =
+            FlickerBuilder(instrumentation)
+                .withTestName { TEST_NAME }
+                .apply {
+                    setup {}
+                    transitions { throw RuntimeException("Fail on transition teardown") }
+                    teardown {}
+                }
+                .build(runner)
+        runner.execute(flicker)
+
+        assertArchiveContainsAllTraces(runStatus = RunStatus.RUN_FAILED, testName = TEST_NAME)
+    }
+
+    @Test
+    fun savesTraceOnTestTeardownErrors() {
+        val runner = TransitionRunner()
+        val flicker =
+            FlickerBuilder(instrumentation)
+                .withTestName { TEST_NAME }
+                .apply {
+                    setup {}
+                    transitions {}
+                    teardown { throw RuntimeException("Fail on test teardown") }
+                }
+                .build(runner)
+        runner.execute(flicker)
+
+        assertArchiveContainsAllTraces(runStatus = RunStatus.RUN_FAILED, testName = TEST_NAME)
+    }
+
+    @Test
+    fun cropsTraceAtTheRightTimestamp() {
+        val instrumentation: Instrumentation = InstrumentationRegistry.getInstrumentation()
+        val setupAndTearDownTestApp = BrowserAppHelper(instrumentation)
+        val transitionTestApp = MessagingAppHelper(instrumentation)
+
+        val runner = TransitionRunner()
+        val flicker =
+            FlickerBuilder(instrumentation)
+                .withTestName { TEST_NAME }
+                .apply {
+                    setup {
+                        // Shouldn't be in the trace we run assertions on
+                        setupAndTearDownTestApp.launchViaIntent(wmHelper)
+                        setupAndTearDownTestApp.exit(wmHelper)
+                    }
+                    transitions {
+                        // Should be in the trace we run assertions on
+                        transitionTestApp.launchViaIntent(wmHelper)
+                    }
+                    teardown {
+                        // Shouldn't be in the trace we run assertions on
+                        setupAndTearDownTestApp.launchViaIntent(wmHelper)
+                        setupAndTearDownTestApp.exit(wmHelper)
+                    }
+                }
+                .build(runner)
+        val result = runner.execute(flicker)
+
+        val setupAndTearDownTestAppNeverExists =
+            FlickerTestParameter.buildWMAssertion {
+                require(
+                    this.subjects.none {
+                        it.wmState
+                            .getActivitiesForWindow(setupAndTearDownTestApp.componentMatcher)
+                            .isNotEmpty()
+                    }
+                ) {
+                    "${setupAndTearDownTestApp.appName} window existed at some point " +
+                        "but shouldn't have."
+                }
+            }
+
+        val transitionTestAppExistsAtSomePoint =
+            FlickerTestParameter.buildWMAssertion {
+                require(
+                    this.subjects.any {
+                        it.wmState
+                            .getActivitiesForWindow(transitionTestApp.componentMatcher)
+                            .isNotEmpty()
+                    }
+                ) {
+                    "${transitionTestApp.appName} window didn't exist at any point " +
+                        "but should have."
+                }
+            }
+
+        val setupAndTearDownTestLayerNeverExists =
+            FlickerTestParameter.buildLayersAssertion {
+                require(
+                    this.subjects.none {
+                        setupAndTearDownTestApp.componentMatcher.layerMatchesAnyOf(
+                            it.entry.flattenedLayers.filter { it.isVisible }
+                        )
+                    }
+                ) {
+                    "${setupAndTearDownTestApp.appName} layer was visible at some point " +
+                        "but shouldn't have."
+                }
+
+                require(
+                    this.subjects.none {
+                        setupAndTearDownTestApp.componentMatcher.layerMatchesAnyOf(
+                            it.entry.flattenedLayers
+                        )
+                    }
+                ) {
+                    "${setupAndTearDownTestApp.appName} layer existed at some point " +
+                        "but shouldn't have."
+                }
+            }
+
+        val transitionTestLayerExistsAtSomePoint =
+            FlickerTestParameter.buildLayersAssertion {
+                require(
+                    this.subjects.any {
+                        transitionTestApp.componentMatcher.layerMatchesAnyOf(
+                            it.entry.flattenedLayers
+                        )
+                    }
+                ) {
+                    "${transitionTestApp.appName} layer didn't exist at any point " +
+                        "but should have."
+                }
+            }
+
+        Truth.assertThat(result.checkAssertion(setupAndTearDownTestAppNeverExists)).isNull()
+        Truth.assertThat(result.checkAssertion(transitionTestAppExistsAtSomePoint)).isNull()
+
+        Truth.assertThat(result.checkAssertion(setupAndTearDownTestLayerNeverExists)).isNull()
+        Truth.assertThat(result.checkAssertion(transitionTestLayerExistsAtSomePoint)).isNull()
     }
 }

@@ -16,10 +16,18 @@
 
 package com.android.server.wm.flicker.assertiongenerator.common
 
+import com.android.server.wm.traces.common.IComponentMatcher
+
 interface ITraceLifecycle {
-    operator fun get(index: Any): IElementLifecycle?
+    // TO-DO: iterator
 
-    operator fun set(index: Any, elementLifecycle: IElementLifecycle)
+    val size: Int
 
-    fun getOrPut(index: Any, elementLifecycle: IElementLifecycle): IElementLifecycle
+    val elementIds: Set<IComponentMatcher>
+
+    operator fun get(elementId: Any): IComponentLifecycle?
+
+    operator fun set(elementId: Any, elementLifecycles: IComponentLifecycle)
+
+    fun getOrPut(elementId: Any, elementLifecycles: IComponentLifecycle): IComponentLifecycle
 }

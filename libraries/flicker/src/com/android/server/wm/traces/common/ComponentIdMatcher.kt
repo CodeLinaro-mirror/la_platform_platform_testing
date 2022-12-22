@@ -20,19 +20,14 @@ import com.android.server.wm.traces.common.layers.Layer
 import com.android.server.wm.traces.common.windowmanager.windows.Activity
 import com.android.server.wm.traces.common.windowmanager.windows.WindowState
 
-class ComponentIdMatcher(
-    private val windowId: Int,
-    private val layerId: Int
-) : IComponentMatcher {
+class ComponentIdMatcher(private val windowId: Int, private val layerId: Int) : IComponentMatcher {
     /**
      * @return if any of the [components] matches any of [windows]
      *
      * @param windows to search
      */
     override fun windowMatchesAnyOf(windows: Array<WindowState>) =
-        windows.any {
-            it.token == windowId.toString(16)
-        }
+        windows.any { it.token == windowId.toString(16) }
 
     /**
      * @return if any of the [components] matches any of [activities]
@@ -40,21 +35,27 @@ class ComponentIdMatcher(
      * @param activities to search
      */
     override fun activityMatchesAnyOf(activities: Array<Activity>) =
-        activities.any {
-            it.token == windowId.toString(16)
-        }
+        activities.any { it.token == windowId.toString(16) }
 
     /**
      * @return if any of the [components] matches any of [layers]
      *
      * @param layers to search
      */
-    override fun layerMatchesAnyOf(layers: Array<Layer>) =
-            layers.any { it.id == layerId }
+    override fun layerMatchesAnyOf(layers: Array<Layer>) = layers.any { it.id == layerId }
 
+    /** {@inheritDoc} */
+    override fun check(
+        layers: Collection<Layer>,
+        condition: (Collection<Layer>) -> Boolean
+    ): Boolean = condition(layers.filter { it.id == layerId })
+
+    /** {@inheritDoc} */
     override fun toActivityIdentifier() = toWindowIdentifier()
 
+    /** {@inheritDoc} */
     override fun toWindowIdentifier() = "Window#${windowId.toString(16)}"
 
+    /** {@inheritDoc} */
     override fun toLayerIdentifier(): String = "Layer#$layerId"
 }

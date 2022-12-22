@@ -17,18 +17,18 @@
 package com.android.server.wm.traces.common.service.processors
 
 import com.android.server.wm.traces.common.DeviceStateDump
-import com.android.server.wm.traces.common.service.Scenario
+import com.android.server.wm.traces.common.service.ScenarioType
 import com.android.server.wm.traces.common.tags.Tag
 
 /**
- * Base state for the FSM, check if there are more WM and SF states to process
- * and ensure there is always a 1:1 correspondence between start and end tags.
- * If the location of the end of the transition wasn't found, add an end tag at end of trace.
+ * Base state for the FSM, check if there are more WM and SF states to process and ensure there is
+ * always a 1:1 correspondence between start and end tags. If the location of the end of the
+ * transition wasn't found, add an end tag at end of trace.
  */
 abstract class BaseFsmState(
     tags: MutableMap<Long, MutableList<Tag>>,
     internal val logger: (String) -> Unit,
-    internal val scenario: Scenario
+    internal val scenarioType: ScenarioType
 ) : FSMState(tags) {
     protected abstract fun doProcessState(
         previous: DeviceStateDump?,
@@ -47,7 +47,7 @@ abstract class BaseFsmState(
             logger.invoke("($timestamp) Trace has reached the end")
             if (hasOpenTag()) {
                 logger.invoke("($timestamp) Has an open tag, closing it on the last SF state")
-                addEndTransitionTag(current, scenario)
+                addEndTransitionTag(current, scenarioType)
             }
             null
         } else {
