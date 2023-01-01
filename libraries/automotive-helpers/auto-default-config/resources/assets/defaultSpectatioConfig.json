@@ -1185,6 +1185,26 @@
       "VALUE": "minimized_playback_controls",
       "PACKAGE": "com.android.car.media"
     },
+    "ARTIST_TITLE": {
+      "TYPE": "RESOURCE_ID",
+      "VALUE": "artist",
+      "PACKAGE": "com.android.car.media"
+    },
+    "ALBUM_TITLE": {
+      "TYPE": "RESOURCE_ID",
+      "VALUE": "album_title",
+      "PACKAGE": "com.android.car.media"
+    },
+    "CURRENT_SONG_TIME": {
+      "TYPE": "RESOURCE_ID",
+      "VALUE": "current_time",
+      "PACKAGE": "com.android.car.media"
+    },
+    "MAX_SONG_TIME": {
+      "TYPE": "RESOURCE_ID",
+      "VALUE": "max_time",
+      "PACKAGE": "com.android.car.media"
+    },
     "TRACK_NAME": {
       "TYPE": "RESOURCE_ID",
       "VALUE": "title",
@@ -1648,6 +1668,26 @@
     "SMS_BLUETOOTH_ERROR": {
       "TYPE": "RESOURCE_ID",
       "VALUE": "error_message",
+      "PACKAGE": "com.android.car.messenger"
+    },
+    "SMS_UNREAD_BADGE": {
+      "TYPE": "RESOURCE_ID",
+      "VALUE": "unread_badge",
+      "PACKAGE": "com.android.car.messenger"
+    },
+    "SMS_PREVIEW_TEXT": {
+      "TYPE": "RESOURCE_ID",
+      "VALUE": "preview",
+      "PACKAGE": "com.android.car.messenger"
+    },
+    "SMS_PREVIEW_TIMESTAMP": {
+      "TYPE": "RESOURCE_ID",
+      "VALUE": "date_time_view",
+      "PACKAGE": "com.android.car.messenger"
+    },
+    "SMS_EMPTY_MESSAGE": {
+      "TYPE": "RESOURCE_ID",
+      "VALUE": "empty_message",
       "PACKAGE": "com.android.car.messenger"
     },
     "BLUETOOTH_BUTTON": {

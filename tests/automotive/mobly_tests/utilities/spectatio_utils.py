@@ -13,6 +13,7 @@
 #  limitations under the License.
 
 import logging
+import re
 import time
 
 from mobly.controllers import android_device
@@ -90,6 +91,7 @@ class CallUtils:
         """Open call history"""
         logging.info("Open call history")
         self.device.mbs.openCallHistory()
+
 
     def open_contacts(self):
         """Open contacts"""
@@ -245,7 +247,13 @@ class CallUtils:
         """ Open Bluetooth Audio app """
         logging.info('Open Bluetooth Audio app')
         self.device.mbs.openBluetoothMediaApp();
-        self.wait_with_log(constants.WAIT_ONE_SEC)
+        self.wait_with_log(1)
+
+    def open_bluetooth_sms_app(self):
+        """ Open Bluetooth SMS app """
+        logging.info('Open Bluetooth SMS app')
+        self.device.mbs.openSmsApp();
+        self.wait_with_log(1)
 
     def click_phone_button(self):
         logging.info("Click phone button")
@@ -274,6 +282,12 @@ class CallUtils:
     def verify_dialer_dialpad_tab(self):
         logging.info("Checks if dialpad is displayed")
         return self.device.mbs.verifyDialerDialpadTab()
+
+    def open_sms_app(self):
+        """Open sms app"""
+        logging.info('Opening sms app')
+        self.device.mbs.openSmsApp()
+
 
     def open_bluetooth_palette(self):
         logging.info("Open Bluetooth Palette")
@@ -338,3 +352,152 @@ class CallUtils:
     )
         if actual_sorting_order != expected_sorting_order:
             raise CallUtilsError("Actual and Expected sorting orders don't match.")
+
+    def is_bluetooth_sms_disconnected_label_visible(self):
+        """ Return is <Bluetooth SMS disconnected> label present """
+        logging.info('Checking is <Bluetooth SMS disconnected> label present')
+        actual_disconnected_label_status = self.device.mbs.isSmsBluetoothErrorDisplayed()
+        logging.info('<Bluetooth SMS disconnected> label is present: %s',
+                     actual_disconnected_label_status)
+        return actual_disconnected_label_status
+
+
+    # Verify dialing number the same as expected
+    def verify_dialing_number(self, expected_dialing_number):
+        """Replace all non-digits characters to null"""
+        actual_dialing_number = re.sub(r'\D', '', str(self.get_dialing_number()))
+        logging.info(
+             'Expected dialing number: %s, Actual: %s',
+              expected_dialing_number,
+              actual_dialing_number,
+        )
+        if actual_dialing_number != expected_dialing_number:
+          raise CallUtilsError(
+                "Actual and Expected dialing numbers don't match.")
+
+    def is_ongoing_call_displayed_on_home(self, expected_result):
+        logging.info('Open Home screen and verify the ongoing call')
+        self.device.mbs.isOngoingCallDisplayedOnHome()
+        actual_result = self.device.mbs.isOngoingCallDisplayedOnHome()
+        logging.info(
+            'Call Displayed on home expected : <%s>, Actual : <%s>',
+            expected_result,
+            actual_result,
+        )
+        if expected_result != actual_result:
+          raise CallUtilsError('Ongoing call not displayed on home')
+
+    def get_recent_call_history(self):
+        actual_recent_call_from_history = self.device.mbs.getRecentCallHistory()
+        logging.info(
+            'The latest call from history: <%s>', actual_recent_call_from_history
+        )
+        return actual_recent_call_from_history
+
+    def verify_last_dialed_number(self, expected_last_dialed_number):
+        actual_last_dialed_number = self.get_recent_call_history()
+        actual_last_dialed_number = ''.join(
+            char for char in actual_last_dialed_number if char.isdigit()
+        )
+        logging.info(
+            'Expected last called number: %s, Actual: %s',
+            expected_last_dialed_number,
+            actual_last_dialed_number,
+        )
+        if actual_last_dialed_number != expected_last_dialed_number:
+          raise CallUtilsError(
+              "Actual and Expected last dialed numbers don't match."
+          )
+
+    def open_phone_app_from_home(self):
+        logging.info('Open Phone from Home Screen card.')
+        self.device.mbs.openPhoneAppFromHome()
+
+    # Search contact by name
+    def search_contact_by_name(self, search_contact_name):
+       logging.info('Searching <%s> in contacts', search_contact_name)
+       self.device.mbs.searchContactsByName(search_contact_name)
+
+     # Get first search result
+    def get_first_search_result(self):
+       logging.info('Getting first search result')
+       actual_first_search_result = self.device.mbs.getFirstSearchResult()
+       logging.info('Actual first search result: <%s>', actual_first_search_result)
+       return actual_first_search_result
+
+    # Verify search result contains expected searach input
+    def verify_search_result_contain_target_search(self, expected_search_result):
+       actual_search_result = self.get_first_search_result()
+       logging.info(
+            'Expected search result: <%s>, Actual search result: <%s>',
+            expected_search_result,
+            actual_search_result,
+        )
+       if expected_search_result not in actual_search_result:
+         raise CallUtilsError('Actual search result does not contain Expected.')
+
+
+    def verify_sms_app_unread_message(self, expected):
+        """Verify unread message on sms app"""
+        logging.info('Verify Unread Message on SMS app')
+        actual_unread_message_badge_displayed = self.device.mbs.isUnreadSmsDisplayed()
+        logging.info(
+            'Unread message Expected: <%s>, Actual: <%s>',
+            expected,
+            actual_unread_message_badge_displayed,
+        )
+        if actual_unread_message_badge_displayed != expected:
+            raise CallUtilsError(
+                "SMS Unread messages - Actual and Expected doesn't match."
+            )
+
+    def verify_sms_preview_text(self, expected, text):
+        """Verify sms preview text"""
+        logging.info('Verify SMS Preview Text')
+        actual_message_preview_displayed = self.device.mbs.isSmsPreviewTextDisplayed(text)
+        logging.info(
+            'SMS Preview Text Expected: <%s>, Actual: <%s>',
+            expected,
+            actual_message_preview_displayed,
+        )
+        if actual_message_preview_displayed != expected:
+            raise CallUtilsError(
+                "SMS Preview Text- Actual and Expected doesn't match."
+            )
+
+    def verify_sms_preview_timestamp(self, expected):
+        """Verify sms preview timestamp"""
+        logging.info('Verify SMS Preview TimeStamp')
+        actual_message_preview_timestamp = self.device.mbs.isSmsTimeStampDisplayed()
+        logging.info(
+            'SMS Preview TimeStamp Expected: <%s>, Actual: <%s>',
+            expected,
+            actual_message_preview_timestamp,
+        )
+        if actual_message_preview_timestamp != expected:
+            raise CallUtilsError(
+                "SMS Preview TimeStamp - Actual and Expected doesn't match."
+            )
+
+    def verify_sms_no_messages_displayed(self, expected):
+        """Verify sms preview timestamp"""
+        logging.info('Verify No Msg displayed')
+        actual_message_preview_timestamp = self.device.mbs.isNoMessagesDisplayed()
+        logging.info(
+            'SMS No Messages Expected: <%s>, Actual: <%s>',
+            expected,
+            actual_message_preview_timestamp,
+        )
+        if actual_message_preview_timestamp != expected:
+            raise CallUtilsError(
+                "No messages - Actual and Expected doesn't match."
+            )
+    def clear_sms_app(self, device_target):
+        """Verify sms preview timestamp"""
+        logging.debug('clearing the sms app')
+        # self.execute_shell_on_device(device_target, constants.ROOT)
+        self.execute_shell_on_device(device_target, constants.DELETE_MESSAGING_DB)
+        self.execute_shell_on_device(device_target, constants.CLEAR_MESSAGING_APP)
+
+    def reboot_device(self, device_target):
+        self.execute_shell_on_device(device_target, constants.REBOOT)

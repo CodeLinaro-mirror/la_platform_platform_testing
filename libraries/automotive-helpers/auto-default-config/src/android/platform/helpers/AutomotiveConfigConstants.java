@@ -18,6 +18,9 @@ package android.platform.helpers;
 
 public class AutomotiveConfigConstants {
 
+    // General UI Elements
+    public static final String GENERAL_UI_PACKAGE = "GENERAL_UI_PACAKAGE";
+
     // Phone App Constants
     public static final String OPEN_DIAL_PAD_COMMAND = "OPEN_DIAL_PAD_COMMAND";
     public static final String OPEN_PHONE_ACTIVITY_COMMAND = "OPEN_PHONE_ACTIVITY_COMMAND";
@@ -293,6 +296,10 @@ public class AutomotiveConfigConstants {
     public static final String MEDIA_SCROLL_DOWN_BUTTON = "MEDIA_SCROLL_DOWN_BUTTON";
     public static final String MEDIA_SCROLL_UP_BUTTON = "MEDIA_SCROLL_UP_BUTTON";
     public static final String MEDIA_SONG_IN_PLAYLIST = "MEDIA_SONG_IN_PLAYLIST";
+    public static final String ARTIST_TITLE = "ARTIST_TITLE";
+    public static final String ALBUM_TITLE = "ALBUM_TITLE";
+    public static final String CURRENT_SONG_TIME = "CURRENT_SONG_TIME";
+    public static final String MAX_SONG_TIME = "MAX_SONG_TIME";
     // NEXT_BUTTON from Account Settings
     public static final String PREVIOUS_BUTTON = "PREVIOUS_BUTTON";
     public static final String SHUFFLE_BUTTON = "SHUFFLE_BUTTON";
@@ -572,6 +579,10 @@ public class AutomotiveConfigConstants {
     public static final String SMS_PACKAGE = "SMS_PACKAGE";
     public static final String OPEN_SMS_ACTIVITY_COMMAND = "OPEN_SMS_ACTIVITY_COMMAND";
     public static final String SMS_BLUETOOTH_ERROR = "SMS_BLUETOOTH_ERROR";
+    public static final String SMS_UNREAD_BADGE = "SMS_UNREAD_BADGE";
+    public static final String SMS_PREVIEW_TEXT = "SMS_PREVIEW_TEXT";
+    public static final String SMS_PREVIEW_TIMESTAMP = "SMS_PREVIEW_TIMESTAMP";
+    public static final String SMS_EMPTY_MESSAGE = "SMS_EMPTY_MESSAGE";
 
     // Bluetooth Tests Constants
     public static final String BLUETOOTH_BUTTON = "BLUETOOTH_BUTTON";
