@@ -14,17 +14,23 @@
  * limitations under the License.
  */
 
-package com.android.server.wm.traces.common.service
+package com.android.server.wm.flicker.utils
 
-import com.android.server.wm.traces.common.layers.LayersTrace
-import com.android.server.wm.traces.common.tags.TagTrace
-import com.android.server.wm.traces.common.transition.TransitionsTrace
-import com.android.server.wm.traces.common.windowmanager.WindowManagerTrace
+import org.mockito.ArgumentMatchers
+import org.mockito.Mockito
 
-interface ITagGenerator {
-    fun generateTags(
-        wmTrace: WindowManagerTrace,
-        layersTrace: LayersTrace,
-        transitionsTrace: TransitionsTrace
-    ): TagTrace
+class KotlinMockito {
+    companion object {
+        inline fun <T> any(type: Class<T>): T {
+            Mockito.any(type)
+            return uninitialized()
+        }
+
+        inline fun <reified T : Any> argThat(noinline predicate: T.() -> Boolean): T {
+            return ArgumentMatchers.argThat { arg: T? -> arg?.predicate() ?: false }
+                ?: uninitialized()
+        }
+
+        inline fun <T> uninitialized(): T = null as T
+    }
 }

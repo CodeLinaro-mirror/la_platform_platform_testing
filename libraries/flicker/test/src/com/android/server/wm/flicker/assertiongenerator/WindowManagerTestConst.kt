@@ -30,29 +30,49 @@ class WindowManagerTestConst {
 
         val emptyConfigurationContainer = ConfigurationContainer(null, null, null)
         val emptyWindowContainer =
-            WindowContainer("", "", 0, 0, false, emptyConfigurationContainer, arrayOf())
+            WindowContainer(
+                "",
+                "",
+                0,
+                0,
+                false,
+                emptyConfigurationContainer,
+                arrayOf(),
+                computedZ = 0
+            )
         val emptyRootWindowContainer = RootWindowContainer(emptyWindowContainer)
         val emptyKeyguardControllerState = KeyguardControllerState.from(false, false, mapOf())
 
         val wmTraceState_ROTATION_0 =
             WindowManagerState(
-                "",
-                wmPolicy_ROTATION_0,
-                "",
-                0,
-                "",
-                "",
-                false,
-                false,
-                arrayOf(),
-                emptyRootWindowContainer,
-                emptyKeyguardControllerState
+                elapsedTimestamp = 0,
+                clockTimestamp = 0,
+                where = "",
+                policy = wmPolicy_ROTATION_0,
+                focusedApp = "",
+                focusedDisplayId = 0,
+                _focusedWindow = "",
+                inputMethodWindowAppToken = "",
+                isHomeRecentsComponent = false,
+                isDisplayFrozen = false,
+                _pendingActivities = arrayOf(),
+                root = emptyRootWindowContainer,
+                keyguardControllerState = emptyKeyguardControllerState
             )
 
         val wmTrace_ROTATION_0 = WindowManagerTrace(arrayOf(wmTraceState_ROTATION_0))
 
         fun createWindowContainer(title: String): WindowContainer {
-            return WindowContainer(title, "", 0, 0, false, emptyConfigurationContainer, arrayOf())
+            return WindowContainer(
+                title,
+                "",
+                0,
+                0,
+                false,
+                emptyConfigurationContainer,
+                arrayOf(),
+                computedZ = 0
+            )
         }
     }
 }

@@ -44,6 +44,8 @@ class MockWindowStateBuilder() {
 
     fun build(): WindowManagerState {
         return WindowManagerState(
+            elapsedTimestamp = timestamp,
+            clockTimestamp = null,
             where = "where",
             policy = null,
             focusedApp = "focusedApp",
@@ -62,7 +64,8 @@ class MockWindowStateBuilder() {
                         layerId = 1,
                         _isVisible = true,
                         configurationContainer = ConfigurationContainer(null, null, null),
-                        children = emptyArray()
+                        children = emptyArray(),
+                        computedZ = 0
                     )
                 ),
             keyguardControllerState =
@@ -70,8 +73,7 @@ class MockWindowStateBuilder() {
                     isAodShowing = false,
                     isKeyguardShowing = false,
                     keyguardOccludedStates = emptyMap()
-                ),
-            _timestamp = timestamp.toString()
+                )
         )
     }
 
