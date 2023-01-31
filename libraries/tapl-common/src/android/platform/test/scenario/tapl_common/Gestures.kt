@@ -15,6 +15,8 @@
  */
 package android.platform.test.scenario.tapl_common
 
+import android.platform.uiautomator_helpers.BetterSwipe
+import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.StaleObjectException
 import androidx.test.uiautomator.UiObject2
 import androidx.test.uiautomator.UiObject2Condition
@@ -29,6 +31,7 @@ import org.junit.Assert.assertTrue
  */
 object Gestures {
     private val WAIT_TIME = Duration.ofSeconds(10)
+    private val UI_AUTOMATION = InstrumentationRegistry.getInstrumentation().uiAutomation
 
     private fun waitForObjectCondition(
         uiObject: UiObject2,
@@ -61,12 +64,23 @@ object Gestures {
         try {
             waitForObjectEnabled(uiObject, objectName)
             waitForObjectClickable(uiObject, objectName)
-            uiObject.click()
+            clickNow(uiObject)
         } catch (e: StaleObjectException) {
             throw AssertionError(
                 "UI object '$objectName' has disappeared from the screen during the click gesture.",
                 e
             )
         }
+    }
+
+    /**
+     * Click on the ui object right away without waiting for animation.
+     *
+     * [UiObject2.click] would wait for all animations finished before clicking. Not waiting for
+     * animations because in some scenarios there is a playing animations when the click is
+     * attempted.
+     */
+    private fun clickNow(uiObject: UiObject2) {
+        BetterSwipe.from(uiObject.visibleCenter).release()
     }
 }
