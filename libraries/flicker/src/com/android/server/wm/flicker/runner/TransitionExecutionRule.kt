@@ -17,6 +17,7 @@
 package com.android.server.wm.flicker.runner
 
 import android.app.Instrumentation
+import android.platform.test.rule.ArtifactSaver
 import android.util.Log
 import com.android.server.wm.flicker.IFlickerTestData
 import com.android.server.wm.flicker.io.ResultWriter
@@ -24,6 +25,7 @@ import com.android.server.wm.flicker.io.TraceType
 import com.android.server.wm.traces.common.IScenario
 import com.android.server.wm.traces.parser.getCurrentState
 import com.android.server.wm.traces.parser.windowmanager.WindowManagerStateHelper
+import com.android.server.wm.traces.parser.withPerfettoTrace
 import java.nio.file.Files
 import org.junit.rules.TestRule
 import org.junit.runner.Description
@@ -52,27 +54,30 @@ class TransitionExecutionRule(
     override fun apply(base: Statement?, description: Description?): Statement {
         return object : Statement() {
             override fun evaluate() {
-                try {
-                    Utils.executeAndNotifyRunner(scenario, "Running transition $description") {
+                withPerfettoTrace("transition") {
+                    try {
+                        Utils.notifyRunnerProgress(scenario, "Running transition $description")
                         doRunBeforeTransition()
                         commands.forEach { it.invoke(flicker) }
                         base?.evaluate()
+                    } catch (e: Throwable) {
+                        ArtifactSaver.onError(Utils.expandDescription(description, "transition"), e)
+                        throw if (e is AssertionError) {
+                            e
+                        } else {
+                            TransitionExecutionFailure(e)
+                        }
+                    } finally {
+                        doRunAfterTransition()
                     }
-                } catch (e: Throwable) {
-                    throw if (e is AssertionError) {
-                        e
-                    } else {
-                        TransitionExecutionFailure(e)
-                    }
-                } finally {
-                    doRunAfterTransition()
                 }
             }
         }
     }
 
     private fun doRunBeforeTransition() {
-        Utils.executeAndNotifyRunner(scenario, "Running doRunBeforeTransition") {
+        withPerfettoTrace("doRunBeforeTransition") {
+            Utils.notifyRunnerProgress(scenario, "Running doRunBeforeTransition")
             Log.d(FLICKER_RUNNER_TAG, "doRunBeforeTransition")
             resultWriter.setTransitionStartTime()
             flicker.setCreateTagListener { doCreateTag(it) }
@@ -81,7 +86,8 @@ class TransitionExecutionRule(
     }
 
     private fun doRunAfterTransition() {
-        Utils.executeAndNotifyRunner(scenario, "Running doRunAfterTransition") {
+        withPerfettoTrace("doRunAfterTransition") {
+            Utils.notifyRunnerProgress(scenario, "Running doRunAfterTransition")
             Log.d(FLICKER_RUNNER_TAG, "doRunAfterTransition")
             Utils.doWaitForUiStabilize(wmHelper)
             resultWriter.setTransitionEndTime()
@@ -100,7 +106,8 @@ class TransitionExecutionRule(
     }
 
     private fun doCreateTag(tag: String) {
-        Utils.executeAndNotifyRunner(scenario, "Creating tag $tag") {
+        withPerfettoTrace("doRunAfterTransition") {
+            Utils.notifyRunnerProgress(scenario, "Creating tag $tag")
             doValidateTag(tag)
             tags.add(tag)
 
