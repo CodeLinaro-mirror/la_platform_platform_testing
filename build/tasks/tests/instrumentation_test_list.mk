@@ -17,6 +17,7 @@ instrumentation_tests := \
     LongevityPlatformLibTests \
     ManagedProvisioningTests \
     FrameworksCoreTests \
+    FrameworksCoreGameManagerTests \
     FrameworksMockingCoreTests \
     BinderProxyCountingTestApp \
     BinderProxyCountingTestService \
