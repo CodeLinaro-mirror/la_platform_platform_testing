@@ -17,6 +17,7 @@
 package android.platform.helpers;
 
 public class AutomotiveConfigConstants {
+
     // Phone App Constants
     public static final String OPEN_DIAL_PAD_COMMAND = "OPEN_DIAL_PAD_COMMAND";
     public static final String OPEN_PHONE_ACTIVITY_COMMAND = "OPEN_PHONE_ACTIVITY_COMMAND";
@@ -79,10 +80,14 @@ public class AutomotiveConfigConstants {
             "CONTACT_DETAILS_SCROLL_DIRECTION";
     public static final String DIAL_PAD_MENU = "DIAL_PAD_MENU";
     public static final String FAVORITES_MENU = "FAVORITES_MENU";
+
+    // Home App Constants
     public static final String HOME_PACKAGE = "HOME_PACKAGE";
     public static final String HOME_BOTTOM_CARD = "HOME_BOTTOM_CARD";
     public static final String HOME_TOP_CARD = "HOME_TOP_CARD";
     public static final String HOME_MAP_CARD = "HOME_MAP_CARD";
+
+    // App Grid Constants
     public static final String OPEN_APP_GRID_COMMAND = "OPEN_APP_GRID_COMMAND";
     public static final String APP_GRID_SCROLL_BACKWARD_BUTTON = "APP_GRID_SCROLL_BACKWARD_BUTTON";
     public static final String APP_GRID_SCROLL_FORWARD_BUTTON = "APP_GRID_SCROLL_FORWARD_BUTTON";
@@ -92,15 +97,16 @@ public class AutomotiveConfigConstants {
     public static final String APP_LIST_SCROLL_ELEMENT = "APP_LIST_SCROLL_ELEMENT";
     public static final String APP_LIST_SCROLL_ACTION = "APP_LIST_SCROLL_ACTION";
     public static final String APP_LIST_SCROLL_DIRECTION = "APP_LIST_SCROLL_DIRECTION";
-    public static final String SECURITY_SETTINGS_SCROLLABLE_ELEMENT =
-            "SECURITY_SETTINGS_SCROLLABLE_ELEMENT";
+
+    // Security Settings  Constants
+    public static final String SECURITY_SETTINGS_SCROLL_ELEMENT =
+            "SECURITY_SETTINGS_SCROLL_ELEMENT";
     public static final String SECURITY_SETTINGS_REMOVE_BUTTON = "SECURITY_SETTINGS_REMOVE_BUTTON";
     public static final String SECURITY_SETTINGS_LOCK_TYPE_NONE =
             "SECURITY_SETTINGS_LOCK_TYPE_NONE";
     public static final String SECURITY_SETTINGS_PIN_PAD = "SECURITY_SETTINGS_PIN_PAD";
     public static final String SECURITY_SETTINGS_ENTER_PIN_BUTTON =
             "SECURITY_SETTINGS_ENTER_PIN_BUTTON";
-    public static final String SECURITY_SETTINGS = "SECURITY_SETTINGS";
     public static final String SECURITY_SETTINGS_LOCK_TYPE_PASSWORD =
             "SECURITY_SETTINGS_LOCK_TYPE_PASSWORD";
     public static final String SECURITY_SETTINGS_PACKAGE = "SECURITY_SETTINGS_PACKAGE";
@@ -113,9 +119,214 @@ public class AutomotiveConfigConstants {
             "SECURITY_SETTINGS_CONTINUE_BUTTON";
     public static final String SECURITY_SETTINGS_CONFIRM_BUTTON =
             "SECURITY_SETTINGS_CONFIRM_BUTTON";
-    public static final String SECURITY_SETTINGS_CHOOSE_LOCK_TYPE = "Choose a lock type";
-    public static final String SECURITY_SCROLL_FORWARD_BUTTON = "SECURITY_SCROLL_FORWARD_BUTTON";
-    public static final String SECURITY_SCROLL_BACKWARD_BUTTON = "SECURITY_SCROLL_BACKWARD_BUTTON";
-    public static final String SECURITY_SCROLL_ACTION = "SECURITY_SCROLL_ACTION";
-    public static final String SECURITY_SCROLL_DIRECTION = "SECURITY_SCROLL_DIRECTION";
+    public static final String SECURITY_SETTINGS_SCROLL_FORWARD =
+            "SECURITY_SETTINGS_SCROLL_FORWARD";
+    public static final String SECURITY_SETTINGS_SCROLL_BACKWARD =
+            "SECURITY_SETTINGS_SCROLL_BACKWARD";
+    public static final String SECURITY_SETTINGS_SCROLL_ACTION = "SECURITY_SETTINGS_SCROLL_ACTION";
+    public static final String SECURITY_SETTINGS_SCROLL_DIRECTION =
+            "SECURITY_SETTINGS_SCROLL_DIRECTION";
+
+    // Lockscreen App Constants
+    public static final String LOCK_SCREEN_PIN_PAD = "LOCK_SCREEN_PIN_PAD";
+    public static final String LOCK_SCREEN_ENTER_KEY = "LOCK_SCREEN_ENTER_KEY";
+    public static final String LOCK_SCREEN_PACKAGE = "LOCK_SCREEN_PACKAGE";
+    public static final String LOCK_TYPE_PASSWORD = "LOCK_TYPE_PASSWORD";
+    public static final String LOCK_TYPE_PIN = "LOCK_TYPE_PIN";
+    public static final String LOCK_SCREEN_CONTINUE_BUTTON = "LOCK_SCREEN_CONTINUE_BUTTON";
+
+    // Notification App Constants
+    public static final String OPEN_NOTIFICATIONS_COMMAND = "OPEN_NOTIFICATIONS_COMMAND";
+    public static final String NOTIFICATION_LIST = "NOTIFICATION_LIST";
+    public static final String NOTIFICATION_VIEW = "NOTIFICATION_VIEW";
+    public static final String CLEAR_ALL_BUTTON = "CLEAR_ALL_BUTTON";
+    public static final String APP_ICON = "APP_ICON";
+    public static final String NOTIFICATION_TITLE = "NOTIFICATION_TITLE";
+    public static final String NOTIFICATION_BODY = "NOTIFICATION_BODY";
+    public static final String NOTIFICATION_LIST_EMPTY = "NOTIFICATION_LIST_EMPTY";
+    public static final String NOTIFICATION_LIST_SCROLL_FORWARD =
+            "NOTIFICATION_LIST_SCROLL_FORWARD";
+    public static final String NOTIFICATION_LIST_SCROLL_BACKWARD =
+            "NOTIFICATION_LIST_SCROLL_BACKWARD";
+    public static final String NOTIFICATION_LIST_SCROLL_ACTION = "NOTIFICATION_LIST_SCROLL_ACTION";
+    public static final String NOTIFICATION_LIST_SCROLL_DIRECTION =
+            "NOTIFICATION_LIST_SCROLL_DIRECTION";
+
+    // System Settings Constants
+    public static final String SETTINGS_PACKAGE = "SETTINGS_PACKAGE";
+    public static final String SYSTEM_SETTINGS_SCROLL_ACTION = "SYSTEM_SETTINGS_SCROLL_ACTION";
+    public static final String SYSTEM_SETTINGS_SCROLL_DIRECTION =
+            "SYSTEM_SETTINGS_SCROLL_DIRECTION";
+    public static final String SYSTEM_SETTINGS_SCROLL_FORWARD_BUTTON =
+            "SYSTEM_SETTINGS_SCROLL_FORWARD_BUTTON";
+    public static final String SYSTEM_SETTINGS_SCROLL_BACKWARD_BUTTON =
+            "SYSTEM_SETTINGS_SCROLL_BACKWARD_BUTTON";
+    public static final String SYSTEM_SETTINGS_SCROLL_ELEMENT = "SYSTEM_SETTINGS_SCROLL_ELEMENT";
+    public static final String ABOUT_MENU = "ABOUT_MENU";
+    public static final String RESET_OPTIONS_MENU = "RESET_OPTIONS_MENU";
+    public static final String LANGUAGES_AND_INPUT_MENU = "LANGUAGES_AND_INPUT_MENU";
+    public static final String DEVICE_MODEL = "DEVICE_MODEL";
+    public static final String ANDROID_VERSION = "ANDROID_VERSION";
+    public static final String ANDROID_SECURITY_PATCH_LEVEL = "ANDROID_SECURITY_PATCH_LEVEL";
+    public static final String KERNEL_VERSION = "KERNEL_VERSION";
+    public static final String BUILD_NUMBER = "BUILD_NUMBER";
+    public static final String RESET_NETWORK = "RESET_NETWORK";
+    public static final String RESET_SETTINGS = "RESET_SETTINGS";
+    public static final String RESET_APP_PREFERENCES = "RESET_APP_PREFERENCES";
+    public static final String RESET_APPS = "RESET_APPS";
+    public static final String LANGUAGES_MENU = "LANGUAGES_MENU";
+    public static final String LANGUAGES_MENU_IN_SELECTED_LANGUAGE =
+            "LANGUAGES_MENU_IN_SELECTED_LANGUAGE";
+    public static final String SYSTEM_SETTINGS_SCROLL_MARGIN = "SYSTEM_SETTINGS_SCROLL_MARGIN";
+    public static final String SYSTEM_SETTINGS_SCROLL_WAIT_TIME =
+            "SYSTEM_SETTINGS_SCROLL_WAIT_TIME";
+
+    // Date and time Settings Constants
+    public static final String DATE_TIME_SETTINGS_SCROLL_ACTION =
+            "DATE_TIME_SETTINGS_SCROLL_ACTION";
+    public static final String DATE_TIME_SETTINGS_SCROLL_DIRECTION =
+            "DATE_TIME_SETTINGS_SCROLL_DIRECTION";
+    public static final String DATE_TIME_SETTINGS_SET_TIME_AUTOMATICALLY =
+            "DATE_TIME_SETTINGS_SET_TIME_AUTOMATICALLY";
+    public static final String DATE_TIME_SETTINGS_SET_TIME_ZONE_AUTOMATICALLY =
+            "DATE_TIME_SETTINGS_SET_TIME_ZONE_AUTOMATICALLY";
+    public static final String DATE_TIME_SETTINGS_SET_DATE = "DATE_TIME_SETTINGS_SET_DATE";
+    public static final String DATE_TIME_SETTINGS_SET_TIME = "DATE_TIME_SETTINGS_SET_TIME";
+    public static final String DATE_TIME_SETTINGS_USE_24_HOUR_FORMAT =
+            "DATE_TIME_SETTINGS_USE_24_HOUR_FORMAT";
+    public static final String DATE_TIME_SETTINGS_SELECT_TIME_ZONE =
+            "DATE_TIME_SETTINGS_SELECT_TIME_ZONE";
+    public static final String DATE_TIME_SETTINGS_SCROLL_FORWARD_BUTTON =
+            "DATE_TIME_SETTINGS_SCROLL_FORWARD_BUTTON";
+    public static final String DATE_TIME_SETTINGS_SCROLL_BACKWARD_BUTTON =
+            "DATE_TIME_SETTINGS_SCROLL_BACKWARD_BUTTON";
+    public static final String DATE_TIME_SETTINGS_SCROLL_ELEMENT =
+            "DATE_TIME_SETTINGS_SCROLL_ELEMENT";
+    public static final String NUMBER_PICKER_WIDGET_CLASS = "NUMBER_PICKER_WIDGET_CLASS";
+    public static final String EDIT_TEXT_WIDGET_CLASS = "EDIT_TEXT_WIDGET_CLASS";
+    public static final String DATE_TIME_SETTINGS_SCROLL_MARGIN =
+            "DATE_TIME_SETTINGS_SCROLL_MARGIN";
+    public static final String DATE_TIME_SETTINGS_SCROLL_WAIT_TIME =
+            "DATE_TIME_SETTINGS_SCROLL_WAIT_TIME";
+
+    // Sound Setting Constants
+    public static final String SOUND_SETTINGS_SAVE_BUTTON = "SOUND_SETTINGS_SAVE_BUTTON";
+    public static final String SOUND_SETTINGS_LIST_SCROLL_DIRECTION =
+            "SOUND_SETTINGS_LIST_SCROLL_DIRECTION";
+    public static final String SOUND_SETTINGS_LIST_SCROLL_ACTION =
+            "SOUND_SETTINGS_LIST_SCROLL_ACTION";
+    public static final String SOUND_SETTINGS_SCROLL_ELEMENT = "SOUND_SETTINGS_SCROLL_ELEMENT";
+    public static final String SOUND_SETTINGS_SCROLL_FORWARD_BUTTON =
+            "SOUND_SETTINGS_SCROLL_FORWARD_BUTTON";
+    public static final String SOUND_SETTINGS_SCROLL_BACKWARD_BUTTON =
+            "SOUND_SETTINGS_SCROLL_BACKWARD_BUTTON";
+    public static final String SOUND_SETTINGS_SCROLL_MARGIN = "SOUND_SETTINGS_SCROLL_MARGIN";
+    public static final String SOUND_SETTINGS_SCROLL_WAIT_TIME = "SOUND_SETTINGS_SCROLL_WAIT_TIME";
+
+    // Setting Constants
+    public static final String OPEN_SETTINGS_COMMAND = "OPEN_SETTINGS_COMMAND";
+    public static final String STOP_SETTING_APP_COMMAND = "STOP_SETTING_APP_COMMAND";
+    public static final String TOGGLE_WIFI = "TOGGLE_WIFI";
+    public static final String TOGGLE_HOTSPOT = "TOGGLE_HOTSPOT";
+    public static final String TOGGLE_BLUETOOTH = "TOGGLE_BLUETOOTH";
+    public static final String SEARCH = "SEARCH";
+    public static final String SEARCH_BOX = "SEARCH_BOX";
+    public static final String SEARCH_RESULTS = "SEARCH_RESULTS";
+    public static final String PAGE_TITLE = "PAGE_TITLE";
+    public static final String PERMISSIONS_PAGE_TITLE = "PERMISSIONS_PAGE_TITLE";
+
+    public static final String SOUND_SETTINGS = "OPEN_SOUND_SETTINGS_WORKFLOW";
+    public static final String NETWORK_AND_INTERNET_SETTINGS =
+            "OPEN_NETWORK_AND_INTERNET_SETTINGS_WORKFLOW";
+    public static final String BLUETOOTH_SETTINGS = "OPEN_BLUETOOTH_SETTINGS_WORKFLOW";
+    public static final String SYSTEM_SETTINGS = "OPEN_SYSTEM_SETTINGS_WORKFLOW";
+    public static final String PROFILE_ACCOUNT_SETTINGS = "OPEN_PROFILE_ACCOUNT_SETTINGS_WORKFLOW";
+    public static final String APPS_SETTINGS = "OPEN_APPS_SETTINGS_WORKFLOW";
+    public static final String SECURITY_SETTINGS = "OPEN_SECURITY_SETTINGS_WORKFLOW";
+
+    public static final String SETTINGS_SUB_SETTING_SCROLL_ACTION =
+            "SETTINGS_SUB_SETTING_SCROLL_ACTION";
+    public static final String SETTINGS_SUB_SETTING_SCROLL_DIRECTION =
+            "SETTINGS_SUB_SETTING_SCROLL_DIRECTION";
+    public static final String SETTINGS_SUB_SETTING_SCROLL_BACKWARD_BUTTON =
+            "SETTINGS_SUB_SETTING_SCROLL_BACKWARD_BUTTON";
+    public static final String SETTINGS_SUB_SETTING_SCROLL_FORWARD_BUTTON =
+            "SETTINGS_SUB_SETTING_SCROLL_FORWARD_BUTTON";
+    public static final String SETTINGS_SUB_SETTING_SCROLL_ELEMENT =
+            "SETTINGS_SUB_SETTING_SCROLL_ELEMENT";
+    public static final String SETTINGS_TITLE_TEXT = "SETTINGS_TITLE_TEXT";
+
+    // App Info Settings Constants
+    public static final String APP_INFO_SETTINGS_SCROLL_ACTION = "APP_INFO_SETTINGS_SCROLL_ACTION";
+    public static final String APP_INFO_SETTINGS_SCROLL_DIRECTION =
+            "APP_INFO_SETTINGS_SCROLL_DIRECTION";
+    public static final String APP_INFO_SETTINGS_VIEW_ALL = "APP_INFO_SETTINGS_VIEW_ALL";
+    public static final String APP_INFO_SETTINGS_SCROLL_ELEMENT =
+            "APP_INFO_SETTINGS_SCROLL_ELEMENT";
+    public static final String APP_INFO_SETTINGS_SCROLL_FORWARD_BUTTON =
+            "APP_INFO_SETTINGS_SCROLL_FORWARD_BUTTON";
+    public static final String APP_INFO_SETTINGS_SCROLL_BACKWARD_BUTTON =
+            "APP_INFO_SETTINGS_SCROLL_BACKWARD_BUTTON";
+    public static final String APP_INFO_SETTINGS_ENABLE_DISABLE_BUTTON =
+            "APP_INFO_SETTINGS_ENABLE_DISABLE_BUTTON";
+    public static final String APP_INFO_SETTINGS_DISABLE_BUTTON_TEXT = "Disable";
+    public static final String APP_INFO_SETTINGS_DISABLE_APP_BUTTON =
+            "APP_INFO_SETTINGS_DISABLE_APP_BUTTON";
+    public static final String APP_INFO_SETTINGS_ENABLE_BUTTON_TEXT = "Enable";
+    public static final String APP_INFO_SETTINGS_OK_BUTTON = "APP_INFO_SETTINGS_OK_BUTTON";
+    public static final String APP_INFO_SETTINGS_PERMISSIONS_MENU =
+            "APP_INFO_SETTINGS_PERMISSIONS_MENU";
+    public static final String APP_INFO_SETTINGS_ALLOW_BUTTON = "APP_INFO_SETTINGS_ALLOW_BUTTON";
+    public static final String APP_INFO_SETTINGS_DONT_ALLOW_BUTTON =
+            "APP_INFO_SETTINGS_DONT_ALLOW_BUTTON";
+    public static final String APP_INFO_SETTINGS_DONT_ALLOW_ANYWAY_BUTTON =
+            "APP_INFO_SETTINGS_DONT_ALLOW_ANYWAY_BUTTON";
+    public static final String APP_INFO_SETTINGS_FORCE_STOP_BUTTON =
+            "APP_INFO_SETTINGS_FORCE_STOP_BUTTON";
+    public static final String APP_INFO_SETTINGS_TITTLE = "APP_INFO_SETTINGS_TITTLE";
+    public static final String APP_INFO_SETTINGS_SCROLL_MARGIN = "APP_INFO_SETTINGS_SCROLL_MARGIN";
+    public static final String APP_INFO_SETTINGS_SCROLL_WAIT_TIME =
+            "APP_INFO_SETTINGS_SCROLL_WAIT_TIME";
+
+    // Settings User Constants
+    public static final String USER_SETTINGS_PACKAGE = "USER_SETTINGS_PACKAGE";
+    public static final String USER_SETTINGS_SCROLL_ACTION = "USER_SETTINGS_SCROLL_ACTION";
+    public static final String USER_SETTINGS_SCROLL_DIRECTION = "USER_SETTINGS_SCROLL_DIRECTION";
+    public static final String USER_SETTINGS_ADD_PROFILE = "USER_SETTINGS_ADD_PROFILE";
+    public static final String USER_SETTINGS_DELETE = "USER_SETTINGS_DELETE";
+    public static final String USER_SETTINGS_OK = "USER_SETTINGS_OK";
+    public static final String USER_SETTINGS_DELETE_SELF = "USER_SETTINGS_DELETE_SELF";
+    public static final String USER_SETTINGS_MAKE_ADMIN = "USER_SETTINGS_MAKE_ADMIN";
+    public static final String USER_SETTINGS_MAKE_ADMIN_CONFIRM =
+            "USER_SETTINGS_MAKE_ADMIN_CONFIRM";
+    public static final String USER_SETTINGS_MAKE_TIME_PATTERN = "USER_SETTINGS_MAKE_TIME_PATTERN";
+    public static final String USER_SETTINGS_SCROLL_FORWARD = "USER_SETTINGS_SCROLL_FORWARD";
+    public static final String USER_SETTINGS_SCROLL_BACKWARD = "USER_SETTINGS_SCROLL_BACKWARD";
+    public static final String USER_SETTINGS_SCROLL_ELEMENT = "USER_SETTINGS_SCROLL_ELEMENT";
+    public static final String USER_SETTINGS_MANAGE_OTHER_PROFILES =
+            "USER_SETTINGS_MANAGE_OTHER_PROFILES";
+    public static final String USER_SETTINGS_SCROLL_MARGIN = "USER_SETTINGS_SCROLL_MARGIN";
+    public static final String USER_SETTINGS_SCROLL_WAIT_TIME = "USER_SETTINGS_SCROLL_WAIT_TIME";
+
+    // Account Settings Constants
+    public static final String ACCOUNT_SETTINGS_SCROLL_ACTION = "ACCOUNT_SETTINGS_SCROLL_ACTION";
+    public static final String ACCOUNT_SETTINGS_SCROLL_DIRECTION =
+            "ACCOUNT_SETTINGS_SCROLL_DIRECTION";
+    public static final String ACCOUNT_SETTINGS_DONE_BUTTON = "ACCOUNT_SETTINGS_DONE_BUTTON";
+    public static final String ACCOUNT_SETTINGS_ADD_ACCOUNT = "ACCOUNT_SETTINGS_ADD_ACCOUNT";
+    public static final String ACCOUNT_SETTINGS_SIGN_IN_ON_CAR_SCREEN =
+            "ACCOUNT_SETTINGS_SIGN_IN_ON_CAR_SCREEN";
+    public static final String ACCOUNT_SETTINGS_REMOVE_BUTTON = "ACCOUNT_SETTINGS_REMOVE_BUTTON";
+    public static final String ACCOUNT_SETTINGS_REMOVE_ACCOUNT_BUTTON =
+            "ACCOUNT_SETTINGS_REMOVE_ACCOUNT_BUTTON";
+    public static final String ACCOUNT_SETTINGS_ENTER_EMAIL = "ACCOUNT_SETTINGS_ENTER_EMAIL";
+    public static final String ACCOUNT_SETTINGS_ENTER_PASSWORD = "ACCOUNT_SETTINGS_ENTER_PASSWORD";
+    public static final String ACCOUNT_SETTINGS_NEXT_BUTTON = "ACCOUNT_SETTINGS_NEXT_BUTTON";
+    public static final String ACCOUNT_SETTINGS_SCROLL_BACKWARD_BUTTON =
+            "ACCOUNT_SETTINGS_SCROLL_BACKWARD_BUTTON";
+    public static final String ACCOUNT_SETTINGS_SCROLL_FORWARD_BUTTON =
+            "ACCOUNT_SETTINGS_SCROLL_FORWARD_BUTTON";
+    public static final String ACCOUNT_SETTINGS_SCROLL_ELEMENT = "ACCOUNT_SETTINGS_SCROLL_ELEMENT";
+    public static final String ACCOUNT_SETTINGS_GOOGLE_SIGN_IN_SCREEN =
+            "ACCOUNT_SETTINGS_GOOGLE_SIGN_IN_SCREEN";
 }

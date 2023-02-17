@@ -69,6 +69,7 @@ object WaitUtils {
         trace(traceName) {
             val startTime = uptimeMillis()
             val timeoutMs = timeout.toMillis()
+            Log.d(TAG, "Starting $traceName")
             withEventualLogging(logTimeDelta = true) {
                 log(traceName)
                 var i = 1
@@ -162,6 +163,7 @@ object WaitUtils {
             prefix +
                 " (settleTime=${minimumSettleTime.toMillis()}ms, deadline=${timeout.toMillis()}ms)"
         trace(traceName) {
+            Log.d(TAG, "Starting $traceName")
             withEventualLogging(logTimeDelta = true) {
                 log(traceName)
 
@@ -187,7 +189,7 @@ object WaitUtils {
                         if (previousValueSet) {
                             Trace.endSection()
                         }
-                        Trace.beginSection("New value: $newValue")
+                        TracingUtils.beginSectionSafe("New value: $newValue")
                         previousValue = newValue
                         previousValueSet = true
                     } else if (now().isAfter(settledSince + minimumSettleTime)) {

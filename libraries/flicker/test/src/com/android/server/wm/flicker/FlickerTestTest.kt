@@ -17,7 +17,9 @@
 package com.android.server.wm.flicker
 
 import android.annotation.SuppressLint
+import com.android.server.wm.flicker.datastore.CachedResultReader
 import com.android.server.wm.flicker.datastore.DataStore
+import com.android.server.wm.flicker.io.ResultReader
 import com.android.server.wm.flicker.io.TraceType
 import com.google.common.truth.Truth
 import java.io.File
@@ -41,9 +43,7 @@ class FlickerTestTest {
     fun failsWithoutScenario() {
         val actual = FlickerTest()
         val failure =
-            assertThrows(IllegalArgumentException::class.java) {
-                actual.assertLayers { executionCount++ }
-            }
+            assertThrows<IllegalArgumentException> { actual.assertLayers { executionCount++ } }
         assertExceptionMessage(failure, "Scenario shouldn't be empty")
         Truth.assertWithMessage("Executed").that(executionCount).isEqualTo(0)
     }
@@ -214,7 +214,16 @@ class FlickerTestTest {
             writer.addTraceResult(traceType, file)
         }
         writer.write()
-        val flickerWrapper = FlickerTest()
+        val flickerWrapper =
+            FlickerTest(
+                resultReaderProvider = {
+                    CachedResultReader(
+                        it,
+                        DEFAULT_TRACE_CONFIG,
+                        reader = ResultReader(DataStore.getResult(it), DEFAULT_TRACE_CONFIG)
+                    )
+                }
+            )
         flickerWrapper.initialize(TEST_SCENARIO.testClass)
         // Each assertion is executed independently and not cached, only Flicker as a Service
         // assertions are cached

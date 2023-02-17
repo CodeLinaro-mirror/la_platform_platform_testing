@@ -17,12 +17,10 @@ package android.platform.test.rule;
 
 import android.util.Log;
 
+import kotlin.Unit;
+
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
-
-import java.util.ArrayList;
-
-import kotlin.Unit;
 
 /**
  * Generates a "Baseline Profile" for the provided package using the wrapped test statements.
@@ -38,8 +36,13 @@ import kotlin.Unit;
  */
 public class BaselineProfileRule extends TestWatcher {
     private static final String LOG_TAG = BaselineProfileRule.class.getSimpleName();
-    // If true, generates a Baseline Profile. If not, or unspecified, doesn't generate one.
-    private static final String GEN_BASELINE_PROFILE_OPTION = "generate-baseline-profile";
+    private static final String PROFILE_ACTION = "profile-action";
+    // If selected, generates a Baseline Profile. If not, or unspecified, doesn't generate one.
+    private static final String GEN_BASELINE_PROFILE_MODE = "generate-baseline-profile";
+    // If selected, checks for profile prior to performance test.
+    private static final String TEST_WITH_PROFILE_MODE = "test-performance-with-profile";
+    // If selected, checks for lack of profile prior to performance test.
+    private static final String TEST_WITHOUT_PROFILE_MODE = "test-performance-without-profile";
 
     private final String mBaselineProfilePackage;
 
@@ -49,42 +52,84 @@ public class BaselineProfileRule extends TestWatcher {
 
     @Override
     public Statement apply(final Statement base, final Description description) {
-        if (!"true".equals(getArguments().getString(GEN_BASELINE_PROFILE_OPTION))) {
-            Log.d(
-                    LOG_TAG,
-                    String.format(
-                            "Baseline Profile generation is currently disabled. Provide the '%s'"
-                                    + "option to enable it.",
-                            GEN_BASELINE_PROFILE_OPTION));
-            return base;
-        }
+        switch (getArguments().getString(PROFILE_ACTION, "none")) {
+            case GEN_BASELINE_PROFILE_MODE:
+                // This class can't extend androidx.benchmark.macro.junit4.BaselineProfileRule,
+                // because it's final; however that would be a preferable way to more cleanly
+                // interact with it.
+                androidx.benchmark.macro.junit4.BaselineProfileRule innerRule =
+                        new androidx.benchmark.macro.junit4.BaselineProfileRule();
+                return innerRule.apply(
+                        new Statement() {
+                            @Override
+                            public void evaluate() throws Throwable {
+                                innerRule.collectBaselineProfile(
+                                        mBaselineProfilePackage,
+                                        1, // Iterations are supported by most Runners already.
+                                        null, // No special prefixing necessary.
+                                        null, // Don't apply any profile filters.
+                                        (scope) -> {
+                                            // Evaluating the base Statement may throw a Throwable,
+                                            // which is checked and not compatible with the lambda
+                                            // without a try-catch statement.
+                                            try {
+                                                base.evaluate();
+                                                return Unit.INSTANCE;
+                                            } catch (Throwable e) {
+                                                throw new RuntimeException(
+                                                        "Caught checked exception in parent"
+                                                                + " statement.",
+                                                        e);
+                                            }
+                                        });
+                            }
+                        },
+                        description);
 
-        // This class can't extend androidx.benchmark.macro.junit4.BaselineProfileRule, because it's
-        // final; however that would be a preferable way to more cleanly interact with it.
-        androidx.benchmark.macro.junit4.BaselineProfileRule innerRule =
-                new androidx.benchmark.macro.junit4.BaselineProfileRule();
-        return innerRule.apply(
-                new Statement() {
-                    @Override
-                    public void evaluate() throws Throwable {
-                        innerRule.collectBaselineProfile(
-                                mBaselineProfilePackage,
-                                1, // Iterations are supported by most Runners already.
-                                new ArrayList<>(),
-                                (scope) -> {
-                                    // Evaluating the base Statement may throw a Throwable, which
-                                    // is checked and not compatible with the lambda without a
-                                    // try-catch statement.
-                                    try {
-                                        base.evaluate();
-                                        return Unit.INSTANCE;
-                                    } catch (Throwable e) {
-                                        throw new RuntimeException(
-                                                "Caught checked exception in parent statement.", e);
-                                    }
-                                });
-                    }
-                },
-                description);
+            case TEST_WITH_PROFILE_MODE:
+                // check for profile
+                String compileStatus =
+                        executeShellCommand(
+                                String.format(
+                                        "dumpsys package %s | grep \"status=\"",
+                                        mBaselineProfilePackage));
+                if (!compileStatus.contains("profile")) {
+                    throw new IllegalStateException(
+                            String.format(
+                                    "The package, %s, was not found to be compiled with"
+                                            + " speed-profile.\n"
+                                            + "The compilation status returned this line: %s",
+                                    mBaselineProfilePackage, compileStatus));
+                }
+                break;
+
+            case TEST_WITHOUT_PROFILE_MODE:
+                // check for no profile
+                compileStatus =
+                        executeShellCommand(
+                                String.format(
+                                        "dumpsys package %s | grep \"status=\"",
+                                        mBaselineProfilePackage));
+                if (compileStatus.contains("profile")) {
+                    throw new IllegalStateException(
+                            String.format(
+                                    "The package, %s, was found to be compiled with"
+                                            + " speed-profile.\n"
+                                            + "The compilation status returned this line: %s",
+                                    mBaselineProfilePackage, compileStatus));
+                }
+                break;
+
+            default:
+                Log.d(
+                        LOG_TAG,
+                        String.format(
+                                "Options %s, %s, and %s are disabled.",
+                                GEN_BASELINE_PROFILE_MODE,
+                                TEST_WITH_PROFILE_MODE,
+                                TEST_WITHOUT_PROFILE_MODE));
+                break;
+        }
+        return base;
     }
 }
