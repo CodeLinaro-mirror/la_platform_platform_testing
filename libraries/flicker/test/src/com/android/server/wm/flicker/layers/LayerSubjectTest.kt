@@ -19,8 +19,9 @@ package com.android.server.wm.flicker.layers
 import com.android.server.wm.flicker.assertThatErrorContainsDebugInfo
 import com.android.server.wm.flicker.assertThrows
 import com.android.server.wm.flicker.readLayerTraceFromFile
+import com.android.server.wm.flicker.traces.FlickerSubjectException
 import com.android.server.wm.flicker.traces.layers.LayerSubject
-import com.android.server.wm.flicker.traces.layers.LayersTraceSubject.Companion.assertThat
+import com.android.server.wm.flicker.traces.layers.LayersTraceSubject
 import com.android.server.wm.traces.common.Cache
 import com.android.server.wm.traces.common.Size
 import com.google.common.truth.Truth
@@ -39,10 +40,11 @@ class LayerSubjectTest {
 
     @Test
     fun exceptionContainsDebugInfoImaginary() {
-        val layersTraceEntries = readLayerTraceFromFile("layers_trace_emptyregion.pb")
+        val layersTraceEntries =
+            readLayerTraceFromFile("layers_trace_emptyregion.pb", legacyTrace = true)
         val error =
-            assertThrows(AssertionError::class.java) {
-                assertThat(layersTraceEntries).first().layer("ImaginaryLayer", 0).exists()
+            assertThrows<FlickerSubjectException> {
+                LayersTraceSubject(layersTraceEntries).first().layer("ImaginaryLayer", 0).exists()
             }
         assertThatErrorContainsDebugInfo(error)
         Truth.assertThat(error).hasMessageThat().contains("ImaginaryLayer")
@@ -51,22 +53,24 @@ class LayerSubjectTest {
 
     @Test
     fun exceptionContainsDebugInfoConcrete() {
-        val layersTraceEntries = readLayerTraceFromFile("layers_trace_emptyregion.pb")
+        val layersTraceEntries =
+            readLayerTraceFromFile("layers_trace_emptyregion.pb", legacyTrace = true)
         val error =
-            assertThrows(AssertionError::class.java) {
-                assertThat(layersTraceEntries).first().subjects.first().doesNotExist()
+            assertThrows<FlickerSubjectException> {
+                LayersTraceSubject(layersTraceEntries).first().subjects.first().doesNotExist()
             }
         assertThatErrorContainsDebugInfo(error)
     }
 
     @Test
     fun canTestAssertionsOnLayer() {
-        val layersTraceEntries = readLayerTraceFromFile("layers_trace_emptyregion.pb")
-        assertThat(layersTraceEntries)
+        val layersTraceEntries =
+            readLayerTraceFromFile("layers_trace_emptyregion.pb", legacyTrace = true)
+        LayersTraceSubject(layersTraceEntries)
             .layer("SoundVizWallpaperV2", 26033)
             .hasBufferSize(Size.from(1440, 2960))
             .hasScalingMode(0)
 
-        assertThat(layersTraceEntries).layer("DoesntExist", 1).doesNotExist()
+        LayersTraceSubject(layersTraceEntries).layer("DoesntExist", 1).doesNotExist()
     }
 }

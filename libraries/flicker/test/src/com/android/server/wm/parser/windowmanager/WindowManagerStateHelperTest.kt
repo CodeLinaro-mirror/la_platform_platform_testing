@@ -25,12 +25,13 @@ import com.android.server.wm.flicker.traces.windowmanager.WindowManagerStateSubj
 import com.android.server.wm.traces.common.ActiveBuffer
 import com.android.server.wm.traces.common.Cache
 import com.android.server.wm.traces.common.Color
-import com.android.server.wm.traces.common.ComponentNameMatcher
 import com.android.server.wm.traces.common.DeviceStateDump
-import com.android.server.wm.traces.common.IComponentName
 import com.android.server.wm.traces.common.Matrix33
 import com.android.server.wm.traces.common.Rect
 import com.android.server.wm.traces.common.RectF
+import com.android.server.wm.traces.common.Timestamp
+import com.android.server.wm.traces.common.component.IComponentName
+import com.android.server.wm.traces.common.component.matchers.ComponentNameMatcher
 import com.android.server.wm.traces.common.layers.HwcCompositionType
 import com.android.server.wm.traces.common.layers.Layer
 import com.android.server.wm.traces.common.layers.LayerTraceEntryBuilder
@@ -194,7 +195,7 @@ class WindowManagerStateHelperTest {
 
     @Test
     fun canWaitForIme() {
-        val trace = readWmTraceFromFile("wm_trace_ime.pb")
+        val trace = readWmTraceFromFile("wm_trace_ime.pb", legacyTrace = true)
         val supplier = trace.asSupplier()
         val helper =
             TestWindowManagerStateHelper(
@@ -204,19 +205,19 @@ class WindowManagerStateHelperTest {
                 retryIntervalMs = 1
             )
         try {
-            WindowManagerStateSubject.assertThat(helper.wmState)
+            WindowManagerStateSubject(helper.wmState)
                 .isNonAppWindowVisible(ComponentNameMatcher.IME)
             error("IME state should not be available")
         } catch (e: AssertionError) {
             helper.StateSyncBuilder().withImeShown().waitFor()
-            WindowManagerStateSubject.assertThat(helper.wmState)
+            WindowManagerStateSubject(helper.wmState)
                 .isNonAppWindowVisible(ComponentNameMatcher.IME)
         }
     }
 
     @Test
     fun canFailImeNotShown() {
-        val trace = readWmTraceFromFile("wm_trace_ime.pb")
+        val trace = readWmTraceFromFile("wm_trace_ime.pb", legacyTrace = true)
         val supplier = trace.asSupplier()
         val helper =
             TestWindowManagerStateHelper(
@@ -226,19 +227,19 @@ class WindowManagerStateHelperTest {
                 retryIntervalMs = 1
             )
         try {
-            WindowManagerStateSubject.assertThat(helper.wmState)
+            WindowManagerStateSubject(helper.wmState)
                 .isNonAppWindowVisible(ComponentNameMatcher.IME)
             error("IME state should not be available")
         } catch (e: AssertionError) {
             helper.StateSyncBuilder().withImeShown().waitFor()
-            WindowManagerStateSubject.assertThat(helper.wmState)
+            WindowManagerStateSubject(helper.wmState)
                 .isNonAppWindowVisible(ComponentNameMatcher.IME)
         }
     }
 
     @Test
     fun canWaitForWindow() {
-        val trace = readWmTraceFromFile("wm_trace_open_app_cold.pb")
+        val trace = readWmTraceFromFile("wm_trace_open_app_cold.pb", legacyTrace = true)
         val supplier = trace.asSupplier()
         val helper =
             TestWindowManagerStateHelper(
@@ -248,19 +249,17 @@ class WindowManagerStateHelperTest {
                 retryIntervalMs = 1
             )
         try {
-            WindowManagerStateSubject.assertThat(helper.wmState)
-                .containsAppWindow(simpleAppComponentName)
+            WindowManagerStateSubject(helper.wmState).containsAppWindow(simpleAppComponentName)
             error("Chrome window should not exist in the start of the trace")
         } catch (e: AssertionError) {
             helper.StateSyncBuilder().withWindowSurfaceAppeared(simpleAppComponentName).waitFor()
-            WindowManagerStateSubject.assertThat(helper.wmState)
-                .isAppWindowVisible(simpleAppComponentName)
+            WindowManagerStateSubject(helper.wmState).isAppWindowVisible(simpleAppComponentName)
         }
     }
 
     @Test
     fun canFailWindowNotShown() {
-        val trace = readWmTraceFromFile("wm_trace_open_app_cold.pb")
+        val trace = readWmTraceFromFile("wm_trace_open_app_cold.pb", legacyTrace = true)
         val supplier = trace.asSupplier()
         val helper =
             TestWindowManagerStateHelper(
@@ -270,8 +269,7 @@ class WindowManagerStateHelperTest {
                 retryIntervalMs = 1
             )
         try {
-            WindowManagerStateSubject.assertThat(helper.wmState)
-                .containsAppWindow(simpleAppComponentName)
+            WindowManagerStateSubject(helper.wmState).containsAppWindow(simpleAppComponentName)
             error("SimpleActivity window should not exist in the start of the trace")
         } catch (e: AssertionError) {
             // nothing to do
@@ -280,13 +278,13 @@ class WindowManagerStateHelperTest {
         try {
             helper.StateSyncBuilder().withWindowSurfaceAppeared(simpleAppComponentName).waitFor()
         } catch (e: IllegalArgumentException) {
-            WindowManagerStateSubject.assertThat(helper.wmState).notContains(simpleAppComponentName)
+            WindowManagerStateSubject(helper.wmState).notContains(simpleAppComponentName)
         }
     }
 
     @Test
     fun canDetectHomeActivityVisibility() {
-        val trace = readWmTraceFromFile("wm_trace_open_and_close_chrome.pb")
+        val trace = readWmTraceFromFile("wm_trace_open_and_close_chrome.pb", legacyTrace = true)
         val supplier = trace.asSupplier()
         val helper =
             TestWindowManagerStateHelper(
@@ -295,16 +293,16 @@ class WindowManagerStateHelperTest {
                 numRetries = trace.entries.size,
                 retryIntervalMs = 1
             )
-        WindowManagerStateSubject.assertThat(helper.wmState).isHomeActivityVisible()
+        WindowManagerStateSubject(helper.wmState).isHomeActivityVisible()
         helper.StateSyncBuilder().withWindowSurfaceAppeared(chromeComponent).waitFor()
-        WindowManagerStateSubject.assertThat(helper.wmState).isHomeActivityInvisible()
+        WindowManagerStateSubject(helper.wmState).isHomeActivityInvisible()
         helper.StateSyncBuilder().withHomeActivityVisible().waitFor()
-        WindowManagerStateSubject.assertThat(helper.wmState).isHomeActivityVisible()
+        WindowManagerStateSubject(helper.wmState).isHomeActivityVisible()
     }
 
     @Test
     fun canWaitActivityRemoved() {
-        val trace = readWmTraceFromFile("wm_trace_open_and_close_chrome.pb")
+        val trace = readWmTraceFromFile("wm_trace_open_and_close_chrome.pb", legacyTrace = true)
         val supplier = trace.asSupplier()
         val helper =
             TestWindowManagerStateHelper(
@@ -313,23 +311,23 @@ class WindowManagerStateHelperTest {
                 numRetries = trace.entries.size,
                 retryIntervalMs = 1
             )
-        WindowManagerStateSubject.assertThat(helper.wmState)
+        WindowManagerStateSubject(helper.wmState)
             .isHomeActivityVisible()
             .notContains(chromeComponent)
         helper.StateSyncBuilder().withWindowSurfaceAppeared(chromeComponent).waitFor()
-        WindowManagerStateSubject.assertThat(helper.wmState).isAppWindowVisible(chromeComponent)
+        WindowManagerStateSubject(helper.wmState).isAppWindowVisible(chromeComponent)
         helper.StateSyncBuilder().withActivityRemoved(chromeComponent).waitFor()
-        WindowManagerStateSubject.assertThat(helper.wmState)
+        WindowManagerStateSubject(helper.wmState)
             .notContains(chromeComponent)
             .isHomeActivityVisible()
     }
 
     @Test
     fun canWaitAppStateIdle() {
-        val trace = readWmTraceFromFile("wm_trace_open_and_close_chrome.pb")
+        val trace = readWmTraceFromFile("wm_trace_open_and_close_chrome.pb", legacyTrace = true)
         val initialTimestamp = 69443918698679
         val supplier = trace.asSupplier(startingTimestamp = initialTimestamp)
-        val initialEntry = trace.getEntryByElapsedTimestamp(initialTimestamp)
+        val initialEntry = trace.getEntryExactlyAt(Timestamp(elapsedNanos = initialTimestamp))
         val helper =
             TestWindowManagerStateHelper(
                 initialEntry,
@@ -338,19 +336,19 @@ class WindowManagerStateHelperTest {
                 retryIntervalMs = 1
             )
         try {
-            WindowManagerStateSubject.assertThat(helper.wmState).isValid()
+            WindowManagerStateSubject(helper.wmState).isValid()
             error("Initial state in the trace should not be valid")
         } catch (e: AssertionError) {
             Truth.assertWithMessage("App transition never became idle")
                 .that(helper.StateSyncBuilder().withAppTransitionIdle().waitFor())
                 .isTrue()
-            WindowManagerStateSubject.assertThat(helper.wmState).isValid()
+            WindowManagerStateSubject(helper.wmState).isValid()
         }
     }
 
     @Test
     fun canWaitForRotation() {
-        val trace = readWmTraceFromFile("wm_trace_rotation.pb")
+        val trace = readWmTraceFromFile("wm_trace_rotation.pb", legacyTrace = true)
         val supplier = trace.asSupplier()
         val helper =
             TestWindowManagerStateHelper(
@@ -359,14 +357,11 @@ class WindowManagerStateHelperTest {
                 numRetries = trace.entries.size,
                 retryIntervalMs = 1
             )
-        WindowManagerStateSubject.assertThat(helper.wmState)
-            .hasRotation(PlatformConsts.Rotation.ROTATION_0)
+        WindowManagerStateSubject(helper.wmState).hasRotation(PlatformConsts.Rotation.ROTATION_0)
         helper.StateSyncBuilder().withRotation(PlatformConsts.Rotation.ROTATION_270).waitFor()
-        WindowManagerStateSubject.assertThat(helper.wmState)
-            .hasRotation(PlatformConsts.Rotation.ROTATION_270)
+        WindowManagerStateSubject(helper.wmState).hasRotation(PlatformConsts.Rotation.ROTATION_270)
         helper.StateSyncBuilder().withRotation(PlatformConsts.Rotation.ROTATION_0).waitFor()
-        WindowManagerStateSubject.assertThat(helper.wmState)
-            .hasRotation(PlatformConsts.Rotation.ROTATION_0)
+        WindowManagerStateSubject(helper.wmState).hasRotation(PlatformConsts.Rotation.ROTATION_0)
     }
 
     @Test
@@ -382,7 +377,7 @@ class WindowManagerStateHelperTest {
     @FlakyTest
     @Test
     fun canWaitForRecents() {
-        val trace = readWmTraceFromFile("wm_trace_open_recents.pb")
+        val trace = readWmTraceFromFile("wm_trace_open_recents.pb", legacyTrace = true)
         val supplier = trace.asSupplier()
         val helper =
             TestWindowManagerStateHelper(
@@ -391,8 +386,8 @@ class WindowManagerStateHelperTest {
                 numRetries = trace.entries.size,
                 retryIntervalMs = 1
             )
-        WindowManagerStateSubject.assertThat(helper.wmState).isRecentsActivityInvisible()
+        WindowManagerStateSubject(helper.wmState).isRecentsActivityInvisible()
         helper.StateSyncBuilder().withRecentsActivityVisible().waitFor()
-        WindowManagerStateSubject.assertThat(helper.wmState).isRecentsActivityVisible()
+        WindowManagerStateSubject(helper.wmState).isRecentsActivityVisible()
     }
 }

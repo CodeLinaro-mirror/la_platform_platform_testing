@@ -105,11 +105,10 @@ abstract class BaseResultReaderTestParseTrace {
 
     @Test
     fun readTraceAndSliceTraceByTimestampAndFailInvalidSize() {
-        val result =
-            setupWriter(newTestResultWriter()).setTransitionEndTime(Timestamp.EMPTY).write()
+        val result = setupWriter(newTestResultWriter()).setTransitionEndTime(Timestamp.MIN).write()
         val reader = ResultReader(result, DEFAULT_TRACE_CONFIG)
         val exception =
-            assertThrows(IllegalArgumentException::class.java) {
+            assertThrows<IllegalArgumentException> {
                 doParse(reader) ?: error("$traceName not built")
             }
         assertExceptionMessage(exception, invalidSizeMessage)
