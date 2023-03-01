@@ -29,6 +29,7 @@ import com.android.server.wm.flicker.rules.ChangeDisplayOrientationRule
 import com.android.server.wm.flicker.rules.LaunchAppRule
 import com.android.server.wm.flicker.rules.RemoveAllTasksButHomeRule
 import com.android.server.wm.traces.common.IScenario
+import com.android.server.wm.traces.parser.withPerfettoTrace
 import org.junit.rules.RuleChain
 import org.junit.runner.Description
 
@@ -43,16 +44,18 @@ class TransitionRunner(
 ) {
     /** Executes [flicker] transition and returns the result */
     fun execute(flicker: IFlickerTestData, description: Description?): ResultData {
-        resultWriter.forScenario(scenario).withOutputDir(flicker.outputDir)
+        return withPerfettoTrace("TransitionRunner:execute") {
+            resultWriter.forScenario(scenario).withOutputDir(flicker.outputDir)
 
-        val ruleChain = buildTestRuleChain(flicker)
-        try {
-            ruleChain.apply(/* statement */ null, description).evaluate()
-            resultWriter.setRunComplete()
-        } catch (e: Throwable) {
-            resultWriter.setRunFailed(e)
+            val ruleChain = buildTestRuleChain(flicker)
+            try {
+                ruleChain.apply(/* statement */ null, description).evaluate()
+                resultWriter.setRunComplete()
+            } catch (e: Throwable) {
+                resultWriter.setRunFailed(e)
+            }
+            resultWriter.write()
         }
-        return resultWriter.write()
     }
 
     /**
@@ -70,13 +73,22 @@ class TransitionRunner(
      */
     private fun buildTestRuleChain(flicker: IFlickerTestData): RuleChain {
         return RuleChain.outerRule(UnlockScreenRule())
-            .around(NavigationModeRule(scenario.navBarMode.value))
+            .around(
+                NavigationModeRule(
+                    scenario.navBarMode.value,
+                    /* changeNavigationModeAfterTest */ false
+                )
+            )
             .around(
                 LaunchAppRule(MessagingAppHelper(instrumentation), clearCacheAfterParsing = false)
             )
             .around(RemoveAllTasksButHomeRule())
             .around(
-                ChangeDisplayOrientationRule(scenario.startRotation, clearCacheAfterParsing = false)
+                ChangeDisplayOrientationRule(
+                    scenario.startRotation,
+                    resetOrientationAfterTest = false,
+                    clearCacheAfterParsing = false
+                )
             )
             .around(PressHomeRule())
             .around(

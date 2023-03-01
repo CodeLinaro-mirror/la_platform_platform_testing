@@ -17,12 +17,14 @@
 package com.android.server.wm.flicker.runner
 
 import android.app.Instrumentation
+import android.platform.test.rule.ArtifactSaver
 import android.util.Log
 import com.android.server.wm.flicker.FLICKER_TAG
 import com.android.server.wm.flicker.ITransitionMonitor
 import com.android.server.wm.flicker.io.ResultWriter
 import com.android.server.wm.traces.common.IScenario
 import com.android.server.wm.traces.parser.windowmanager.WindowManagerStateHelper
+import com.android.server.wm.traces.parser.withPerfettoTrace
 import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
@@ -57,12 +59,13 @@ class TraceMonitorRule(
     }
 
     private fun doStartMonitors(description: Description?) {
-        Log.d(FLICKER_RUNNER_TAG, "doStartMonitors")
-        Utils.executeAndNotifyRunner(scenario, "Starting traces for $description") {
+        withPerfettoTrace("doStartMonitors") {
+            Utils.notifyRunnerProgress(scenario, "Starting traces for $description")
             traceMonitors.forEach {
                 try {
                     it.start()
                 } catch (e: Throwable) {
+                    ArtifactSaver.onError(Utils.expandDescription(description, "startTrace"), e)
                     throw TransitionTracingFailure(e)
                 }
             }
@@ -70,8 +73,8 @@ class TraceMonitorRule(
     }
 
     private fun doStopMonitors(description: Description?) {
-        Log.d(FLICKER_RUNNER_TAG, "doStopMonitors")
-        Utils.executeAndNotifyRunner(scenario, "Stopping traces for $description") {
+        withPerfettoTrace("doStopMonitors") {
+            Utils.notifyRunnerProgress(scenario, "Stopping traces for $description")
             val errors =
                 traceMonitors.map {
                     runCatching {
@@ -79,6 +82,10 @@ class TraceMonitorRule(
                             it.stop()
                             it.setResult(resultWriter)
                         } catch (e: Throwable) {
+                            ArtifactSaver.onError(
+                                Utils.expandDescription(description, "stopTrace"),
+                                e
+                            )
                             Log.e(FLICKER_TAG, "Unable to stop $it", e)
                             throw TransitionTracingFailure(e)
                         }

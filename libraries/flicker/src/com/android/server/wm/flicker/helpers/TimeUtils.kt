@@ -24,10 +24,10 @@ import java.util.Locale
 import java.util.TimeZone
 
 const val MILLISECOND_AS_NANOSECONDS: Long = 1000000
-private const val SECOND_AS_NANOSECONDS: Long = 1000000000
-private const val MINUTE_AS_NANOSECONDS: Long = 60000000000
-private const val HOUR_AS_NANOSECONDS: Long = 3600000000000
-private const val DAY_AS_NANOSECONDS: Long = 86400000000000
+const val SECOND_AS_NANOSECONDS: Long = 1000000000
+const val MINUTE_AS_NANOSECONDS: Long = 60000000000
+const val HOUR_AS_NANOSECONDS: Long = 3600000000000
+const val DAY_AS_NANOSECONDS: Long = 86400000000000
 
 fun Timestamp.format(): String {
     if (this == Timestamp.EMPTY) {
@@ -84,12 +84,12 @@ fun formatElapsedTimestamp(timestampNs: Long): String {
 fun formatRealTimestamp(timestampNs: Long): String {
     val timestampMs = timestampNs / MILLISECOND_AS_NANOSECONDS
     val remainderNs = timestampNs % MILLISECOND_AS_NANOSECONDS
-    val timeFormatter = SimpleDateFormat("HH'h'mm'm'ss's'SSS'ms'", Locale.ENGLISH)
-    timeFormatter.timeZone = TimeZone.getTimeZone("UTC")
-    val dateFormatter = SimpleDateFormat("d MMM yyyy zz", Locale.ENGLISH)
-    dateFormatter.timeZone = TimeZone.getTimeZone("UTC")
     val date = Date(timestampMs)
-    return "${timeFormatter.format(date)}${remainderNs}ns, ${dateFormatter.format(date)}"
+
+    val timeFormatter = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS", Locale.ENGLISH)
+    timeFormatter.timeZone = TimeZone.getTimeZone("UTC")
+
+    return "${timeFormatter.format(date)}${remainderNs.toString().padStart(6, '0')}"
 }
 
 class TimeFormatter {

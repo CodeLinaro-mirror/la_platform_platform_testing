@@ -17,11 +17,12 @@
 package com.android.server.wm.flicker.runner
 
 import android.app.Instrumentation
-import android.util.Log
+import android.platform.test.rule.ArtifactSaver
 import com.android.server.wm.flicker.IFlickerTestData
 import com.android.server.wm.flicker.io.ResultWriter
 import com.android.server.wm.traces.common.IScenario
 import com.android.server.wm.traces.parser.windowmanager.WindowManagerStateHelper
+import com.android.server.wm.traces.parser.withPerfettoTrace
 import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
@@ -61,12 +62,13 @@ class SetupTeardownRule(
 
     @Throws(TransitionSetupFailure::class)
     private fun doRunTransitionSetup(description: Description?) {
-        Log.d(FLICKER_RUNNER_TAG, "doRunTransitionSetup")
-        Utils.executeAndNotifyRunner(scenario, "Running transition setup for $description") {
+        withPerfettoTrace("doRunTransitionSetup") {
+            Utils.notifyRunnerProgress(scenario, "Running transition setup for $description")
             try {
                 setupCommands.forEach { it.invoke(flicker) }
                 Utils.doWaitForUiStabilize(wmHelper)
             } catch (e: Throwable) {
+                ArtifactSaver.onError(Utils.expandDescription(description, "setup"), e)
                 throw TransitionSetupFailure(e)
             }
         }
@@ -74,12 +76,13 @@ class SetupTeardownRule(
 
     @Throws(TransitionTeardownFailure::class)
     private fun doRunTransitionTeardown(description: Description?) {
-        Log.d(FLICKER_RUNNER_TAG, "doRunTransitionTeardown")
-        Utils.executeAndNotifyRunner(scenario, "Running transition teardown for $description") {
+        withPerfettoTrace("doRunTransitionTeardown") {
+            Utils.notifyRunnerProgress(scenario, "Running transition teardown for $description")
             try {
                 teardownCommands.forEach { it.invoke(flicker) }
                 Utils.doWaitForUiStabilize(wmHelper)
             } catch (e: Throwable) {
+                ArtifactSaver.onError(Utils.expandDescription(description, "teardown"), e)
                 throw TransitionTeardownFailure(e)
             }
         }

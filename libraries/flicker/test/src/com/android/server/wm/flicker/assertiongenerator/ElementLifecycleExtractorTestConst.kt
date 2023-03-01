@@ -239,7 +239,11 @@ class ElementLifecycleExtractorTestConst {
             var traceEntries = arrayOf<BaseLayerTraceEntry>()
             for ((timestamp, flattenedLayers) in mapOfFlattenedLayers) {
                 val layerTraceEntryBuilder =
-                    LayerTraceEntryBuilder(timestamp.toString(), flattenedLayers, arrayOf(), 1)
+                    LayerTraceEntryBuilder()
+                        .setElapsedTimestamp(timestamp.toString())
+                        .setLayers(flattenedLayers)
+                        .setDisplays(arrayOf())
+                        .setVSyncId("1")
                 val layerTraceEntry = layerTraceEntryBuilder.build()
                 traceEntries += layerTraceEntry
             }
@@ -257,12 +261,11 @@ class ElementLifecycleExtractorTestConst {
             var traceEntries = arrayOf<BaseLayerTraceEntry>()
             for ((timestamp, flattenedLayers) in mapOfFlattenedLayers) {
                 val layerTraceEntryBuilder =
-                    LayerTraceEntryBuilder(
-                        timestamp.toString(),
-                        flattenedLayers,
-                        arrayOf(),
-                        timestamp.toLong()
-                    )
+                    LayerTraceEntryBuilder()
+                        .setElapsedTimestamp(timestamp.toString())
+                        .setLayers(flattenedLayers)
+                        .setDisplays(arrayOf())
+                        .setVSyncId(timestamp.toString())
                 val layerTraceEntry = layerTraceEntryBuilder.build()
                 traceEntries += layerTraceEntry
             }
@@ -339,7 +342,8 @@ class ElementLifecycleExtractorTestConst {
                 requestedColor = Color.DEFAULT,
                 cornerRadiusCrop = RectF.EMPTY,
                 inputTransform = transform,
-                inputRegion = Region.from(rect.toRect())
+                inputRegion = Region.from(rect.toRect()),
+                excludesCompositionState = false
             )
         }
     }

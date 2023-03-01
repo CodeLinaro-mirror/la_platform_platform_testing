@@ -15,6 +15,7 @@
  */
 package android.platform.test.scenario.tapl_common
 
+import android.platform.uiautomator_helpers.BetterSwipe
 import androidx.test.uiautomator.StaleObjectException
 import androidx.test.uiautomator.UiObject2
 import androidx.test.uiautomator.UiObject2Condition
@@ -50,6 +51,10 @@ object Gestures {
         waitForObjectCondition(uiObject, waitReason, Until.clickable(true), "clickable")
     }
 
+    private fun waitForObjectLongClickable(uiObject: UiObject2, waitReason: String) {
+        waitForObjectCondition(uiObject, waitReason, Until.longClickable(true), "long-clickable")
+    }
+
     /**
      * Wait for the object to become clickable and enabled, then clicks the object.
      *
@@ -61,12 +66,54 @@ object Gestures {
         try {
             waitForObjectEnabled(uiObject, objectName)
             waitForObjectClickable(uiObject, objectName)
-            uiObject.click()
+            clickNow(uiObject)
         } catch (e: StaleObjectException) {
             throw AssertionError(
                 "UI object '$objectName' has disappeared from the screen during the click gesture.",
                 e
             )
         }
+    }
+
+    /** The result of [longClickDown]. The caller has to call the [up] method. */
+    class LongClick internal constructor(swipe: BetterSwipe.Swipe) {
+        private val mSwipe: BetterSwipe.Swipe = swipe
+
+        fun up() {
+            mSwipe.release()
+        }
+    }
+
+    /**
+     * Waits for the object to become long-clickable and enabled, then presses the object down.
+     *
+     * @param [uiObject] The object to click
+     * @param [objectName] Name of the object for diags
+     * @return the object with [LongClick.up] method that needs to be called.
+     */
+    @JvmStatic
+    fun longClickDown(uiObject: UiObject2, objectName: String): LongClick {
+        try {
+            waitForObjectEnabled(uiObject, objectName)
+            waitForObjectLongClickable(uiObject, objectName)
+            return LongClick(BetterSwipe.from(uiObject.visibleCenter))
+        } catch (e: StaleObjectException) {
+            throw AssertionError(
+                "UI object '$objectName' has disappeared from " +
+                    "the screen during the long click gesture.",
+                e
+            )
+        }
+    }
+
+    /**
+     * Click on the ui object right away without waiting for animation.
+     *
+     * [UiObject2.click] would wait for all animations finished before clicking. Not waiting for
+     * animations because in some scenarios there is a playing animations when the click is
+     * attempted.
+     */
+    private fun clickNow(uiObject: UiObject2) {
+        BetterSwipe.from(uiObject.visibleCenter).release()
     }
 }

@@ -16,9 +16,10 @@
 
 package com.android.server.wm.flicker.io
 
+import androidx.collection.LruCache
 import com.android.server.wm.flicker.RunStatus
 import com.android.server.wm.flicker.Utils
-import com.android.server.wm.flicker.traces.eventlog.FocusEvent
+import java.nio.file.Files
 import java.nio.file.Path
 
 /**
@@ -32,14 +33,11 @@ import java.nio.file.Path
  */
 class ResultData(
     _artifactPath: Path,
-    _eventLog: List<FocusEvent>?,
     _transitionTimeRange: TransitionTimeRange,
     _executionError: Throwable?,
     _runStatus: RunStatus
 ) {
     var artifactPath: Path = _artifactPath
-        private set
-    var eventLog: List<FocusEvent>? = _eventLog
         private set
     var transitionTimeRange: TransitionTimeRange = _transitionTimeRange
         private set
@@ -47,6 +45,12 @@ class ResultData(
         private set
     var runStatus: RunStatus = _runStatus
         private set
+
+    fun getArtifactBytes(): ByteArray {
+        val data = cache[artifactPath] ?: Files.readAllBytes(artifactPath)
+        cache.put(artifactPath, data)
+        return data
+    }
 
     /** updates the artifact status to [newStatus] */
     internal fun updateStatus(newStatus: RunStatus) = apply {
@@ -58,6 +62,8 @@ class ResultData(
         val newFile = currFile.resolveSibling("${newStatus.prefix}_$currTestName")
         if (currFile != newFile) {
             Utils.moveFile(currFile, newFile)
+            // update LRU cache
+            cache.put(newFile, getArtifactBytes())
             artifactPath = newFile
             runStatus = newStatus
         }
@@ -72,5 +78,9 @@ class ResultData(
             append(it.message)
         }
         append(") ")
+    }
+
+    companion object {
+        private val cache = LruCache<Path, ByteArray>(1)
     }
 }
