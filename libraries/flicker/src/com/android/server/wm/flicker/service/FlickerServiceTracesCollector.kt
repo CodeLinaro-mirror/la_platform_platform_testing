@@ -19,10 +19,11 @@ package com.android.server.wm.flicker.service
 import android.util.Log
 import com.android.server.wm.flicker.DEFAULT_TRACE_CONFIG
 import com.android.server.wm.flicker.FLICKER_TAG
+import com.android.server.wm.flicker.Scenario
 import com.android.server.wm.flicker.ScenarioBuilder
 import com.android.server.wm.flicker.io.IReader
 import com.android.server.wm.flicker.io.ResultData
-import com.android.server.wm.flicker.io.ResultReader
+import com.android.server.wm.flicker.io.ResultReaderWithLru
 import com.android.server.wm.flicker.io.ResultWriter
 import com.android.server.wm.flicker.monitor.EventLogMonitor
 import com.android.server.wm.flicker.monitor.LayersTraceMonitor
@@ -32,7 +33,11 @@ import com.android.server.wm.flicker.monitor.WindowManagerTraceMonitor
 import java.nio.file.Files
 import java.nio.file.Path
 
-class FlickerServiceTracesCollector(val outputDir: Path) : ITracesCollector {
+class FlickerServiceTracesCollector(
+    val outputDir: Path,
+    val scenario: Scenario =
+        ScenarioBuilder().forClass(FlickerServiceTracesCollector::class.java.simpleName).build()
+) : ITracesCollector {
 
     private var result: ResultData? = null
 
@@ -58,10 +63,6 @@ class FlickerServiceTracesCollector(val outputDir: Path) : ITracesCollector {
             Files.createDirectories(outputDir)
 
             Log.v(LOG_TAG, "Stopping trace monitors")
-            val scenario =
-                ScenarioBuilder()
-                    .forClass(FlickerServiceTracesCollector::class.java.simpleName)
-                    .build()
             val writer = ResultWriter().forScenario(scenario).withOutputDir(outputDir)
             traceMonitors.forEach {
                 it.stop()
@@ -75,7 +76,7 @@ class FlickerServiceTracesCollector(val outputDir: Path) : ITracesCollector {
         return reportErrorsBlock("Failed to get collected traces") {
             val result = result
             requireNotNull(result) { "Result not set" }
-            ResultReader(result, DEFAULT_TRACE_CONFIG)
+            ResultReaderWithLru(result, DEFAULT_TRACE_CONFIG)
         }
     }
 

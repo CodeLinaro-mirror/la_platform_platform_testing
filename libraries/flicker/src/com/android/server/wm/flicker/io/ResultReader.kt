@@ -18,16 +18,17 @@ package com.android.server.wm.flicker.io
 
 import android.util.Log
 import androidx.annotation.VisibleForTesting
-import androidx.collection.LruCache
 import com.android.server.wm.flicker.AssertionTag
 import com.android.server.wm.flicker.TraceConfig
 import com.android.server.wm.flicker.TraceConfigs
+import com.android.server.wm.traces.common.Timestamp
+import com.android.server.wm.traces.common.events.CujTrace
 import com.android.server.wm.traces.common.events.EventLog
 import com.android.server.wm.traces.common.layers.LayersTrace
+import com.android.server.wm.traces.common.parser.events.EventLogParser
 import com.android.server.wm.traces.common.transactions.TransactionsTrace
 import com.android.server.wm.traces.common.transition.TransitionsTrace
 import com.android.server.wm.traces.common.windowmanager.WindowManagerTrace
-import com.android.server.wm.traces.parser.events.EventLogParser
 import com.android.server.wm.traces.parser.layers.LayersTraceParser
 import com.android.server.wm.traces.parser.transaction.TransactionsTraceParser
 import com.android.server.wm.traces.parser.transition.TransitionsTraceParser
@@ -38,7 +39,6 @@ import java.io.BufferedOutputStream
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.IOException
-import java.nio.file.Path
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 
@@ -48,13 +48,13 @@ import java.util.zip.ZipInputStream
  * @param result to read from
  * @param traceConfig
  */
-open class ResultReader(protected var result: ResultData, private val traceConfig: TraceConfigs) :
+open class ResultReader(internal var result: ResultData, internal val traceConfig: TraceConfigs) :
     IReader {
     override val artifactPath
         get() = result.artifactPath
     override val runStatus
         get() = result.runStatus
-    private val transitionTimeRange
+    internal val transitionTimeRange
         get() = result.transitionTimeRange
     override val isFailure
         get() = runStatus.isFailure
@@ -136,28 +136,25 @@ open class ResultReader(protected var result: ResultData, private val traceConfi
     @Throws(IOException::class)
     override fun readWmTrace(): WindowManagerTrace? {
         val descriptor = ResultArtifactDescriptor(TraceType.WM)
-        val key = CacheKey(artifactPath, descriptor)
-        return wmTraceCache[key]
-            ?: readFromZip(descriptor)?.let {
-                val trace =
-                    WindowManagerTraceParser()
-                        .parse(
-                            it,
-                            from = transitionTimeRange.start.elapsedNanos,
-                            to = transitionTimeRange.end.elapsedNanos,
-                            addInitialEntry = true,
-                            clearCache = true
-                        )
-                val minimumEntries = minimumTraceEntriesForConfig(traceConfig.wmTrace)
-                require(trace.entries.size >= minimumEntries) {
-                    "WM trace contained ${trace.entries.size} entries, " +
-                        "expected at least $minimumEntries... :: " +
-                        "transition starts at ${transitionTimeRange.start.elapsedNanos} and " +
-                        "ends at ${transitionTimeRange.end.elapsedNanos}."
-                }
-                wmTraceCache.put(key, trace)
-                trace
+        return readFromZip(descriptor)?.let {
+            val trace =
+                WindowManagerTraceParser()
+                    .parse(
+                        it,
+                        from = transitionTimeRange.start,
+                        to = transitionTimeRange.end,
+                        addInitialEntry = true,
+                        clearCache = true
+                    )
+            val minimumEntries = minimumTraceEntriesForConfig(traceConfig.wmTrace)
+            require(trace.entries.size >= minimumEntries) {
+                "WM trace contained ${trace.entries.size} entries, " +
+                    "expected at least $minimumEntries... :: " +
+                    "transition starts at ${transitionTimeRange.start} and " +
+                    "ends at ${transitionTimeRange.end}."
             }
+            trace
+        }
     }
 
     /**
@@ -167,28 +164,25 @@ open class ResultReader(protected var result: ResultData, private val traceConfi
     @Throws(IOException::class)
     override fun readLayersTrace(): LayersTrace? {
         val descriptor = ResultArtifactDescriptor(TraceType.SF)
-        val key = CacheKey(artifactPath, descriptor)
-        return layersTraceCache[key]
-            ?: readFromZip(descriptor)?.let {
-                val trace =
-                    LayersTraceParser()
-                        .parse(
-                            it,
-                            transitionTimeRange.start.systemUptimeNanos,
-                            transitionTimeRange.end.systemUptimeNanos,
-                            addInitialEntry = true,
-                            clearCache = true
-                        )
-                val minimumEntries = minimumTraceEntriesForConfig(traceConfig.layersTrace)
-                require(trace.entries.size >= minimumEntries) {
-                    "Layers trace contained ${trace.entries.size} entries, " +
-                        "expected at least $minimumEntries... :: " +
-                        "transition starts at ${transitionTimeRange.start.systemUptimeNanos} and " +
-                        "ends at ${transitionTimeRange.end.systemUptimeNanos}."
-                }
-                layersTraceCache.put(key, trace)
-                trace
+        return readFromZip(descriptor)?.let {
+            val trace =
+                LayersTraceParser()
+                    .parse(
+                        it,
+                        transitionTimeRange.start,
+                        transitionTimeRange.end,
+                        addInitialEntry = true,
+                        clearCache = true
+                    )
+            val minimumEntries = minimumTraceEntriesForConfig(traceConfig.layersTrace)
+            require(trace.entries.size >= minimumEntries) {
+                "Layers trace contained ${trace.entries.size} entries, " +
+                    "expected at least $minimumEntries... :: " +
+                    "transition starts at ${transitionTimeRange.start} and " +
+                    "ends at ${transitionTimeRange.end}."
             }
+            trace
+        }
     }
 
     /**
@@ -208,12 +202,9 @@ open class ResultReader(protected var result: ResultData, private val traceConfi
      */
     @Throws(IOException::class)
     override fun readTransactionsTrace(): TransactionsTrace? =
-        doReadTransactionsTrace(
-            from = transitionTimeRange.start.systemUptimeNanos,
-            to = transitionTimeRange.end.systemUptimeNanos
-        )
+        doReadTransactionsTrace(from = transitionTimeRange.start, to = transitionTimeRange.end)
 
-    private fun doReadTransactionsTrace(from: Long, to: Long): TransactionsTrace? {
+    private fun doReadTransactionsTrace(from: Timestamp, to: Timestamp): TransactionsTrace? {
         val traceData = readFromZip(ResultArtifactDescriptor(TraceType.TRANSACTION))
         return traceData?.let {
             val trace = TransactionsTraceParser().parse(it, from, to, addInitialEntry = true)
@@ -228,18 +219,13 @@ open class ResultReader(protected var result: ResultData, private val traceConfi
      */
     @Throws(IOException::class)
     override fun readTransitionsTrace(): TransitionsTrace? {
-        val transactionsTrace = doReadTransactionsTrace(Long.MIN_VALUE, Long.MAX_VALUE)
         val traceData = readFromZip(ResultArtifactDescriptor(TraceType.TRANSITION))
-        if (transactionsTrace == null || traceData == null) {
+        if (traceData == null) {
             return null
         }
 
-        val fullTrace = TransitionsTraceParser(transactionsTrace).parse(traceData)
-        val trace =
-            fullTrace.slice(
-                transitionTimeRange.start.elapsedNanos,
-                transitionTimeRange.end.elapsedNanos
-            )
+        val fullTrace = TransitionsTraceParser().parse(traceData)
+        val trace = fullTrace.slice(transitionTimeRange.start, transitionTimeRange.end)
         if (!traceConfig.transitionsTrace.allowNoChange) {
             require(trace.entries.isNotEmpty()) { "Transitions trace cannot be empty" }
         }
@@ -251,25 +237,37 @@ open class ResultReader(protected var result: ResultData, private val traceConfi
     }
 
     /**
-     * @return a List<[FocusEvent]> for the part of the trace we want to run the assertions on
+     * @return an [EventLog] for the part of the trace we want to run the assertions on
      * @throws IOException if the artifact file doesn't exist or can't be read
      */
     @Throws(IOException::class)
-    override fun readEventLogTrace(): EventLog? =
-        doReadEventLog(
-            from = transitionTimeRange.start.unixNanos,
-            to = transitionTimeRange.end.unixNanos
-        )
-
-    private fun doReadEventLog(from: Long, to: Long): EventLog? {
+    override fun readEventLogTrace(): EventLog? {
         val descriptor = ResultArtifactDescriptor(TraceType.EVENT_LOG)
-        val key = CacheKey(artifactPath, descriptor)
-        return eventLogCache[key]
-            ?: readFromZip(descriptor)?.let {
-                val trace = EventLogParser().parse(it, from, to)
-                eventLogCache.put(key, trace)
-                trace
-            }
+        return readFromZip(descriptor)?.let {
+            EventLogParser()
+                .parse(it, from = transitionTimeRange.start, to = transitionTimeRange.end)
+        }
+    }
+
+    /**
+     * @return a [CujTrace] for the part of the trace we want to run the assertions on
+     * @throws IOException if the artifact file doesn't exist or can't be read
+     */
+    @Throws(IOException::class)
+    override fun readCujTrace(): CujTrace? = readEventLogTrace()?.cujTrace
+
+    /** @return an [IReader] for the subsection of the trace we are reading in this reader */
+    override fun slice(startTimestamp: Timestamp, endTimestamp: Timestamp): ResultReader {
+        require(startTimestamp.hasAllTimestamps)
+        require(endTimestamp.hasAllTimestamps)
+        val slicedResult =
+            ResultData(
+                result.artifactPath,
+                TransitionTimeRange(startTimestamp, endTimestamp),
+                result.executionError,
+                result.runStatus
+            )
+        return ResultReader(slicedResult, traceConfig)
     }
 
     override fun toString(): String = "$result"
@@ -289,16 +287,5 @@ open class ResultReader(protected var result: ResultData, private val traceConfi
         var found = false
         forEachFileInZip { found = found || (it.name == descriptor.fileNameInArtifact) }
         return found
-    }
-
-    companion object {
-        data class CacheKey(
-            private val artifactPath: Path,
-            private val descriptor: ResultArtifactDescriptor
-        )
-
-        private val wmTraceCache = LruCache<CacheKey, WindowManagerTrace>(1)
-        private val layersTraceCache = LruCache<CacheKey, LayersTrace>(1)
-        private val eventLogCache = LruCache<CacheKey, EventLog>(1)
     }
 }
