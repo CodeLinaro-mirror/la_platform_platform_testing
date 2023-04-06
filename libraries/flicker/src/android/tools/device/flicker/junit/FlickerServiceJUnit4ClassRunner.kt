@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package android.tools.device.flicker.junit
 
 import android.os.Bundle
 import android.platform.test.util.TestFilter
-import android.tools.common.Scenario
+import android.util.Log
 import androidx.test.platform.app.InstrumentationRegistry
 import java.util.Collections
 import java.util.concurrent.locks.Lock
@@ -27,6 +27,8 @@ import org.junit.FixMethodOrder
 import org.junit.Ignore
 import org.junit.internal.AssumptionViolatedException
 import org.junit.internal.runners.model.EachTestNotifier
+import org.junit.internal.runners.model.ReflectiveCallable
+import org.junit.internal.runners.statements.Fail
 import org.junit.runner.Description
 import org.junit.runner.manipulation.Filter
 import org.junit.runner.manipulation.InvalidOrderingException
@@ -36,50 +38,26 @@ import org.junit.runner.manipulation.Orderer
 import org.junit.runner.manipulation.Sorter
 import org.junit.runner.notification.RunNotifier
 import org.junit.runner.notification.StoppedByUserException
+import org.junit.runners.BlockJUnit4ClassRunner
 import org.junit.runners.model.FrameworkMethod
 import org.junit.runners.model.RunnerScheduler
 import org.junit.runners.model.Statement
-import org.junit.runners.parameterized.BlockJUnit4ClassRunnerWithParameters
-import org.junit.runners.parameterized.TestWithParameters
 
-/**
- * Implements the JUnit 4 standard test case class model, parsing from a flicker DSL.
- *
- * Supports both assertions in {@link org.junit.Test} and assertions defined in the DSL
- *
- * When using this runner the default `atest class#method` command doesn't work. Instead use: --
- * --test-arg \
- *
- * ```
- *     com.android.tradefed.testtype.AndroidJUnitTest:instrumentation-arg:filter-tests:=<TEST_NAME>
- * ```
- *
- * For example: `atest FlickerTests -- \
- *
- * ```
- *     --test-arg com.android.tradefed.testtype.AndroidJUnitTest:instrumentation-arg:filter-tests\
- *     :=com.android.server.wm.flicker.close.\
- *     CloseAppBackButtonTest#launcherWindowBecomesVisible[ROTATION_90_GESTURAL_NAV]`
- * ```
- */
-class FlickerBlockJUnit4ClassRunner(test: TestWithParameters?, private val scenario: Scenario?) :
-    BlockJUnit4ClassRunnerWithParameters(test), IFlickerJUnitDecorator {
-
+open class FlickerServiceJUnit4ClassRunner
+@JvmOverloads
+constructor(testClass: Class<*>?, paramString: String? = null) :
+    BlockJUnit4ClassRunner(testClass), IFlickerJUnitDecorator {
     private val arguments: Bundle = InstrumentationRegistry.getArguments()
     private val flickerDecorator =
-        test?.let {
-            FlickerServiceDecorator(
-                test.testClass,
-                scenario,
-                inner = LegacyFlickerDecorator(test.testClass, scenario, inner = this)
-            )
+        testClass?.let {
+            FlickerServiceDecorator(this.testClass, paramString = paramString, inner = this)
         }
 
     override fun run(notifier: RunNotifier) {
         val testNotifier = EachTestNotifier(notifier, description)
         testNotifier.fireTestSuiteStarted()
         try {
-            val statement = classBlock(notifier)
+            val statement = childrenInvoker(notifier)
             statement.evaluate()
         } catch (e: AssumptionViolatedException) {
             testNotifier.addFailedAssumption(e)
@@ -141,10 +119,8 @@ class FlickerBlockJUnit4ClassRunner(test: TestWithParameters?, private val scena
      */
     public override fun computeTestMethods(): List<FrameworkMethod> {
         val result = mutableListOf<FrameworkMethod>()
-        if (scenario != null) {
-            val testInstance = createTest()
-            result.addAll(flickerDecorator?.getTestMethods(testInstance) ?: emptyList())
-        }
+        val testInstance = createTest()
+        result.addAll(flickerDecorator?.getTestMethods(testInstance) ?: emptyList())
         return result
     }
 
@@ -207,6 +183,10 @@ class FlickerBlockJUnit4ClassRunner(test: TestWithParameters?, private val scena
     override fun getMethodInvoker(method: FrameworkMethod, test: Any): Statement {
         return super.methodInvoker(method, test)
     }
+
+    override fun shouldRunBeforeOn(method: FrameworkMethod): Boolean = true
+
+    override fun shouldRunAfterOn(method: FrameworkMethod): Boolean = true
 
     /**
      * ********************************************************************************************
@@ -342,6 +322,7 @@ class FlickerBlockJUnit4ClassRunner(test: TestWithParameters?, private val scena
     override fun childrenInvoker(notifier: RunNotifier): Statement {
         return object : Statement() {
             override fun evaluate() {
+                Log.d("PAB", "RUNNING MY CHILD INVOKER")
                 runChildren(notifier)
             }
         }
@@ -356,6 +337,52 @@ class FlickerBlockJUnit4ClassRunner(test: TestWithParameters?, private val scena
         } finally {
             currentScheduler.finished()
         }
+    }
+
+    //
+    // Implementation of ParentRunner
+    //
+    override fun runChild(method: FrameworkMethod, notifier: RunNotifier) {
+        val description = describeChild(method)
+        if (isIgnored(method)) {
+            notifier.fireTestIgnored(description)
+        } else {
+            val statement: Statement =
+                object : Statement() {
+                    @Throws(Throwable::class)
+                    override fun evaluate() {
+                        methodBlock(method).evaluate()
+                    }
+                }
+            runLeaf(statement, description, notifier)
+        }
+    }
+
+    override fun methodBlock(method: FrameworkMethod?): Statement {
+        val test: Any =
+            try {
+                object : ReflectiveCallable() {
+                        @Throws(Throwable::class)
+                        override fun runReflectiveCall(): Any {
+                            return createTest(method)
+                        }
+                    }
+                    .run()
+            } catch (e: Throwable) {
+                return Fail(e)
+            }
+        var statement: Statement? = methodInvoker(method!!, test)
+        statement = possiblyExpectingExceptions(method, test, statement)
+        statement = withPotentialTimeout(method, test, statement)
+        if (flickerDecorator?.shouldRunBeforeOn(method) ?: true) {
+            statement = withBefores(method, test, statement)
+        }
+        if (flickerDecorator?.shouldRunAfterOn(method) ?: true) {
+            statement = withAfters(method, test, statement)
+        }
+        //        statement = withRules(method, test, statement)
+        statement = withInterruptIsolation(statement)
+        return statement
     }
 
     private fun comparator(sorter: Sorter): Comparator<in FrameworkMethod> {
