@@ -109,6 +109,7 @@ class LayersTraceSubject(
                 ComponentNameMatcher.SNAPSHOT,
                 ComponentNameMatcher.IME_SNAPSHOT,
                 ComponentNameMatcher.PIP_CONTENT_OVERLAY,
+                ComponentNameMatcher.EDGE_BACK_GESTURE_HANDLER,
                 EdgeExtensionComponentMatcher()
             )
     ): LayersTraceSubject = apply {
@@ -188,6 +189,14 @@ class LayersTraceSubject(
             it.hasNoColor(componentMatcher)
         }
     }
+
+    /** {@inheritDoc} */
+    override fun hasRoundedCorners(componentMatcher: IComponentMatcher): LayersTraceSubject =
+        apply {
+            addAssertion("hasRoundedCorners(${componentMatcher.toLayerIdentifier()})") {
+                it.hasRoundedCorners(componentMatcher)
+            }
+        }
 
     /** See [isSplashScreenVisibleFor] */
     fun isSplashScreenVisibleFor(
