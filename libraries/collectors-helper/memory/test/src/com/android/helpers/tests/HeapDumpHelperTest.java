@@ -58,29 +58,11 @@ public class HeapDumpHelperTest {
     }
 
     @Test
-    public void testHeapDumpCollectionNoProcess() {
-        mHeapDumpHelper.setUp("/data/local/tmp/", "");
-        assertTrue(mHeapDumpHelper.startCollecting("sample-heapdump-1"));
-        Map<String, String> metrics = mHeapDumpHelper.getMetrics();
-        assertTrue(metrics.size() == 2);
-        assertTrue(metrics.get("managed_heapdump_empty_files_count").equalsIgnoreCase("0"));
-        assertTrue(metrics.get("native_heapdump_empty_files_count").equalsIgnoreCase("0"));
-    }
-
-    @Test
     public void testSuccessfulHeapDumpCollection() {
         mHeapDumpHelper.setUp("/data/local/tmp/", "com.android.systemui");
         assertTrue(mHeapDumpHelper.startCollecting("sample-heapdump-1"));
         Map<String, String> metrics = mHeapDumpHelper.getMetrics();
-        assertTrue(metrics.size() == 3);
-        assertTrue(metrics.get("managed_heapdump_empty_files_count").equalsIgnoreCase("0"));
-        assertTrue(metrics.get("native_heapdump_empty_files_count").equalsIgnoreCase("0"));
-        assertTrue(
-                metrics.get("managed_heapdump_file_1")
-                        .equalsIgnoreCase(
-                                "/data/local/tmp/"
-                                        + "managed_heapdump_file_"
-                                        + "com.android.systemui_sample-heapdump-1.hprof"));
+        assertTrue(metrics.size() == 1);
     }
 
     @Test
@@ -88,15 +70,11 @@ public class HeapDumpHelperTest {
         mHeapDumpHelper.setUp("/data/local/tmp/", "/system/bin/surfaceflinger");
         assertTrue(mHeapDumpHelper.startCollecting("sample-heapdump-1"));
         Map<String, String> metrics = mHeapDumpHelper.getMetrics();
-        assertTrue(metrics.size() == 3);
-        assertTrue(metrics.get("managed_heapdump_empty_files_count").equalsIgnoreCase("1"));
-        assertTrue(metrics.get("native_heapdump_empty_files_count").equalsIgnoreCase("0"));
+        assertTrue(metrics.size() == 1);
         assertTrue(
                 metrics.get("managed_heapdump_file_1")
                         .equalsIgnoreCase(
-                                "/data/local/tmp/"
-                                        + "EMPTY-managed_heapdump_file_"
-                                        + "#system#bin#surfaceflinger_sample-heapdump-1.hprof"));
+                                "/data/local/tmp/managed_heapdump_file_#system#bin#surfaceflinger_sample-heapdump-1.hprof"));
     }
 
     @Test
@@ -105,21 +83,7 @@ public class HeapDumpHelperTest {
         mHeapDumpHelper.setUp("/data/local/tmp/", processNames);
         assertTrue(mHeapDumpHelper.startCollecting("sample-heapdump-2"));
         Map<String, String> metrics = mHeapDumpHelper.getMetrics();
-        assertTrue(metrics.size() == 4);
-        assertTrue(metrics.get("managed_heapdump_empty_files_count").equalsIgnoreCase("0"));
-        assertTrue(metrics.get("native_heapdump_empty_files_count").equalsIgnoreCase("0"));
-        assertTrue(
-                metrics.get("managed_heapdump_file_1")
-                        .equalsIgnoreCase(
-                                "/data/local/tmp/"
-                                        + "managed_heapdump_file_"
-                                        + "com.android.systemui_sample-heapdump-2.hprof"));
-        assertTrue(
-                metrics.get("managed_heapdump_file_2")
-                        .equalsIgnoreCase(
-                                "/data/local/tmp/"
-                                        + "managed_heapdump_file_"
-                                        + "system_server_sample-heapdump-2.hprof"));
+        assertTrue(metrics.size() == 2);
     }
 
     @Test
@@ -129,32 +93,11 @@ public class HeapDumpHelperTest {
         mHeapDumpHelper.enableNativeHeapDump();
         assertTrue(mHeapDumpHelper.startCollecting("sample-heapdump-2"));
         Map<String, String> metrics = mHeapDumpHelper.getMetrics();
-        assertTrue(metrics.size() == 6);
-        assertTrue(metrics.get("managed_heapdump_empty_files_count").equalsIgnoreCase("0"));
-        assertTrue(metrics.get("native_heapdump_empty_files_count").equalsIgnoreCase("0"));
-        assertTrue(
-                metrics.get("managed_heapdump_file_1")
-                        .equalsIgnoreCase(
-                                "/data/local/tmp/"
-                                        + "managed_heapdump_file_"
-                                        + "com.android.systemui_sample-heapdump-2.hprof"));
-        assertTrue(
-                metrics.get("managed_heapdump_file_2")
-                        .equalsIgnoreCase(
-                                "/data/local/tmp/"
-                                        + "managed_heapdump_file_"
-                                        + "system_server_sample-heapdump-2.hprof"));
-        assertTrue(
-                metrics.get("native_heapdump_file_1")
-                        .equalsIgnoreCase(
-                                "/data/local/tmp/"
-                                        + "native_heapdump_file_"
-                                        + "com.android.systemui_sample-heapdump-2.txt"));
+        assertTrue(metrics.size() == 4);
         assertTrue(
                 metrics.get("native_heapdump_file_2")
                         .equalsIgnoreCase(
-                                "/data/local/tmp/"
-                                    + "native_heapdump_file_system_server_sample-heapdump-2.txt"));
+                                "/data/local/tmp/native_heapdump_file_system_server_sample-heapdump-2.txt"));
     }
 
     @Test
@@ -162,48 +105,6 @@ public class HeapDumpHelperTest {
         mHeapDumpHelper.setUp("/data/local/tmp/", "com.android.systemui");
         assertFalse(mHeapDumpHelper.startCollecting(""));
         Map<String, String> metrics = mHeapDumpHelper.getMetrics();
-        assertTrue(metrics.size() == 2);
-        assertTrue(metrics.get("managed_heapdump_empty_files_count").equalsIgnoreCase("0"));
-        assertTrue(metrics.get("native_heapdump_empty_files_count").equalsIgnoreCase("0"));
-    }
-
-    @Test
-    public void testHeapDumpCollectionForInvalidProcesses() {
-        String[] processNames = new String[] {"systemui", "twoshay"};
-        mHeapDumpHelper.setUp("/data/local/tmp/", processNames);
-        assertTrue(mHeapDumpHelper.startCollecting("sample-heapdump-2"));
-        Map<String, String> metrics = mHeapDumpHelper.getMetrics();
-        assertTrue(metrics.size() == 3);
-        assertTrue(metrics.get("managed_heapdump_empty_files_count").equalsIgnoreCase("1"));
-        assertTrue(metrics.get("native_heapdump_empty_files_count").equalsIgnoreCase("0"));
-        assertTrue(
-                metrics.get("managed_heapdump_file_1")
-                        .equalsIgnoreCase(
-                                "/data/local/tmp/"
-                                        + "EMPTY-managed_heapdump_file_"
-                                        + "twoshay_sample-heapdump-2.hprof"));
-    }
-
-    @Test
-    public void testNativeHeapDumpCollectionForInvalidProcesses() {
-        String[] processNames = new String[] {"systemui", "twoshay"};
-        mHeapDumpHelper.setUp("/data/local/tmp/", processNames);
-        mHeapDumpHelper.enableNativeHeapDump();
-        assertTrue(mHeapDumpHelper.startCollecting("sample-heapdump-2"));
-        Map<String, String> metrics = mHeapDumpHelper.getMetrics();
-        assertTrue(metrics.size() == 4);
-        assertTrue(metrics.get("managed_heapdump_empty_files_count").equalsIgnoreCase("1"));
-        assertTrue(metrics.get("native_heapdump_empty_files_count").equalsIgnoreCase("1"));
-        assertTrue(
-                metrics.get("managed_heapdump_file_1")
-                        .equalsIgnoreCase(
-                                "/data/local/tmp/"
-                                        + "EMPTY-managed_heapdump_file_"
-                                        + "twoshay_sample-heapdump-2.hprof"));
-        assertTrue(
-                metrics.get("native_heapdump_file_1")
-                        .equalsIgnoreCase(
-                                "/data/local/tmp/"
-                                    + "EMPTY-native_heapdump_file_twoshay_sample-heapdump-2.txt"));
+        assertTrue(metrics.size() == 0);
     }
 }
