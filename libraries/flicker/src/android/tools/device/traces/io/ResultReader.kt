@@ -19,8 +19,8 @@ package android.tools.device.traces.io
 import android.tools.common.CrossPlatform
 import android.tools.common.Tag
 import android.tools.common.Timestamp
-import android.tools.common.io.BUFFER_SIZE
 import android.tools.common.io.FLICKER_IO_TAG
+import android.tools.common.io.IArtifact
 import android.tools.common.io.IReader
 import android.tools.common.io.ResultArtifactDescriptor
 import android.tools.common.io.TraceType
@@ -39,24 +39,21 @@ import android.tools.device.traces.parsers.wm.TransitionsTraceParser
 import android.tools.device.traces.parsers.wm.WindowManagerDumpParser
 import android.tools.device.traces.parsers.wm.WindowManagerTraceParser
 import androidx.annotation.VisibleForTesting
-import java.io.BufferedInputStream
-import java.io.BufferedOutputStream
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
 import java.io.IOException
-import java.util.zip.ZipEntry
-import java.util.zip.ZipInputStream
 
 /**
  * Helper class to read results from a flicker artifact
  *
- * @param result to read from
+ * @param _result to read from
  * @param traceConfig
  */
-open class ResultReader(internal var result: IResultData, internal val traceConfig: TraceConfigs) :
-    IReader {
+open class ResultReader(_result: IResultData, internal val traceConfig: TraceConfigs) : IReader {
+    @VisibleForTesting
+    var result = _result
+        internal set
+    override val artifact: IArtifact = result.artifact
     override val artifactPath: String
-        get() = result.artifact.absolutePath
+        get() = result.artifact.path
     override val runStatus
         get() = result.runStatus
     internal val transitionTimeRange
@@ -66,64 +63,8 @@ open class ResultReader(internal var result: IResultData, internal val traceConf
     override val executionError
         get() = result.executionError
 
-    private fun withZipFile(predicate: (ZipInputStream) -> Unit) {
-        val zipInputStream =
-            ZipInputStream(
-                BufferedInputStream(ByteArrayInputStream(result.getArtifactBytes()), BUFFER_SIZE)
-            )
-        try {
-            predicate(zipInputStream)
-        } finally {
-            zipInputStream.closeEntry()
-            zipInputStream.close()
-        }
-    }
-
-    private fun forEachFileInZip(predicate: (ZipEntry) -> Unit) {
-        withZipFile {
-            var zipEntry: ZipEntry? = it.nextEntry
-            while (zipEntry != null) {
-                predicate(zipEntry)
-                zipEntry = it.nextEntry
-            }
-        }
-    }
-
-    @Throws(IOException::class)
-    private fun readFromZip(descriptor: ResultArtifactDescriptor): ByteArray? {
-        CrossPlatform.log.d(FLICKER_IO_TAG, "Reading descriptor=$descriptor from $result")
-
-        var foundFile = false
-        val outByteArray = ByteArrayOutputStream()
-        val tmpBuffer = ByteArray(BUFFER_SIZE)
-        withZipFile {
-            var zipEntry: ZipEntry? = it.nextEntry
-            while (zipEntry != null) {
-                if (zipEntry.name == descriptor.fileNameInArtifact) {
-                    val outputStream = BufferedOutputStream(outByteArray, BUFFER_SIZE)
-                    try {
-                        var size = it.read(tmpBuffer, 0, BUFFER_SIZE)
-                        while (size > 0) {
-                            outputStream.write(tmpBuffer, 0, size)
-                            size = it.read(tmpBuffer, 0, BUFFER_SIZE)
-                        }
-                        it.closeEntry()
-                    } finally {
-                        outputStream.flush()
-                        outputStream.close()
-                    }
-                    foundFile = true
-                    break
-                }
-                zipEntry = it.nextEntry
-            }
-        }
-
-        return if (foundFile) outByteArray.toByteArray() else null
-    }
-
     override fun readBytes(traceType: TraceType, tag: String): ByteArray? =
-        readFromZip(ResultArtifactDescriptor(traceType, tag))
+        artifact.readBytes(ResultArtifactDescriptor(traceType, tag))
 
     /**
      * {@inheritDoc}
@@ -134,7 +75,7 @@ open class ResultReader(internal var result: IResultData, internal val traceConf
     override fun readWmState(tag: String): WindowManagerTrace? {
         val descriptor = ResultArtifactDescriptor(TraceType.WM_DUMP, tag)
         CrossPlatform.log.d(FLICKER_IO_TAG, "Reading WM trace descriptor=$descriptor from $result")
-        val traceData = readFromZip(descriptor)
+        val traceData = artifact.readBytes(descriptor)
         return traceData?.let { WindowManagerDumpParser().parse(it, clearCache = true) }
     }
 
@@ -146,7 +87,7 @@ open class ResultReader(internal var result: IResultData, internal val traceConf
     @Throws(IOException::class)
     override fun readWmTrace(): WindowManagerTrace? {
         val descriptor = ResultArtifactDescriptor(TraceType.WM)
-        return readFromZip(descriptor)?.let {
+        return artifact.readBytes(descriptor)?.let {
             val trace =
                 WindowManagerTraceParser()
                     .parse(
@@ -175,7 +116,7 @@ open class ResultReader(internal var result: IResultData, internal val traceConf
     @Throws(IOException::class)
     override fun readLayersTrace(): LayersTrace? {
         val descriptor = ResultArtifactDescriptor(TraceType.SF)
-        return readFromZip(descriptor)?.let {
+        return artifact.readBytes(descriptor)?.let {
             val trace =
                 LayersTraceParser()
                     .parse(
@@ -204,7 +145,7 @@ open class ResultReader(internal var result: IResultData, internal val traceConf
     @Throws(IOException::class)
     override fun readLayersDump(tag: String): LayersTrace? {
         val descriptor = ResultArtifactDescriptor(TraceType.SF_DUMP, tag)
-        val traceData = readFromZip(descriptor)
+        val traceData = artifact.readBytes(descriptor)
         return traceData?.let { LayersTraceParser().parse(it, clearCache = true) }
     }
 
@@ -218,7 +159,7 @@ open class ResultReader(internal var result: IResultData, internal val traceConf
         doReadTransactionsTrace(from = transitionTimeRange.start, to = transitionTimeRange.end)
 
     private fun doReadTransactionsTrace(from: Timestamp, to: Timestamp): TransactionsTrace? {
-        val traceData = readFromZip(ResultArtifactDescriptor(TraceType.TRANSACTION))
+        val traceData = artifact.readBytes(ResultArtifactDescriptor(TraceType.TRANSACTION))
         return traceData?.let {
             val trace = TransactionsTraceParser().parse(it, from, to, addInitialEntry = true)
             require(trace.entries.isNotEmpty()) { "Transactions trace cannot be empty" }
@@ -233,7 +174,8 @@ open class ResultReader(internal var result: IResultData, internal val traceConf
      */
     @Throws(IOException::class)
     override fun readTransitionsTrace(): TransitionsTrace? {
-        val traceData = readFromZip(ResultArtifactDescriptor(TraceType.TRANSITION)) ?: return null
+        val traceData =
+            artifact.readBytes(ResultArtifactDescriptor(TraceType.TRANSITION)) ?: return null
 
         val fullTrace = TransitionsTraceParser().parse(traceData)
         val trace = fullTrace.slice(transitionTimeRange.start, transitionTimeRange.end)
@@ -255,7 +197,7 @@ open class ResultReader(internal var result: IResultData, internal val traceConf
     @Throws(IOException::class)
     override fun readEventLogTrace(): EventLog? {
         val descriptor = ResultArtifactDescriptor(TraceType.EVENT_LOG)
-        return readFromZip(descriptor)?.let {
+        return artifact.readBytes(descriptor)?.let {
             EventLogParser()
                 .parse(it, from = transitionTimeRange.start, to = transitionTimeRange.end)
         }
@@ -278,18 +220,11 @@ open class ResultReader(internal var result: IResultData, internal val traceConf
     override fun toString(): String = "$result"
 
     /** @return the number of files in the artifact */
-    @VisibleForTesting
-    fun countFiles(): Int {
-        var count = 0
-        forEachFileInZip { count++ }
-        return count
-    }
+    @VisibleForTesting fun countFiles(): Int = artifact.traceCount()
 
     /** @return if a file with type [traceType] linked to a [tag] exists in the artifact */
     fun hasTraceFile(traceType: TraceType, tag: String = Tag.ALL): Boolean {
         val descriptor = ResultArtifactDescriptor(traceType, tag)
-        var found = false
-        forEachFileInZip { found = found || (it.name == descriptor.fileNameInArtifact) }
-        return found
+        return artifact.hasTrace(descriptor)
     }
 }

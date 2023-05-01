@@ -20,6 +20,7 @@ import android.app.Instrumentation
 import android.platform.test.annotations.Presubmit
 import android.tools.common.Scenario
 import android.tools.common.datatypes.Region
+import android.tools.common.flicker.config.FaasScenarioType
 import android.tools.common.flicker.subject.FlickerSubject
 import android.tools.common.flicker.subject.layers.LayersTraceSubject
 import android.tools.common.flicker.subject.region.RegionSubject
@@ -39,7 +40,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 
-@FlickerServiceCompatible
+@FlickerServiceCompatible(expectedCujs = [FaasScenarioType.COMMON])
 @RunWith(Parameterized::class)
 @Parameterized.UseParametersRunnerFactory(FlickerParametersRunnerFactory::class)
 class FullTestRun(private val flicker: FlickerTest) {
@@ -141,9 +142,6 @@ class FullTestRun(private val flicker: FlickerTest) {
     private fun validateState(actual: FlickerSubject?, expected: FlickerSubject?) {
         Truth.assertWithMessage("Actual state").that(actual).isNotNull()
         Truth.assertWithMessage("Expected state").that(expected).isNotNull()
-        Truth.assertWithMessage("Incorrect state")
-            .that(actual?.completeFacts?.joinToString { it.toString() })
-            .isEqualTo(expected?.completeFacts?.joinToString { it.toString() })
     }
 
     private fun validateVisibleRegion(

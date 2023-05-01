@@ -17,13 +17,14 @@
 package android.tools.common.flicker
 
 import android.device.collectors.DataRecord
-import android.tools.InitRule
+import android.tools.CleanFlickerEnvironmentRule
 import android.tools.common.flicker.assertors.AssertionResult
 import android.tools.common.flicker.assertors.IAssertionResult
 import android.tools.common.flicker.assertors.IFaasAssertion
 import android.tools.common.io.IReader
 import android.tools.common.traces.wm.TransitionsTrace
 import android.tools.device.flicker.FlickerServiceResultsCollector
+import android.tools.device.traces.io.InMemoryArtifact
 import android.tools.device.traces.io.ParsedTracesReader
 import android.tools.utils.KotlinMockito
 import android.tools.utils.MockLayersTraceBuilder
@@ -31,6 +32,7 @@ import android.tools.utils.MockWindowManagerTraceBuilder
 import com.google.common.truth.Truth
 import org.junit.ClassRule
 import org.junit.FixMethodOrder
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.Description
 import org.junit.runner.notification.Failure
@@ -46,9 +48,10 @@ class FlickerServiceResultsCollectorTest {
     @Test
     fun reportsMetricsOnlyForPassingTestsIfRequested() {
         val mockTraceCollector = Mockito.mock(ITracesCollector::class.java)
-        Mockito.`when`(mockTraceCollector.getResultReader())
+        Mockito.`when`(mockTraceCollector.stop())
             .thenReturn(
                 ParsedTracesReader(
+                    artifact = InMemoryArtifact.EMPTY,
                     wmTrace = MockWindowManagerTraceBuilder().build(),
                     layersTrace = MockLayersTraceBuilder().build(),
                     transitionsTrace = TransitionsTrace(emptyArray()),
@@ -57,6 +60,8 @@ class FlickerServiceResultsCollectorTest {
             )
         val mockFlickerService = Mockito.mock(IFlickerService::class.java)
         Mockito.`when`(mockFlickerService.process(KotlinMockito.any(IReader::class.java)))
+            .thenReturn(listOf(mockSuccessfulAssertionResult))
+        Mockito.`when`(mockFlickerService.executeAssertions(KotlinMockito.argThat { true }))
             .thenReturn(listOf(mockSuccessfulAssertionResult))
 
         val collector =
@@ -69,7 +74,7 @@ class FlickerServiceResultsCollectorTest {
         val runData = DataRecord()
         val runDescription = Description.createSuiteDescription("TestSuite")
         val testData = DataRecord()
-        val testDescription = Description.createTestDescription("TestClass", "TestName")
+        val testDescription = Description.createTestDescription(this::class.java, "TestName")
 
         collector.onTestRunStart(runData, runDescription)
         collector.onTestStart(testData, testDescription)
@@ -85,9 +90,10 @@ class FlickerServiceResultsCollectorTest {
     @Test
     fun reportsMetricsForFailingTestsIfRequested() {
         val mockTraceCollector = Mockito.mock(ITracesCollector::class.java)
-        Mockito.`when`(mockTraceCollector.getResultReader())
+        Mockito.`when`(mockTraceCollector.stop())
             .thenReturn(
                 ParsedTracesReader(
+                    artifact = InMemoryArtifact.EMPTY,
                     wmTrace = MockWindowManagerTraceBuilder().build(),
                     layersTrace = MockLayersTraceBuilder().build(),
                     transitionsTrace = TransitionsTrace(emptyArray()),
@@ -96,6 +102,8 @@ class FlickerServiceResultsCollectorTest {
             )
         val mockFlickerService = Mockito.mock(IFlickerService::class.java)
         Mockito.`when`(mockFlickerService.process(KotlinMockito.any(IReader::class.java)))
+            .thenReturn(listOf(mockSuccessfulAssertionResult))
+        Mockito.`when`(mockFlickerService.executeAssertions(KotlinMockito.argThat { true }))
             .thenReturn(listOf(mockSuccessfulAssertionResult))
         val collector =
             FlickerServiceResultsCollector(
@@ -107,7 +115,7 @@ class FlickerServiceResultsCollectorTest {
         val runData = DataRecord()
         val runDescription = Description.createSuiteDescription("TestSuite")
         val testData = DataRecord()
-        val testDescription = Description.createTestDescription("TestClass", "TestName")
+        val testDescription = Description.createTestDescription(this::class.java, "TestName")
 
         collector.onTestRunStart(runData, runDescription)
         collector.onTestStart(testData, testDescription)
@@ -123,9 +131,10 @@ class FlickerServiceResultsCollectorTest {
     @Test
     fun collectsMetricsForEachTestIfRequested() {
         val mockTraceCollector = Mockito.mock(ITracesCollector::class.java)
-        Mockito.`when`(mockTraceCollector.getResultReader())
+        Mockito.`when`(mockTraceCollector.stop())
             .thenReturn(
                 ParsedTracesReader(
+                    artifact = InMemoryArtifact.EMPTY,
                     wmTrace = MockWindowManagerTraceBuilder().build(),
                     layersTrace = MockLayersTraceBuilder().build(),
                     transitionsTrace = TransitionsTrace(emptyArray()),
@@ -134,6 +143,8 @@ class FlickerServiceResultsCollectorTest {
             )
         val mockFlickerService = Mockito.mock(IFlickerService::class.java)
         Mockito.`when`(mockFlickerService.process(KotlinMockito.any(IReader::class.java)))
+            .thenReturn(listOf(mockSuccessfulAssertionResult))
+        Mockito.`when`(mockFlickerService.executeAssertions(KotlinMockito.argThat { true }))
             .thenReturn(listOf(mockSuccessfulAssertionResult))
         val collector =
             FlickerServiceResultsCollector(
@@ -145,7 +156,7 @@ class FlickerServiceResultsCollectorTest {
         val runData = DataRecord()
         val runDescription = Description.createSuiteDescription("TestSuite")
         val testData = DataRecord()
-        val testDescription = Description.createTestDescription("TestClass", "TestName")
+        val testDescription = Description.createTestDescription(this::class.java, "TestName")
 
         collector.onTestRunStart(runData, runDescription)
         collector.onTestStart(testData, testDescription)
@@ -160,9 +171,10 @@ class FlickerServiceResultsCollectorTest {
     @Test
     fun collectsMetricsForEntireTestRunIfRequested() {
         val mockTraceCollector = Mockito.mock(ITracesCollector::class.java)
-        Mockito.`when`(mockTraceCollector.getResultReader())
+        Mockito.`when`(mockTraceCollector.stop())
             .thenReturn(
                 ParsedTracesReader(
+                    artifact = InMemoryArtifact.EMPTY,
                     wmTrace = MockWindowManagerTraceBuilder().build(),
                     layersTrace = MockLayersTraceBuilder().build(),
                     transitionsTrace = TransitionsTrace(emptyArray()),
@@ -172,6 +184,8 @@ class FlickerServiceResultsCollectorTest {
         val mockFlickerService = Mockito.mock(IFlickerService::class.java)
         Mockito.`when`(mockFlickerService.process(KotlinMockito.any(IReader::class.java)))
             .thenReturn(listOf(mockSuccessfulAssertionResult))
+        Mockito.`when`(mockFlickerService.executeAssertions(KotlinMockito.argThat { true }))
+            .thenReturn(listOf(mockSuccessfulAssertionResult))
         val collector =
             FlickerServiceResultsCollector(
                 tracesCollector = mockTraceCollector,
@@ -180,9 +194,9 @@ class FlickerServiceResultsCollectorTest {
             )
 
         val runData = DataRecord()
-        val runDescription = Description.createSuiteDescription("TestSuite")
+        val runDescription = Description.createSuiteDescription(this::class.java)
         val testData = DataRecord()
-        val testDescription = Description.createTestDescription("TestClass", "TestName")
+        val testDescription = Description.createTestDescription(this::class.java, "TestName")
 
         collector.onTestRunStart(runData, runDescription)
         collector.onTestStart(testData, testDescription)
@@ -209,6 +223,6 @@ class FlickerServiceResultsCollectorTest {
                 assertionError = null
             )
 
-        @ClassRule @JvmField val initRule = InitRule()
+        @Rule @ClassRule @JvmField val cleanFlickerEnvironmentRule = CleanFlickerEnvironmentRule()
     }
 }

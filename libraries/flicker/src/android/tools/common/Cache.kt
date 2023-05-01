@@ -19,7 +19,9 @@ package android.tools.common
 import kotlin.js.JsName
 
 object Cache {
-    private val cache = mutableMapOf<Any, Any>()
+    private var cache = mutableMapOf<Any, Any>()
+
+    data class Backup(val cache: MutableMap<Any, Any>)
 
     @JsName("get")
     fun <T : Any> get(element: T): T {
@@ -28,6 +30,14 @@ object Cache {
 
     @JsName("clear")
     fun clear() {
-        Cache.cache.clear()
+        Cache.cache = mutableMapOf<Any, Any>()
+    }
+
+    fun backup(): Backup {
+        return Backup(cache.toMutableMap())
+    }
+
+    fun restore(backup: Cache.Backup) {
+        cache = backup.cache
     }
 }
