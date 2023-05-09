@@ -19,7 +19,6 @@ package android.tools.common.traces.component
 import android.tools.common.traces.surfaceflinger.Layer
 import android.tools.common.traces.wm.Activity
 import android.tools.common.traces.wm.WindowContainer
-import kotlin.js.JsName
 
 /** ComponentMatcher based on name */
 class ComponentNameMatcher(var component: ComponentName) : IComponentNameMatcher {
@@ -38,18 +37,8 @@ class ComponentNameMatcher(var component: ComponentName) : IComponentNameMatcher
 
     constructor(className: String) : this("", className)
 
-    private fun <T> matchesAnyOf(
-        values: Array<T>,
-        valueProducer: (T) -> String,
-        regexProducer: (ComponentName) -> Regex,
-    ): Boolean {
-        val componentRegex = regexProducer.invoke(component)
-        val targets = values.map { valueProducer.invoke(it) }
-        return targets.any { value -> componentRegex.matches(value) }
-    }
-
     override fun activityRecordMatchesAnyOf(layers: Array<Layer>): Boolean =
-        matchesAnyOf(layers, { it.name }, { it.toActivityRecordFilter() })
+        layers.any { activityRecordFilter.invoke(it.name) }
 
     override fun componentNameMatcherToString(): String {
         return "ComponentNameMatcher(\"${this.packageName}\", " + "\"${this.className}\")"
@@ -57,15 +46,15 @@ class ComponentNameMatcher(var component: ComponentName) : IComponentNameMatcher
 
     /** {@inheritDoc} */
     override fun windowMatchesAnyOf(windows: Array<WindowContainer>): Boolean =
-        matchesAnyOf(windows, { it.title }, { it.toWindowNameRegex() })
+        windows.any { windowNameFilter.invoke(it.title) }
 
     /** {@inheritDoc} */
     override fun activityMatchesAnyOf(activities: Array<Activity>): Boolean =
-        matchesAnyOf(activities, { it.name }, { it.toActivityNameRegex() })
+        activities.any { activityNameFilter.invoke(it.name) }
 
     /** {@inheritDoc} */
     override fun layerMatchesAnyOf(layers: Array<Layer>): Boolean =
-        matchesAnyOf(layers, { it.name }, { it.toLayerNameRegex() })
+        layers.any { layerNameFilter.invoke(it.name) }
 
     /** {@inheritDoc} */
     override fun check(
@@ -92,48 +81,52 @@ class ComponentNameMatcher(var component: ComponentName) : IComponentNameMatcher
 
     override fun toString(): String = component.toString()
 
+    private val activityRecordFilter: (String) -> Boolean
+        get() = { it.startsWith("ActivityRecord{") && it.contains(component.toShortWindowName()) }
+
+    private val activityNameFilter: (String) -> Boolean
+        get() = { it.contains(component.toActivityName()) }
+
+    private val windowNameFilter: (String) -> Boolean
+        get() = { it.contains(component.toWindowName()) }
+
+    private val layerNameFilter: (String) -> Boolean
+        get() = { it.contains(component.toLayerName()) }
+
     companion object {
-        @JsName("NAV_BAR") val NAV_BAR = ComponentNameMatcher("", "NavigationBar0")
-        @JsName("TASK_BAR") val TASK_BAR = ComponentNameMatcher("", "Taskbar")
-        @JsName("STATUS_BAR") val STATUS_BAR = ComponentNameMatcher("", "StatusBar")
-        @JsName("ROTATION") val ROTATION = ComponentNameMatcher("", "RotationLayer")
-        @JsName("BACK_SURFACE") val BACK_SURFACE = ComponentNameMatcher("", "BackColorSurface")
-        @JsName("IME") val IME = ComponentNameMatcher("", "InputMethod")
-        @JsName("IME_SNAPSHOT") val IME_SNAPSHOT = ComponentNameMatcher("", "IME-snapshot-surface")
-        @JsName("SPLASH_SCREEN") val SPLASH_SCREEN = ComponentNameMatcher("", "Splash Screen")
-        @JsName("SNAPSHOT") val SNAPSHOT = ComponentNameMatcher("", "SnapshotStartingWindow")
+        val NAV_BAR = ComponentNameMatcher("", "NavigationBar0")
+        val TASK_BAR = ComponentNameMatcher("", "Taskbar")
+        val STATUS_BAR = ComponentNameMatcher("", "StatusBar")
+        val ROTATION = ComponentNameMatcher("", "RotationLayer")
+        val BACK_SURFACE = ComponentNameMatcher("", "BackColorSurface")
+        val IME = ComponentNameMatcher("", "InputMethod")
+        val IME_SNAPSHOT = ComponentNameMatcher("", "IME-snapshot-surface")
+        val SPLASH_SCREEN = ComponentNameMatcher("", "Splash Screen")
+        val SNAPSHOT = ComponentNameMatcher("", "SnapshotStartingWindow")
 
-        @JsName("TRANSITION_SNAPSHOT")
         val TRANSITION_SNAPSHOT = ComponentNameMatcher("", "transition snapshot")
-        @JsName("LETTERBOX") val LETTERBOX = ComponentNameMatcher("", "Letterbox")
+        val LETTERBOX = ComponentNameMatcher("", "Letterbox")
 
-        @JsName("WALLPAPER_BBQ_WRAPPER")
         val WALLPAPER_BBQ_WRAPPER = ComponentNameMatcher("", "Wallpaper BBQ wrapper")
 
-        @JsName("PIP_CONTENT_OVERLAY")
         val PIP_CONTENT_OVERLAY = ComponentNameMatcher("", "PipContentOverlay")
 
-        @JsName("EDGE_BACK_GESTURE_HANDLER")
         val EDGE_BACK_GESTURE_HANDLER = ComponentNameMatcher("", "EdgeBackGestureHandler")
 
-        @JsName("LAUNCHER")
         val LAUNCHER =
             ComponentNameMatcher(
                 "com.google.android.apps.nexuslauncher",
                 "com.google.android.apps.nexuslauncher.NexusLauncherActivity"
             )
 
-        @JsName("AOSP_LAUNCHER")
         val AOSP_LAUNCHER =
             ComponentNameMatcher(
                 "com.android.launcher3",
                 "com.android.launcher3.uioverrides.QuickstepLauncher"
             )
 
-        @JsName("SPLIT_DIVIDER")
         val SPLIT_DIVIDER = ComponentNameMatcher("", "StageCoordinatorSplitDivider")
 
-        @JsName("DEFAULT_TASK_DISPLAY_AREA")
         val DEFAULT_TASK_DISPLAY_AREA = ComponentNameMatcher("", "DefaultTaskDisplayArea")
 
         /**
@@ -143,7 +136,6 @@ class ComponentNameMatcher(var component: ComponentName) : IComponentNameMatcher
          *
          * @param str Value to parse
          */
-        @JsName("unflattenFromString")
         fun unflattenFromString(str: String): ComponentNameMatcher {
             val sep = str.indexOf('/')
             if (sep < 0 || sep + 1 >= str.length) {
@@ -166,7 +158,6 @@ class ComponentNameMatcher(var component: ComponentName) : IComponentNameMatcher
          *
          * @param str Value to parse
          */
-        @JsName("unflattenFromStringWithJunk")
         fun unflattenFromStringWithJunk(str: String): ComponentNameMatcher {
             val sep = str.indexOf('/')
             if (sep < 0 || sep + 1 >= str.length) {
