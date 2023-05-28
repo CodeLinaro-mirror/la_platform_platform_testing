@@ -582,6 +582,19 @@
       "TYPE": "DESCRIPTION",
       "VALUE": "Scroll Up"
     },
+    "MANAGE_BUTTON": {
+      "TYPE": "TEXT",
+      "VALUE": "Manage"
+    },
+    "NOTIFICATION_SETTINGS_LAYOUT": {
+      "TYPE": "RESOURCE_ID",
+      "VALUE": "car_ui_base_layout_content_container",
+      "PACKAGE": "com.android.car.settings"
+    },
+    "NOTIFICATION_SETTINGS_TITLE": {
+      "TYPE": "TEXT",
+      "VALUE": "Notifications"
+    },
     "ABOUT_MENU": {
       "TYPE": "TEXT",
       "VALUE": "About",
@@ -690,6 +703,26 @@
     "SOUND_SETTINGS_SAVE_BUTTON": {
       "TYPE": "DESCRIPTION",
       "VALUE": "Save"
+    },
+    "BRIGHTNESS_SEEKBAR": {
+      "TYPE": "MULTIPLE",
+      "SPECIFIERS": [
+        {
+          "TYPE": "CLASS",
+          "VALUE": "android.widget.SeekBar"
+        },
+        {
+          "TYPE": "HAS_ANCESTOR",
+          "MAX_DEPTH": 2,
+          "ANCESTOR": {
+            "TYPE": "HAS_DESCENDANT",
+            "DESCENDANT": {
+              "TYPE": "TEXT",
+              "VALUE": "Brightness level"
+            }
+          }
+        }
+      ]
     },
     "DATE_TIME_SETTINGS_SET_TIME_AUTOMATICALLY": {
       "TYPE": "TEXT",
