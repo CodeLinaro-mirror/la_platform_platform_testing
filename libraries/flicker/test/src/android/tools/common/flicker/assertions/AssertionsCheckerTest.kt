@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-package android.tools.common.assertions
+package android.tools.common.flicker.assertions
 
-import android.tools.CleanFlickerEnvironmentRule
 import android.tools.assertFail
 import android.tools.common.CrossPlatform
 import android.tools.common.ITraceEntry
 import android.tools.common.Timestamp
-import android.tools.common.flicker.assertions.AssertionsChecker
 import android.tools.common.flicker.subject.FlickerSubject
+import android.tools.rules.CleanFlickerEnvironmentRule
 import org.junit.ClassRule
 import org.junit.FixMethodOrder
 import org.junit.Test
@@ -166,6 +165,6 @@ class AssertionsCheckerTest {
                     SimpleEntry(CrossPlatform.timestamp.from(elapsedNanos = it.toLong()), data[it])
                 )
             }
-        @ClassRule @JvmField val cleanFlickerEnvironmentRule = CleanFlickerEnvironmentRule()
+        @ClassRule @JvmField val ENV_CLEANUP = CleanFlickerEnvironmentRule()
     }
 }
