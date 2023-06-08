@@ -48,6 +48,21 @@ class TransitionMatcher(
 
         val completeTransitions = transitionsTrace.entries.filter { !it.isIncomplete }
 
+        val formattedTransitions = {
+            "[\n" +
+                "${
+                        transitionsTrace.entries.joinToString(",\n") {
+                            Transition.Formatter(reader.readLayersTrace(),
+                                    reader.readWmTrace()).format(it)
+                        }.prependIndent()
+                    }\n" +
+                "]"
+        }
+
+        require(!associatedTransitionRequired || completeTransitions.isNotEmpty()) {
+            "No successfully finished transitions in: ${formattedTransitions()}"
+        }
+
         var appliedTransformsCount = 0
         val matchedTransitions =
             transforms.fold(completeTransitions) { transitions, transform ->
@@ -58,10 +73,7 @@ class TransitionMatcher(
                     "Required an associated transition for ${cujEntry.cuj.name}" +
                         "(${cujEntry.startTimestamp},${cujEntry.endTimestamp}) " +
                         "but no transition left after $appliedTransformsCount/${transforms.size} " +
-                        "filters from: " +
-                        "[\n${transitionsTrace.entries.joinToString(",\n") {
-                            Transition.Formatter(reader).format(it)
-                        }.prependIndent()}\n]!"
+                        "filters from: ${formattedTransitions()}!"
                 }
 
                 remainingTransitions
@@ -112,7 +124,9 @@ object TransitionTransforms {
     val mergeTrampolineTransitions: TransitionsTransform = { transitions, _, reader ->
         require(transitions.size <= 2) {
             "Got to merging trampoline transitions with more than 2 transitions left :: " +
-                transitions.joinToString { Transition.Formatter(reader).format(it) }
+                transitions.joinToString {
+                    Transition.Formatter(reader.readLayersTrace(), reader.readWmTrace()).format(it)
+                }
         }
         if (
             transitions.size == 2 &&
