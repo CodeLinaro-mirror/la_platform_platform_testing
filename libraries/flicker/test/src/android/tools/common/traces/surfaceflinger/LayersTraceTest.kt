@@ -19,7 +19,7 @@ package android.tools.common.traces.surfaceflinger
 import android.tools.assertThatErrorContainsDebugInfo
 import android.tools.assertThrows
 import android.tools.common.Cache
-import android.tools.common.Timestamps
+import android.tools.common.CrossPlatform
 import android.tools.common.flicker.subject.layers.LayersTraceSubject
 import android.tools.common.traces.component.ComponentNameMatcher
 import android.tools.getLayerTraceReaderFromAsset
@@ -68,7 +68,10 @@ class LayersTraceTest {
     fun canTestLayerOccludedByAppLayerHasVisibleRegion() {
         val reader = getLayerTraceReaderFromAsset("layers_trace_occluded.pb", legacyTrace = true)
         val trace = reader.readLayersTrace() ?: error("Unable to read layers trace")
-        val entry = trace.getEntryExactlyAt(Timestamps.from(systemUptimeNanos = 1700382131522L))
+        val entry =
+            trace.getEntryExactlyAt(
+                CrossPlatform.timestamp.from(systemUptimeNanos = 1700382131522L)
+            )
         val component =
             ComponentNameMatcher("", "com.android.server.wm.flicker.testapp.SimpleActivity#0")
         val layer = entry.getLayerWithBuffer(component)
@@ -96,7 +99,10 @@ class LayersTraceTest {
         val component = ComponentNameMatcher("", layerName)
         val reader = getLayerTraceReaderFromAsset("layers_trace_occluded.pb", legacyTrace = true)
         val trace = reader.readLayersTrace() ?: error("Unable to read layers trace")
-        val entry = trace.getEntryExactlyAt(Timestamps.from(systemUptimeNanos = 1700382131522L))
+        val entry =
+            trace.getEntryExactlyAt(
+                CrossPlatform.timestamp.from(systemUptimeNanos = 1700382131522L)
+            )
         val layer = entry.getLayerWithBuffer(component)
         val occludedBy = layer?.occludedBy ?: emptyArray()
         val partiallyOccludedBy = layer?.partiallyOccludedBy ?: emptyArray()
@@ -129,13 +135,13 @@ class LayersTraceTest {
                 legacyTrace = false
             )
         val trace = reader.readLayersTrace() ?: error("Unable to read layers trace")
-        val matchingEntry = trace.getFirstEntryWithOnDisplayAfter(Timestamps.min())
+        val matchingEntry = trace.getFirstEntryWithOnDisplayAfter(CrossPlatform.timestamp.min())
 
         Truth.assertThat(matchingEntry.timestamp)
-            .isEqualTo(Timestamps.from(null, 20143030557279, 1685030549975607247))
+            .isEqualTo(CrossPlatform.timestamp.from(null, 20143030557279, 1685030549975607247))
 
         try {
-            trace.getFirstEntryWithOnDisplayAfter(Timestamps.max())
+            trace.getFirstEntryWithOnDisplayAfter(CrossPlatform.timestamp.max())
         } catch (e: Throwable) {
             Truth.assertThat(e).hasMessageThat().contains("No entry after")
         }
@@ -149,13 +155,13 @@ class LayersTraceTest {
                 legacyTrace = false
             )
         val trace = reader.readLayersTrace() ?: error("Unable to read layers trace")
-        val matchingEntry = trace.getLastEntryWithOnDisplayBefore(Timestamps.max())
+        val matchingEntry = trace.getLastEntryWithOnDisplayBefore(CrossPlatform.timestamp.max())
 
         Truth.assertThat(matchingEntry.timestamp)
-            .isEqualTo(Timestamps.from(null, 20147964614573, 1685030554909664541))
+            .isEqualTo(CrossPlatform.timestamp.from(null, 20147964614573, 1685030554909664541))
 
         try {
-            trace.getLastEntryWithOnDisplayBefore(Timestamps.min())
+            trace.getLastEntryWithOnDisplayBefore(CrossPlatform.timestamp.min())
         } catch (e: Throwable) {
             Truth.assertThat(e).hasMessageThat().contains("No entry before")
         }

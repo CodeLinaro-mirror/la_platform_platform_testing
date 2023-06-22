@@ -18,9 +18,9 @@ package android.tools.device.flicker.legacy.runner
 
 import android.app.Instrumentation
 import android.platform.test.rule.ArtifactSaver
-import android.tools.common.Logger
-import android.tools.common.Scenario
-import android.tools.device.flicker.legacy.FlickerTestData
+import android.tools.common.CrossPlatform
+import android.tools.common.IScenario
+import android.tools.device.flicker.legacy.IFlickerTestData
 import android.tools.device.traces.io.ResultWriter
 import android.tools.device.traces.parsers.WindowManagerStateHelper
 import org.junit.rules.TestRule
@@ -39,12 +39,12 @@ import org.junit.runners.model.Statement
  * @param wmHelper to stabilize the UI before/after transitions
  */
 class SetupTeardownRule(
-    private val flicker: FlickerTestData,
+    private val flicker: IFlickerTestData,
     private val resultWriter: ResultWriter,
-    private val scenario: Scenario,
+    private val scenario: IScenario,
     private val instrumentation: Instrumentation,
-    private val setupCommands: List<FlickerTestData.() -> Any> = flicker.transitionSetup,
-    private val teardownCommands: List<FlickerTestData.() -> Any> = flicker.transitionTeardown,
+    private val setupCommands: List<IFlickerTestData.() -> Any> = flicker.transitionSetup,
+    private val teardownCommands: List<IFlickerTestData.() -> Any> = flicker.transitionTeardown,
     private val wmHelper: WindowManagerStateHelper = flicker.wmHelper
 ) : TestRule {
     override fun apply(base: Statement?, description: Description?): Statement {
@@ -61,7 +61,7 @@ class SetupTeardownRule(
     }
 
     private fun doRunTransitionSetup(description: Description?) {
-        Logger.withTracing("doRunTransitionSetup") {
+        CrossPlatform.log.withTracing("doRunTransitionSetup") {
             Utils.notifyRunnerProgress(scenario, "Running transition setup for $description")
             try {
                 setupCommands.forEach { it.invoke(flicker) }
@@ -74,7 +74,7 @@ class SetupTeardownRule(
     }
 
     private fun doRunTransitionTeardown(description: Description?) {
-        Logger.withTracing("doRunTransitionTeardown") {
+        CrossPlatform.log.withTracing("doRunTransitionTeardown") {
             Utils.notifyRunnerProgress(scenario, "Running transition teardown for $description")
             try {
                 teardownCommands.forEach { it.invoke(flicker) }

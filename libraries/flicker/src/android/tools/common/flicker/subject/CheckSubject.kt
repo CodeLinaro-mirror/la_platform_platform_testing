@@ -20,14 +20,14 @@ import android.tools.common.Timestamp
 import android.tools.common.flicker.assertions.Fact
 import android.tools.common.flicker.subject.exceptions.ExceptionMessageBuilder
 import android.tools.common.flicker.subject.exceptions.InvalidPropertyException
-import android.tools.common.io.Reader
+import android.tools.common.io.IReader
 
 /** Subject for flicker checks */
 data class CheckSubject<T>(
     private val actualValue: T?,
     private val timestamp: Timestamp,
     private val extraFacts: List<Fact>,
-    private val reader: Reader?,
+    private val reader: IReader?,
     private val lazyMessage: () -> String,
 ) {
     private val exceptionMessageBuilder: ExceptionMessageBuilder

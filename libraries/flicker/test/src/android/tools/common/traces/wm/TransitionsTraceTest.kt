@@ -16,7 +16,7 @@
 
 package android.tools.common.traces.wm
 
-import android.tools.common.Timestamps
+import android.tools.common.CrossPlatform
 import com.google.common.truth.Truth
 import org.junit.FixMethodOrder
 import org.junit.Test
@@ -37,15 +37,15 @@ class TransitionsTraceTest {
                             id = 1,
                             wmData =
                                 WmTransitionData(
-                                    createTime = Timestamps.from(10),
-                                    sendTime = Timestamps.from(20),
+                                    createTime = CrossPlatform.timestamp.from(10),
+                                    sendTime = CrossPlatform.timestamp.from(20),
                                 ),
                         ),
                         Transition(
                             id = 1,
                             shellData =
                                 ShellTransitionData(
-                                    dispatchTime = Timestamps.from(22),
+                                    dispatchTime = CrossPlatform.timestamp.from(22),
                                     handler = "DefaultHandler"
                                 ),
                         ),
@@ -53,7 +53,7 @@ class TransitionsTraceTest {
                             id = 1,
                             wmData =
                                 WmTransitionData(
-                                    finishTime = Timestamps.from(40),
+                                    finishTime = CrossPlatform.timestamp.from(40),
                                 ),
                         )
                     )

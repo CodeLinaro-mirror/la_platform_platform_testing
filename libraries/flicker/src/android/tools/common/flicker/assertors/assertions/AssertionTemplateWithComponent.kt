@@ -16,16 +16,14 @@
 
 package android.tools.common.flicker.assertors.assertions
 
-import android.tools.common.flicker.ScenarioInstance
 import android.tools.common.flicker.assertors.AssertionTemplate
 import android.tools.common.flicker.assertors.ComponentTemplate
 
-/** Base class for tests that require a [components] named window name */
+/** Base class for tests that require a [component] named window name */
 abstract class AssertionTemplateWithComponent(vararg val components: ComponentTemplate) :
     AssertionTemplate() {
 
-    override fun defaultAssertionName(scenarioInstance: ScenarioInstance) =
-        "${super.defaultAssertionName(scenarioInstance)}(${components.joinToString { it.name }})"
+    override val assertionName = "${this::class.simpleName}(${components.joinToString { it.name }})"
 
     override fun equals(other: Any?): Boolean {
         if (other !is AssertionTemplateWithComponent) {
@@ -48,7 +46,7 @@ abstract class AssertionTemplateWithComponent(vararg val components: ComponentTe
 
     override fun hashCode(): Int {
         var result = super.hashCode()
-        result = 31 * result + components.hashCode()
+        result = 31 * result + assertionName.hashCode()
         return result
     }
 }

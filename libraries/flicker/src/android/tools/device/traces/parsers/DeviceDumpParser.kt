@@ -16,7 +16,7 @@
 
 package android.tools.device.traces.parsers
 
-import android.tools.common.Logger
+import android.tools.common.CrossPlatform
 import android.tools.common.traces.DeviceStateDump
 import android.tools.common.traces.DeviceTraceDump
 import android.tools.common.traces.NullableDeviceStateDump
@@ -53,7 +53,7 @@ class DeviceDumpParser {
             layersTraceData: ByteArray,
             clearCacheAfterParsing: Boolean
         ): NullableDeviceStateDump {
-            return Logger.withTracing("fromNullableDump") {
+            return CrossPlatform.log.withTracing("fromNullableDump") {
                 NullableDeviceStateDump(
                     wmState =
                         if (wmTraceData.isNotEmpty()) {
@@ -84,7 +84,7 @@ class DeviceDumpParser {
             layersTraceData: ByteArray,
             clearCacheAfterParsing: Boolean
         ): DeviceStateDump {
-            return Logger.withTracing("fromDump") {
+            return CrossPlatform.log.withTracing("fromDump") {
                 val nullableDump =
                     fromNullableDump(wmTraceData, layersTraceData, clearCacheAfterParsing)
                 DeviceStateDump(
@@ -113,7 +113,7 @@ class DeviceDumpParser {
             layersTraceData: ByteArray,
             clearCache: Boolean
         ): DeviceTraceDump {
-            return Logger.withTracing("fromTrace") {
+            return CrossPlatform.log.withTracing("fromTrace") {
                 DeviceTraceDump(
                     wmTrace =
                         if (wmTraceData.isNotEmpty()) {

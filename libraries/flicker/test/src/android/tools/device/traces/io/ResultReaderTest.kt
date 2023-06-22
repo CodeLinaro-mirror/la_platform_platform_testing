@@ -17,7 +17,7 @@
 package android.tools.device.traces.io
 
 import android.tools.assertThrows
-import android.tools.common.Timestamps
+import android.tools.common.CrossPlatform
 import android.tools.common.io.RunStatus
 import android.tools.device.traces.TRACE_CONFIG_REQUIRE_CHANGES
 import android.tools.device.traces.deleteIfExists
@@ -55,7 +55,8 @@ class ResultReaderTest {
     fun slicedResultKeepsStatusInSync() {
         val data = newTestResultWriter().setRunComplete().write()
         val reader = ResultReader(data, TRACE_CONFIG_REQUIRE_CHANGES)
-        val slicedReader = reader.slice(Timestamps.min(), Timestamps.max())
+        val slicedReader =
+            reader.slice(CrossPlatform.timestamp.min(), CrossPlatform.timestamp.max())
         reader.result.updateStatus(RunStatus.ASSERTION_SUCCESS)
 
         Truth.assertThat(reader.runStatus).isEqualTo(RunStatus.ASSERTION_SUCCESS)

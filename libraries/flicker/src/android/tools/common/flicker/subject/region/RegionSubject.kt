@@ -23,7 +23,7 @@ import android.tools.common.datatypes.Region
 import android.tools.common.flicker.subject.FlickerSubject
 import android.tools.common.flicker.subject.exceptions.ExceptionMessageBuilder
 import android.tools.common.flicker.subject.exceptions.IncorrectRegionException
-import android.tools.common.io.Reader
+import android.tools.common.io.IReader
 import android.tools.common.traces.region.RegionEntry
 import kotlin.math.abs
 
@@ -33,42 +33,42 @@ import kotlin.math.abs
 class RegionSubject(
     val regionEntry: RegionEntry,
     override val timestamp: Timestamp,
-    override val reader: Reader? = null,
+    override val reader: IReader? = null,
 ) : FlickerSubject(), IRegionSubject {
 
     /** Custom constructor for existing android regions */
     constructor(
         region: Region?,
         timestamp: Timestamp,
-        reader: Reader? = null
+        reader: IReader? = null
     ) : this(RegionEntry(region ?: Region.EMPTY, timestamp), timestamp, reader)
 
     /** Custom constructor for existing rects */
     constructor(
         rect: Rect?,
         timestamp: Timestamp,
-        reader: Reader? = null
+        reader: IReader? = null
     ) : this(Region.from(rect), timestamp, reader)
 
     /** Custom constructor for existing rects */
     constructor(
         rect: RectF?,
         timestamp: Timestamp,
-        reader: Reader? = null
+        reader: IReader? = null
     ) : this(rect?.toRect(), timestamp, reader)
 
     /** Custom constructor for existing rects */
     constructor(
         rect: Array<RectF>,
         timestamp: Timestamp,
-        reader: Reader? = null
+        reader: IReader? = null
     ) : this(mergeRegions(rect.map { Region.from(it.toRect()) }.toTypedArray()), timestamp, reader)
 
     /** Custom constructor for existing regions */
     constructor(
         regions: Array<Region>,
         timestamp: Timestamp,
-        reader: Reader? = null
+        reader: IReader? = null
     ) : this(mergeRegions(regions), timestamp, reader)
 
     val region = regionEntry.region

@@ -17,9 +17,9 @@
 package android.tools.common.flicker.assertors.assertions
 
 import android.tools.common.datatypes.Rect
-import android.tools.common.flicker.ScenarioInstance
-import android.tools.common.flicker.assertions.FlickerTest
+import android.tools.common.flicker.IScenarioInstance
 import android.tools.common.flicker.assertors.ComponentTemplate
+import android.tools.common.flicker.subject.wm.WindowManagerTraceSubject
 
 /**
  * Checks that the app layer doesn't exist or is invisible at the start of the transition, but is
@@ -28,10 +28,14 @@ import android.tools.common.flicker.assertors.ComponentTemplate
 class WindowRemainInsideVisibleBounds(private val component: ComponentTemplate) :
     AssertionTemplateWithComponent(component) {
     /** {@inheritDoc} */
-    override fun doEvaluate(scenarioInstance: ScenarioInstance, flicker: FlickerTest) {
+    override fun doEvaluate(
+        scenarioInstance: IScenarioInstance,
+        wmSubject: WindowManagerTraceSubject
+    ) {
         val displayBounds = Rect.EMPTY // TODO: Get display bounds from wmSubject
-        flicker.assertWm {
-            visibleRegion(component.build(scenarioInstance)).coversAtMost(displayBounds)
-        }
+        wmSubject
+            .visibleRegion(component.build(scenarioInstance))
+            .coversAtMost(displayBounds)
+            .forAllEntries()
     }
 }

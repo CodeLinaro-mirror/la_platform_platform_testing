@@ -16,9 +16,9 @@
 
 package android.tools.common.flicker.assertors.assertions
 
-import android.tools.common.flicker.ScenarioInstance
-import android.tools.common.flicker.assertions.FlickerTest
+import android.tools.common.flicker.IScenarioInstance
 import android.tools.common.flicker.assertors.ComponentTemplate
+import android.tools.common.flicker.subject.wm.WindowManagerTraceSubject
 
 /**
  * Checks that non-app window [component] is invisible at the start of the transition and becomes
@@ -27,11 +27,14 @@ import android.tools.common.flicker.assertors.ComponentTemplate
 class NonAppWindowBecomesVisible(private val component: ComponentTemplate) :
     AssertionTemplateWithComponent(component) {
     /** {@inheritDoc} */
-    override fun doEvaluate(scenarioInstance: ScenarioInstance, flicker: FlickerTest) {
-        flicker.assertWm {
-            isNonAppWindowInvisible(component.build(scenarioInstance))
-                .then()
-                .isAppWindowVisible(component.build(scenarioInstance))
-        }
+    override fun doEvaluate(
+        scenarioInstance: IScenarioInstance,
+        wmSubject: WindowManagerTraceSubject
+    ) {
+        wmSubject
+            .isNonAppWindowInvisible(component.build(scenarioInstance))
+            .then()
+            .isAppWindowVisible(component.build(scenarioInstance))
+            .forAllEntries()
     }
 }

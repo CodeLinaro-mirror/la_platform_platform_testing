@@ -16,22 +16,32 @@
 
 package android.tools.common.flicker
 
-import android.tools.common.Scenario
-import android.tools.common.flicker.assertions.ScenarioAssertion
+import android.tools.common.Rotation
+import android.tools.common.Timestamp
 import android.tools.common.flicker.config.FaasScenarioType
-import android.tools.common.flicker.config.ScenarioConfig
-import android.tools.common.io.Reader
+import android.tools.common.io.IReader
+import android.tools.common.traces.events.CujType
 import android.tools.common.traces.wm.Transition
 
-interface ScenarioInstance : Scenario {
-    val config: ScenarioConfig
+data class ScenarioInstance(
+    override val type: FaasScenarioType,
+    override val startRotation: Rotation,
+    override val endRotation: Rotation,
+    val startTimestamp: Timestamp,
+    val endTimestamp: Timestamp,
+    override val reader: IReader,
+    val associatedCuj: CujType? = null,
+    override val associatedTransition: Transition? = null,
+) : IScenarioInstance {
+    // b/227752705
+    override val navBarMode
+        get() = error("Unsupported")
 
-    /** A reader to read the part of the trace associated with the scenario instance */
-    val reader: Reader
-    val associatedTransition: Transition?
+    override val key = "${type.name}_${startRotation}_$endRotation"
 
-    val type: FaasScenarioType
-        get() = config.type
+    override val description = key
 
-    fun generateAssertions(): Collection<ScenarioAssertion>
+    override val isEmpty = false
+
+    override fun toString() = key
 }

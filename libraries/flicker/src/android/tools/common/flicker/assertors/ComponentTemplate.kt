@@ -16,12 +16,12 @@
 
 package android.tools.common.flicker.assertors
 
-import android.tools.common.flicker.ScenarioInstance
+import android.tools.common.flicker.IScenarioInstance
 import android.tools.common.traces.component.IComponentMatcher
 
 data class ComponentTemplate(
     val name: String,
-    val build: (scenarioInstance: ScenarioInstance) -> IComponentMatcher
+    val build: (scenarioInstance: IScenarioInstance) -> IComponentMatcher
 ) {
     override fun equals(other: Any?): Boolean {
         return other is ComponentTemplate && name == other.name && build == other.build

@@ -16,13 +16,35 @@
 
 package android.tools.common.flicker.assertions
 
-/** Interface containing basic data about an assertion */
-interface AssertionData {
-    val name: String
+import android.tools.common.flicker.subject.FlickerSubject
+import kotlin.reflect.KClass
+
+/** Class containing basic data about an assertion */
+data class AssertionData(
+    /** Segment of the trace where the assertion will be applied (e.g., start, end). */
+    val tag: String,
+    /** Expected run result type */
+    val expectedSubjectClass: KClass<out FlickerSubject>,
+    /** Assertion command */
+    val assertion: FlickerSubject.() -> Unit
+) {
     /**
      * Extracts the data from the result and executes the assertion
      *
      * @param run Run to be asserted
      */
-    fun checkAssertion(run: SubjectsParser)
+    fun checkAssertion(run: SubjectsParser) {
+        val subject = run.getSubjectOfType(tag, expectedSubjectClass)
+        subject?.let { assertion(it) }
+    }
+
+    override fun toString(): String = buildString {
+        append("AssertionData(tag='")
+        append(tag)
+        append("', expectedSubjectClass='")
+        append(expectedSubjectClass.simpleName)
+        append("', assertion='")
+        append(assertion)
+        append(")")
+    }
 }

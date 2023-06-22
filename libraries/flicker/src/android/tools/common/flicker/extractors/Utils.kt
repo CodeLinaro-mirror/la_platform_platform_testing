@@ -16,16 +16,19 @@
 
 package android.tools.common.flicker.extractors
 
+import android.tools.common.CrossPlatform
 import android.tools.common.Timestamp
-import android.tools.common.Timestamps
-import android.tools.common.io.Reader
+import android.tools.common.io.IReader
 import android.tools.common.traces.surfaceflinger.Display
 import android.tools.common.traces.surfaceflinger.LayerTraceEntry
 import android.tools.common.traces.wm.Transition
 import kotlin.math.abs
 
 object Utils {
-    fun interpolateStartTimestampFromTransition(transition: Transition, reader: Reader): Timestamp {
+    fun interpolateStartTimestampFromTransition(
+        transition: Transition,
+        reader: IReader
+    ): Timestamp {
         val wmTrace = reader.readWmTrace() ?: error("Missing WM trace")
         val layersTrace = reader.readLayersTrace() ?: error("Missing layers trace")
         val transactionsTrace =
@@ -47,12 +50,12 @@ object Utils {
             startTransactionAppliedTimestamp?.systemUptimeNanos
                 ?: transition.createTime.systemUptimeNanos
 
-        return Timestamps.from(elapsedNanos, systemUptimeNanos, unixNanos)
+        return CrossPlatform.timestamp.from(elapsedNanos, systemUptimeNanos, unixNanos)
     }
 
     fun interpolateFinishTimestampFromTransition(
         transition: Transition,
-        reader: Reader
+        reader: IReader
     ): Timestamp {
         val layersTrace = reader.readLayersTrace() ?: error("Missing layers trace")
         val wmTrace = reader.readWmTrace() ?: error("Missing WM trace")
@@ -118,7 +121,7 @@ object Utils {
                 layersTrace.getEntryAt(finishTransactionAppliedTimestamp).timestamp.unixNanos
         }
 
-        return Timestamps.from(elapsedNanos, systemUptimeNanos, unixNanos)
+        return CrossPlatform.timestamp.from(elapsedNanos, systemUptimeNanos, unixNanos)
     }
 
     fun getOnDisplayFor(layerTraceEntry: LayerTraceEntry): Display {

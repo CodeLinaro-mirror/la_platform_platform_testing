@@ -20,13 +20,9 @@ import android.app.Instrumentation
 import android.device.collectors.util.SendToInstrumentation
 import android.tools.assertThrows
 import android.tools.common.flicker.AssertionInvocationGroup
-import android.tools.common.flicker.FlickerService
-import android.tools.common.flicker.ScenarioInstance
-import android.tools.common.flicker.assertions.AssertionData
-import android.tools.common.flicker.assertions.AssertionResult
-import android.tools.common.flicker.assertions.ScenarioAssertion
-import android.tools.common.flicker.assertions.SubjectsParser
-import android.tools.common.io.Reader
+import android.tools.common.flicker.IFlickerService
+import android.tools.common.flicker.assertors.IAssertionResult
+import android.tools.common.flicker.assertors.IFaasAssertion
 import android.tools.device.flicker.FlickerServiceResultsCollector
 import android.tools.utils.KotlinMockito
 import com.google.common.truth.Truth
@@ -37,34 +33,15 @@ import org.mockito.Mockito
 class FlickerServiceCachedTestCaseTest {
     @Test
     fun reportsPassingResultMetric() {
+        val mockAssertion = Mockito.mock(IFaasAssertion::class.java)
+        val mockFlickerService = Mockito.mock(IFlickerService::class.java)
         val decorator = Mockito.mock(IFlickerJUnitDecorator::class.java)
         val mockInstrumentation = Mockito.mock(Instrumentation::class.java)
-        val mockFlickerService = Mockito.mock(FlickerService::class.java)
-        val mockScenarioInstance = Mockito.mock(ScenarioInstance::class.java)
-        val mockScenarioAssertion = Mockito.mock(ScenarioAssertion::class.java)
-        val assertionResult =
-            object : AssertionResult {
-                override val assertion =
-                    object : AssertionData {
-                        override val name = "AssertionName"
-                        override fun checkAssertion(run: SubjectsParser) {
-                            error("Unimplemented - shouldn't be called")
-                        }
-                    }
-                override val assertionError = null
-                override val stabilityGroup = AssertionInvocationGroup.BLOCKING
-                override val passed = true
-            }
-        Mockito.`when`(mockScenarioAssertion.execute()).thenReturn(assertionResult)
-        Mockito.`when`(mockScenarioInstance.generateAssertions())
-            .thenReturn(listOf(mockScenarioAssertion))
-        Mockito.`when`(mockFlickerService.detectScenarios(KotlinMockito.any(Reader::class.java)))
-            .thenReturn(listOf(mockScenarioInstance))
 
-        val mockDescription = Mockito.mock(Description::class.java)
         val test =
             FlickerServiceCachedTestCase(
-                assertion = mockScenarioAssertion,
+                assertion = mockAssertion,
+                flickerService = mockFlickerService,
                 method = InjectedTestCase::class.java.getMethod("execute", Description::class.java),
                 onlyBlocking = false,
                 isLast = false,
@@ -72,6 +49,26 @@ class FlickerServiceCachedTestCaseTest {
                 instrumentation = mockInstrumentation,
                 paramString = "",
             )
+
+        val assertionResult =
+            object : IAssertionResult {
+                override val assertion =
+                    object : IFaasAssertion {
+                        override val name = "PassingFaasAssertion"
+                        override val stabilityGroup = AssertionInvocationGroup.BLOCKING
+                        override fun evaluate(): IAssertionResult {
+                            TODO("Not implemented")
+                        }
+                    }
+                override val passed = true
+                override val assertionError = null
+            }
+        Mockito.`when`(
+                mockFlickerService.executeAssertion(KotlinMockito.any(IFaasAssertion::class.java))
+            )
+            .thenReturn(assertionResult)
+
+        val mockDescription = Mockito.mock(Description::class.java)
         test.execute(mockDescription)
 
         Mockito.verify(mockInstrumentation)
@@ -80,7 +77,7 @@ class FlickerServiceCachedTestCaseTest {
                 KotlinMockito.argThat {
                     this.getString(
                         "${FlickerServiceResultsCollector.FAAS_METRICS_PREFIX}::" +
-                            assertionResult.assertion.name
+                            "${assertionResult.assertion.name}"
                     ) == "0"
                 }
             )
@@ -88,34 +85,15 @@ class FlickerServiceCachedTestCaseTest {
 
     @Test
     fun reportsFailingResultMetric() {
+        val mockAssertion = Mockito.mock(IFaasAssertion::class.java)
+        val mockFlickerService = Mockito.mock(IFlickerService::class.java)
         val decorator = Mockito.mock(IFlickerJUnitDecorator::class.java)
         val mockInstrumentation = Mockito.mock(Instrumentation::class.java)
-        val mockFlickerService = Mockito.mock(FlickerService::class.java)
-        val mockScenarioInstance = Mockito.mock(ScenarioInstance::class.java)
-        val mockScenarioAssertion = Mockito.mock(ScenarioAssertion::class.java)
-        val assertionResult =
-            object : AssertionResult {
-                override val assertion =
-                    object : AssertionData {
-                        override val name = "AssertionName"
-                        override fun checkAssertion(run: SubjectsParser) {
-                            error("Unimplemented - shouldn't be called")
-                        }
-                    }
-                override val assertionError = Exception("EXPECTED")
-                override val stabilityGroup = AssertionInvocationGroup.BLOCKING
-                override val passed = false
-            }
-        Mockito.`when`(mockScenarioAssertion.execute()).thenReturn(assertionResult)
-        Mockito.`when`(mockScenarioInstance.generateAssertions())
-            .thenReturn(listOf(mockScenarioAssertion))
-        Mockito.`when`(mockFlickerService.detectScenarios(KotlinMockito.any(Reader::class.java)))
-            .thenReturn(listOf(mockScenarioInstance))
 
-        val mockDescription = Mockito.mock(Description::class.java)
         val test =
             FlickerServiceCachedTestCase(
-                assertion = mockScenarioAssertion,
+                assertion = mockAssertion,
+                flickerService = mockFlickerService,
                 method = InjectedTestCase::class.java.getMethod("execute", Description::class.java),
                 onlyBlocking = false,
                 isLast = false,
@@ -124,8 +102,28 @@ class FlickerServiceCachedTestCaseTest {
                 paramString = "",
             )
 
+        val assertionResult =
+            object : IAssertionResult {
+                override val assertion =
+                    object : IFaasAssertion {
+                        override val name = "PassingFaasAssertion"
+                        override val stabilityGroup = AssertionInvocationGroup.BLOCKING
+                        override fun evaluate(): IAssertionResult {
+                            TODO("Not implemented")
+                        }
+                    }
+                override val passed = false
+                override val assertionError = Throwable("Some assertion")
+            }
+        Mockito.`when`(
+                mockFlickerService.executeAssertion(KotlinMockito.any(IFaasAssertion::class.java))
+            )
+            .thenReturn(assertionResult)
+
+        val mockDescription = Mockito.mock(Description::class.java)
+
         val failure = assertThrows<Throwable> { test.execute(mockDescription) }
-        Truth.assertThat(failure).hasMessageThat().isEqualTo("EXPECTED")
+        Truth.assertThat(failure).hasMessageThat().isEqualTo("Some assertion")
 
         Mockito.verify(mockInstrumentation)
             .sendStatus(
@@ -133,7 +131,7 @@ class FlickerServiceCachedTestCaseTest {
                 KotlinMockito.argThat {
                     this.getString(
                         "${FlickerServiceResultsCollector.FAAS_METRICS_PREFIX}::" +
-                            assertionResult.assertion.name
+                            "${assertionResult.assertion.name}"
                     ) == "1"
                 }
             )

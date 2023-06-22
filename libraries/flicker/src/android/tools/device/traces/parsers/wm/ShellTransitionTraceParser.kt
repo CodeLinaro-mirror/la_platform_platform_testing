@@ -16,8 +16,8 @@
 
 package android.tools.device.traces.parsers.wm
 
+import android.tools.common.CrossPlatform
 import android.tools.common.Timestamp
-import android.tools.common.Timestamps
 import android.tools.common.parsers.AbstractTraceParser
 import android.tools.common.traces.wm.ShellTransitionData
 import android.tools.common.traces.wm.Transition
@@ -53,16 +53,16 @@ class ShellTransitionTraceParser :
         requireValidTimestamp(entry)
 
         if (entry.dispatchTimeNs != 0L) {
-            return Timestamps.from(elapsedNanos = entry.dispatchTimeNs)
+            return CrossPlatform.timestamp.from(elapsedNanos = entry.dispatchTimeNs)
         }
         if (entry.mergeRequestTimeNs != 0L) {
-            return Timestamps.from(elapsedNanos = entry.mergeRequestTimeNs)
+            return CrossPlatform.timestamp.from(elapsedNanos = entry.mergeRequestTimeNs)
         }
         if (entry.mergeTimeNs != 0L) {
-            return Timestamps.from(elapsedNanos = entry.mergeTimeNs)
+            return CrossPlatform.timestamp.from(elapsedNanos = entry.mergeTimeNs)
         }
         if (entry.abortTimeNs != 0L) {
-            return Timestamps.from(elapsedNanos = entry.abortTimeNs)
+            return CrossPlatform.timestamp.from(elapsedNanos = entry.abortTimeNs)
         }
 
         error("No valid timestamp for entry")
@@ -97,16 +97,16 @@ class ShellTransitionTraceParser :
                 ShellTransitionData(
                     dispatchTime =
                         if (entry.dispatchTimeNs == 0L) null
-                        else Timestamps.from(elapsedNanos = entry.dispatchTimeNs),
+                        else CrossPlatform.timestamp.from(elapsedNanos = entry.dispatchTimeNs),
                     mergeRequestTime =
                         if (entry.mergeRequestTimeNs == 0L) null
-                        else Timestamps.from(elapsedNanos = entry.mergeRequestTimeNs),
+                        else CrossPlatform.timestamp.from(elapsedNanos = entry.mergeRequestTimeNs),
                     mergeTime =
                         if (entry.mergeTimeNs == 0L) null
-                        else Timestamps.from(elapsedNanos = entry.mergeTimeNs),
+                        else CrossPlatform.timestamp.from(elapsedNanos = entry.mergeTimeNs),
                     abortTime =
                         if (entry.abortTimeNs == 0L) null
-                        else Timestamps.from(elapsedNanos = entry.abortTimeNs),
+                        else CrossPlatform.timestamp.from(elapsedNanos = entry.abortTimeNs),
                     handler = handlerMapping[entry.handler],
                     mergedInto = if (entry.mergedInto == 0) null else entry.mergedInto
                 )

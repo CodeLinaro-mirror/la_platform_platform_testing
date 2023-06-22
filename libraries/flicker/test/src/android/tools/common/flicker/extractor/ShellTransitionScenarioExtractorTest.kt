@@ -16,9 +16,8 @@
 
 package android.tools.common.flicker.extractor
 
-import android.tools.common.Timestamps
+import android.tools.common.CrossPlatform
 import android.tools.common.flicker.config.FaasScenarioType
-import android.tools.common.flicker.config.FlickerServiceConfig
 import android.tools.common.flicker.extractors.ITransitionMatcher
 import android.tools.common.flicker.extractors.ShellTransitionScenarioExtractor
 import android.tools.common.traces.wm.Transition
@@ -38,9 +37,7 @@ class ShellTransitionScenarioExtractorTest {
 
         val noFilterExtractor =
             ShellTransitionScenarioExtractor(
-                FlickerServiceConfig.getScenarioConfigFor(
-                    FaasScenarioType.LAUNCHER_APP_LAUNCH_FROM_ICON
-                ),
+                FaasScenarioType.LAUNCHER_APP_LAUNCH_FROM_ICON,
                 object : ITransitionMatcher {
                     override fun findAll(
                         transitions: Collection<Transition>
@@ -70,9 +67,7 @@ class ShellTransitionScenarioExtractorTest {
 
         val filterToFrontExtractor =
             ShellTransitionScenarioExtractor(
-                FlickerServiceConfig.getScenarioConfigFor(
-                    FaasScenarioType.LAUNCHER_APP_LAUNCH_FROM_ICON
-                ),
+                FaasScenarioType.LAUNCHER_APP_LAUNCH_FROM_ICON,
                 object : ITransitionMatcher {
                     override fun findAll(
                         transitions: Collection<Transition>
@@ -88,7 +83,7 @@ class ShellTransitionScenarioExtractorTest {
         val layersTrace = scenarios.first().reader.readLayersTrace() ?: error("Missing layer trace")
         Truth.assertThat(layersTrace.entries.first().timestamp)
             .isEqualTo(
-                Timestamps.from(
+                CrossPlatform.timestamp.from(
                     unixNanos = 1682433275759078118,
                     systemUptimeNanos = 2766599071189,
                     elapsedNanos = 0
@@ -96,7 +91,7 @@ class ShellTransitionScenarioExtractorTest {
             )
         Truth.assertThat(layersTrace.entries.first().timestamp)
             .isEqualTo(
-                Timestamps.from(
+                CrossPlatform.timestamp.from(
                     unixNanos = 1682433275759078118,
                     systemUptimeNanos = 2766599071189,
                     elapsedNanos = 0
@@ -112,9 +107,7 @@ class ShellTransitionScenarioExtractorTest {
 
         val filterToBackExtractor =
             ShellTransitionScenarioExtractor(
-                FlickerServiceConfig.getScenarioConfigFor(
-                    FaasScenarioType.LAUNCHER_APP_LAUNCH_FROM_ICON
-                ),
+                FaasScenarioType.LAUNCHER_APP_LAUNCH_FROM_ICON,
                 object : ITransitionMatcher {
                     override fun findAll(
                         transitions: Collection<Transition>

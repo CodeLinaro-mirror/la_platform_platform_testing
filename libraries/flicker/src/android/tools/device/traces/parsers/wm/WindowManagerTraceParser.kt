@@ -16,8 +16,8 @@
 
 package android.tools.device.traces.parsers.wm
 
+import android.tools.common.CrossPlatform
 import android.tools.common.Timestamp
-import android.tools.common.Timestamps
 import android.tools.common.parsers.AbstractTraceParser
 import android.tools.common.traces.wm.WindowManagerState
 import android.tools.common.traces.wm.WindowManagerTrace
@@ -44,7 +44,7 @@ open class WindowManagerTraceParser(private val legacyTrace: Boolean = false) :
 
     override fun getTimestamp(entry: WindowManagerTraceProto): Timestamp {
         require(legacyTrace || realToElapsedTimeOffsetNanos != 0L)
-        return Timestamps.from(
+        return CrossPlatform.timestamp.from(
             elapsedNanos = entry.elapsedRealtimeNanos,
             unixNanos = entry.elapsedRealtimeNanos + realToElapsedTimeOffsetNanos
         )

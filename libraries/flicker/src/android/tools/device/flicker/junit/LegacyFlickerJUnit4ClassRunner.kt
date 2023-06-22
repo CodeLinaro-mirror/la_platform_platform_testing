@@ -19,8 +19,9 @@ package android.tools.device.flicker.junit
 import android.app.Instrumentation
 import android.os.Bundle
 import android.platform.test.util.TestFilter
+import android.tools.common.CrossPlatform
 import android.tools.common.FLICKER_TAG
-import android.tools.common.Logger
+import android.tools.common.IScenario
 import android.tools.common.Scenario
 import android.tools.device.flicker.legacy.FlickerBuilder
 import android.tools.device.flicker.legacy.runner.TransitionRunner
@@ -81,14 +82,14 @@ class LegacyFlickerJUnit4ClassRunner(test: TestWithParameters?, private val scen
             private val instrumentation: Instrumentation =
                 InstrumentationRegistry.getInstrumentation()
 
-            override fun runTransition(scenario: Scenario, test: Any, description: Description?) {
-                Logger.withTracing("LegacyFlickerJUnit4ClassRunner#runTransition") {
-                    Logger.v(FLICKER_TAG, "Creating flicker object for $scenario")
+            override fun runTransition(scenario: IScenario, test: Any, description: Description?) {
+                CrossPlatform.log.withTracing("LegacyFlickerJUnit4ClassRunner#runTransition") {
+                    CrossPlatform.log.v(FLICKER_TAG, "Creating flicker object for $scenario")
                     val builder = getFlickerBuilder(test)
-                    Logger.v(FLICKER_TAG, "Creating flicker object for $scenario")
+                    CrossPlatform.log.v(FLICKER_TAG, "Creating flicker object for $scenario")
                     val flicker = builder.build()
                     val runner = TransitionRunner(scenario, instrumentation)
-                    Logger.v(FLICKER_TAG, "Running transition for $scenario")
+                    CrossPlatform.log.v(FLICKER_TAG, "Running transition for $scenario")
                     runner.execute(flicker, description)
                 }
             }
@@ -99,7 +100,7 @@ class LegacyFlickerJUnit4ClassRunner(test: TestWithParameters?, private val scen
                         ?: error("Provider method not found")
 
             private fun getFlickerBuilder(test: Any): FlickerBuilder {
-                Logger.v(FLICKER_TAG, "Obtaining flicker builder for $testClass")
+                CrossPlatform.log.v(FLICKER_TAG, "Obtaining flicker builder for $testClass")
                 return providerMethod.invokeExplosively(test) as FlickerBuilder
             }
         }

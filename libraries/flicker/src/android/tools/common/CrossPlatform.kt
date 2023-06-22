@@ -21,11 +21,13 @@ import kotlin.js.JsName
 
 @JsExport
 object CrossPlatform {
-    val timestamp: TimestampFactory
-        get() = Timestamps
+    var log: ILogger = LoggerBuilder().build()
+        private set
+    var timestamp: TimestampFactory = TimestampFactory()
+        private set
 
-    @JsName("setLogger") fun setLogger(logger: ILogger) = apply { Logger = logger }
+    @JsName("setLogger") fun setLogger(logger: ILogger) = apply { log = logger }
 
     @JsName("setTimestampFactory")
-    fun setTimestampFactory(factory: TimestampFactory) = apply { Timestamps = factory }
+    fun setTimestampFactory(factory: TimestampFactory) = apply { timestamp = factory }
 }

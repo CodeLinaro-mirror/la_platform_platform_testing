@@ -16,16 +16,16 @@
 
 package android.tools.common.flicker.extractors
 
+import android.tools.common.flicker.IScenarioInstance
 import android.tools.common.flicker.ScenarioInstance
-import android.tools.common.flicker.ScenarioInstanceImpl
-import android.tools.common.flicker.config.ScenarioConfig
-import android.tools.common.io.Reader
+import android.tools.common.flicker.config.FaasScenarioType
+import android.tools.common.io.IReader
 
 class ShellTransitionScenarioExtractor(
-    val config: ScenarioConfig,
+    val type: FaasScenarioType,
     val transitionMatcher: ITransitionMatcher,
-) : ScenarioExtractor {
-    override fun extract(reader: Reader): List<ScenarioInstance> {
+) : IScenarioExtractor {
+    override fun extract(reader: IReader): List<IScenarioInstance> {
         val layersTrace = reader.readLayersTrace() ?: error("Missing layers trace")
 
         val transitionsTrace = reader.readTransitionsTrace() ?: error("Missing transitions trace")
@@ -42,8 +42,8 @@ class ShellTransitionScenarioExtractor(
             val displayAtEnd =
                 Utils.getOnDisplayFor(layersTrace.getLastEntryWithOnDisplayBefore(endTimestamp))
 
-            ScenarioInstanceImpl(
-                config,
+            ScenarioInstance(
+                type,
                 startRotation = displayAtStart.transform.getRotation(),
                 endRotation = displayAtEnd.transform.getRotation(),
                 startTimestamp = startTimestamp,

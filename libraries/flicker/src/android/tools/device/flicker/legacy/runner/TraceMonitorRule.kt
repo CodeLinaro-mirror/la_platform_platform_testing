@@ -18,9 +18,9 @@ package android.tools.device.flicker.legacy.runner
 
 import android.app.Instrumentation
 import android.platform.test.rule.ArtifactSaver
+import android.tools.common.CrossPlatform
 import android.tools.common.FLICKER_TAG
-import android.tools.common.Logger
-import android.tools.common.Scenario
+import android.tools.common.IScenario
 import android.tools.device.traces.io.ResultWriter
 import android.tools.device.traces.monitors.ITransitionMonitor
 import android.tools.device.traces.parsers.WindowManagerStateHelper
@@ -39,7 +39,7 @@ import org.junit.runners.model.Statement
  */
 class TraceMonitorRule(
     private val traceMonitors: List<ITransitionMonitor>,
-    private val scenario: Scenario,
+    private val scenario: IScenario,
     private val wmHelper: WindowManagerStateHelper,
     private val resultWriter: ResultWriter,
     private val instrumentation: Instrumentation
@@ -58,7 +58,7 @@ class TraceMonitorRule(
     }
 
     private fun doStartMonitors(description: Description?) {
-        Logger.withTracing("doStartMonitors") {
+        CrossPlatform.log.withTracing("doStartMonitors") {
             Utils.notifyRunnerProgress(scenario, "Starting traces for $description")
             traceMonitors.forEach {
                 try {
@@ -72,7 +72,7 @@ class TraceMonitorRule(
     }
 
     private fun doStopMonitors(description: Description?) {
-        Logger.withTracing("doStopMonitors") {
+        CrossPlatform.log.withTracing("doStopMonitors") {
             Utils.notifyRunnerProgress(scenario, "Stopping traces for $description")
             val errors =
                 traceMonitors.map {
@@ -84,7 +84,7 @@ class TraceMonitorRule(
                                 Utils.expandDescription(description, "stopTrace"),
                                 e
                             )
-                            Logger.e(FLICKER_TAG, "Unable to stop $it", e)
+                            CrossPlatform.log.e(FLICKER_TAG, "Unable to stop $it", e)
                             throw e
                         }
                     }

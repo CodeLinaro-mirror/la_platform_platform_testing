@@ -16,34 +16,34 @@
 
 package android.tools
 
-import android.tools.common.Timestamps
+import android.tools.common.CrossPlatform
 import android.tools.device.traces.TraceConfig
 import android.tools.device.traces.TraceConfigs
 
 object TestTraces {
     object LayerTrace {
         private const val ASSET = "layers_trace.winscope"
-        val START_TIME = Timestamps.from(systemUptimeNanos = 1618663562444)
-        val SLICE_TIME = Timestamps.from(systemUptimeNanos = 1618715108595)
-        val END_TIME = Timestamps.from(systemUptimeNanos = 1620770824112)
+        val START_TIME = CrossPlatform.timestamp.from(systemUptimeNanos = 1618663562444)
+        val SLICE_TIME = CrossPlatform.timestamp.from(systemUptimeNanos = 1618715108595)
+        val END_TIME = CrossPlatform.timestamp.from(systemUptimeNanos = 1620770824112)
         val FILE
             get() = readAssetAsFile(ASSET)
     }
 
     object WMTrace {
         private const val ASSET = "wm_trace.winscope"
-        val START_TIME = Timestamps.from(elapsedNanos = 1618650751245)
-        val SLICE_TIME = Timestamps.from(elapsedNanos = 1618730362295)
-        val END_TIME = Timestamps.from(elapsedNanos = 1620756218174)
+        val START_TIME = CrossPlatform.timestamp.from(elapsedNanos = 1618650751245)
+        val SLICE_TIME = CrossPlatform.timestamp.from(elapsedNanos = 1618730362295)
+        val END_TIME = CrossPlatform.timestamp.from(elapsedNanos = 1620756218174)
         val FILE
             get() = readAssetAsFile(ASSET)
     }
 
     object EventLog {
         private const val ASSET = "eventlog.winscope"
-        val START_TIME = Timestamps.from(unixNanos = 1670594369069951546)
-        val SLICE_TIME = Timestamps.from(unixNanos = 1670594384516466159)
-        val END_TIME = Timestamps.from(unixNanos = 1670594389958451901)
+        val START_TIME = CrossPlatform.timestamp.from(unixNanos = 1670594369069951546)
+        val SLICE_TIME = CrossPlatform.timestamp.from(unixNanos = 1670594384516466159)
+        val END_TIME = CrossPlatform.timestamp.from(unixNanos = 1670594389958451901)
         val FILE
             get() = readAssetAsFile(ASSET)
     }
@@ -51,12 +51,21 @@ object TestTraces {
     object TransactionTrace {
         private const val ASSET = "transactions_trace.winscope"
         val START_TIME =
-            Timestamps.from(systemUptimeNanos = 1556111744859, elapsedNanos = 1556111744859)
+            CrossPlatform.timestamp.from(
+                systemUptimeNanos = 1556111744859,
+                elapsedNanos = 1556111744859
+            )
         val VALID_SLICE_TIME =
-            Timestamps.from(systemUptimeNanos = 1556147625539, elapsedNanos = 1556147625539)
-        val INVALID_SLICE_TIME = Timestamps.from(systemUptimeNanos = 1622127714039 + 1)
+            CrossPlatform.timestamp.from(
+                systemUptimeNanos = 1556147625539,
+                elapsedNanos = 1556147625539
+            )
+        val INVALID_SLICE_TIME = CrossPlatform.timestamp.from(systemUptimeNanos = 1622127714039 + 1)
         val END_TIME =
-            Timestamps.from(systemUptimeNanos = 1622127714039, elapsedNanos = 1622127714039)
+            CrossPlatform.timestamp.from(
+                systemUptimeNanos = 1622127714039,
+                elapsedNanos = 1622127714039
+            )
         val FILE
             get() = readAssetAsFile(ASSET)
     }
@@ -64,24 +73,32 @@ object TestTraces {
     object TransitionTrace {
         private val WM_ASSET = "wm_transition_trace.winscope"
 
-        private const val SHELL_ASSET = "shell_transition_trace.winscope"
+        private val SHELL_ASSET = "shell_transition_trace.winscope"
 
         val START_TIME =
-            Timestamps.from(elapsedNanos = 760760231809, systemUptimeNanos = 0, unixNanos = 0)
+            CrossPlatform.timestamp.from(
+                elapsedNanos = 760760231809,
+                systemUptimeNanos = 0,
+                unixNanos = 0
+            )
         val VALID_SLICE_TIME =
-            Timestamps.from(
+            CrossPlatform.timestamp.from(
                 elapsedNanos = 2770105426934 - 1000,
                 systemUptimeNanos = 0,
                 unixNanos = 0
             )
         val INVALID_SLICE_TIME =
-            Timestamps.from(
+            CrossPlatform.timestamp.from(
                 elapsedNanos = 2770105426934 + 1,
                 systemUptimeNanos = 0,
                 unixNanos = 0,
             )
         val END_TIME =
-            Timestamps.from(elapsedNanos = 2770105426934, systemUptimeNanos = 0, unixNanos = 0)
+            CrossPlatform.timestamp.from(
+                elapsedNanos = 2770105426934,
+                systemUptimeNanos = 0,
+                unixNanos = 0
+            )
 
         val WM_FILE
             get() = readAssetAsFile(WM_ASSET)
@@ -91,8 +108,8 @@ object TestTraces {
             get() = listOf(WM_FILE, SHELL_FILE)
     }
 
-    val TIME_5 = Timestamps.from(5, 5, 5)
-    val TIME_10 = Timestamps.from(10, 10, 10)
+    val TIME_5 = CrossPlatform.timestamp.from(5, 5, 5)
+    val TIME_10 = CrossPlatform.timestamp.from(10, 10, 10)
 
     val TEST_TRACE_CONFIG =
         TraceConfigs(

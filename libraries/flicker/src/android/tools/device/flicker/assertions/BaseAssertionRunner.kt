@@ -17,25 +17,41 @@
 package android.tools.device.flicker.assertions
 
 import android.tools.common.flicker.assertions.AssertionData
-import android.tools.common.flicker.assertions.AssertionRunner
-import android.tools.common.flicker.assertions.ReaderAssertionRunner
-import android.tools.common.io.Reader
+import android.tools.common.flicker.assertions.SubjectsParser
+import android.tools.common.io.IReader
 import android.tools.common.io.RunStatus
 
 /**
  * Helper class to run an assertions
  *
  * @param resultReader helper class to read the flicker artifact
- * @param innerRunner helper class to run the assertion
+ * @param subjectsParser helper class to convert a result into flicker subjects
  */
 abstract class BaseAssertionRunner(
-    private val resultReader: Reader,
-    private val innerRunner: AssertionRunner = ReaderAssertionRunner(resultReader)
-) : AssertionRunner by innerRunner {
-    protected abstract fun doUpdateStatus(newStatus: RunStatus)
+    private val resultReader: IReader,
+    private val subjectsParser: SubjectsParser = SubjectsParser(resultReader)
+) {
+    /**
+     * Executes [assertion] on the subjects parsed by [subjectsParser] and update its execution
+     * status
+     *
+     * @param assertion to run
+     * @return the transition execution error (if any) , assertion error (if any), null otherwise
+     */
+    fun runAssertion(assertion: AssertionData): Throwable? {
+        return resultReader.executionError ?: doRunAssertion(assertion)
+    }
 
-    override fun runAssertion(assertion: AssertionData): Throwable? =
-        innerRunner.runAssertion(assertion).also { updateResultStatus(it) }
+    private fun doRunAssertion(assertion: AssertionData): Throwable? {
+        return try {
+            assertion.checkAssertion(subjectsParser)
+            updateResultStatus(error = null)
+            null
+        } catch (error: Throwable) {
+            updateResultStatus(error)
+            error
+        }
+    }
 
     private fun updateResultStatus(error: Throwable?) {
         val newStatus =
@@ -45,4 +61,6 @@ abstract class BaseAssertionRunner(
 
         doUpdateStatus(newStatus)
     }
+
+    protected abstract fun doUpdateStatus(newStatus: RunStatus)
 }
