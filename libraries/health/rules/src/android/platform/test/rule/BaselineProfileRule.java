@@ -75,12 +75,14 @@ public class BaselineProfileRule extends TestWatcher {
                                             // without a try-catch statement.
                                             try {
                                                 base.evaluate();
-                                                return Unit.INSTANCE;
                                             } catch (Throwable e) {
-                                                throw new RuntimeException(
-                                                        "Caught checked exception in parent"
-                                                                + " statement.",
+                                                Log.e(
+                                                        LOG_TAG,
+                                                        "Caught checked exception in parent "
+                                                                + "statement.",
                                                         e);
+                                            } finally {
+                                                return Unit.INSTANCE;
                                             }
                                         });
                             }
@@ -91,10 +93,8 @@ public class BaselineProfileRule extends TestWatcher {
                 // check for profile
                 String compileStatus =
                         executeShellCommand(
-                                String.format(
-                                        "dumpsys package %s | grep \"status=\"",
-                                        mBaselineProfilePackage));
-                if (!compileStatus.contains("profile")) {
+                                String.format("dumpsys package %s", mBaselineProfilePackage));
+                if (!compileStatus.contains("status=speed-profile")) {
                     throw new IllegalStateException(
                             String.format(
                                     "The package, %s, was not found to be compiled with"
@@ -108,10 +108,8 @@ public class BaselineProfileRule extends TestWatcher {
                 // check for no profile
                 compileStatus =
                         executeShellCommand(
-                                String.format(
-                                        "dumpsys package %s | grep \"status=\"",
-                                        mBaselineProfilePackage));
-                if (compileStatus.contains("profile")) {
+                                String.format("dumpsys package %s", mBaselineProfilePackage));
+                if (compileStatus.contains("status=speed-profile")) {
                     throw new IllegalStateException(
                             String.format(
                                     "The package, %s, was found to be compiled with"
