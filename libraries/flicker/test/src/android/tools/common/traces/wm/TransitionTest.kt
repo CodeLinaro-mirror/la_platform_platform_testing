@@ -29,7 +29,7 @@ import org.junit.runners.MethodSorters
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class TransitionTest {
     @Test
-    fun canMerge() {
+    fun canMergePartialTransitions() {
         val transition1 =
             Transition(
                 id = 1,
@@ -59,7 +59,11 @@ class TransitionTest {
                     ),
             )
 
-        val mergedTransition = transition1.merge(transition2).merge(transition3)
+        val mergedTransition =
+            Transition.mergePartialTransitions(
+                Transition.mergePartialTransitions(transition1, transition2),
+                transition3
+            )
 
         Truth.assertThat(mergedTransition.createTime.elapsedNanos).isEqualTo(10)
         Truth.assertThat(mergedTransition.sendTime.elapsedNanos).isEqualTo(20)
@@ -68,7 +72,7 @@ class TransitionTest {
     }
 
     @Test
-    fun mergeOverrideValues() {
+    fun mergePartialTransitionsOverrideValues() {
         val transition1 =
             Transition(
                 id = 1,
@@ -78,8 +82,8 @@ class TransitionTest {
                         sendTime = CrossPlatform.timestamp.from(20),
                         abortTime = CrossPlatform.timestamp.from(30),
                         finishTime = CrossPlatform.timestamp.from(40),
-                        startTransactionId = 1,
-                        finishTransactionId = 2,
+                        startTransactionId = "1",
+                        finishTransactionId = "2",
                         type = TransitionType.CLOSE,
                         changes = arrayOf(),
                     ),
@@ -103,8 +107,8 @@ class TransitionTest {
                         sendTime = CrossPlatform.timestamp.from(200),
                         abortTime = CrossPlatform.timestamp.from(300),
                         finishTime = CrossPlatform.timestamp.from(400),
-                        startTransactionId = 10,
-                        finishTransactionId = 20,
+                        startTransactionId = "10",
+                        finishTransactionId = "20",
                         type = TransitionType.OPEN,
                         changes = arrayOf(),
                     ),
@@ -119,7 +123,7 @@ class TransitionTest {
                     )
             )
 
-        val mergedTransition = transition1.merge(transition2)
+        val mergedTransition = Transition.mergePartialTransitions(transition1, transition2)
 
         Truth.assertThat(mergedTransition.createTime.elapsedNanos).isEqualTo(100)
         Truth.assertThat(mergedTransition.sendTime.elapsedNanos).isEqualTo(200)
@@ -145,7 +149,7 @@ class TransitionTest {
                 wmData =
                     WmTransitionData(
                         sendTime = CrossPlatform.timestamp.from(1),
-                        startTransactionId = transactionId
+                        startTransactionId = transactionId.toString()
                     )
             )
 
@@ -184,7 +188,7 @@ class TransitionTest {
                 wmData =
                     WmTransitionData(
                         sendTime = CrossPlatform.timestamp.from(1),
-                        startTransactionId = transactionId
+                        startTransactionId = transactionId.toString()
                     )
             )
 
@@ -223,7 +227,7 @@ class TransitionTest {
                 wmData =
                     WmTransitionData(
                         sendTime = CrossPlatform.timestamp.from(1),
-                        startTransactionId = transactionId
+                        startTransactionId = transactionId.toString()
                     )
             )
 
@@ -262,7 +266,7 @@ class TransitionTest {
                 wmData =
                     WmTransitionData(
                         sendTime = CrossPlatform.timestamp.from(1),
-                        finishTransactionId = transactionId
+                        finishTransactionId = transactionId.toString()
                     )
             )
 
@@ -301,7 +305,7 @@ class TransitionTest {
                 wmData =
                     WmTransitionData(
                         sendTime = CrossPlatform.timestamp.from(1),
-                        finishTransactionId = transactionId
+                        finishTransactionId = transactionId.toString()
                     )
             )
 
@@ -340,7 +344,7 @@ class TransitionTest {
                 wmData =
                     WmTransitionData(
                         sendTime = CrossPlatform.timestamp.from(1),
-                        finishTransactionId = transactionId
+                        finishTransactionId = transactionId.toString()
                     )
             )
 
