@@ -21,7 +21,7 @@ import android.app.Instrumentation
 import android.app.WindowConfiguration
 import android.os.SystemClock
 import android.os.Trace
-import android.tools.common.CrossPlatform
+import android.tools.common.Logger
 import android.tools.common.Rotation
 import android.tools.common.datatypes.Region
 import android.tools.common.traces.Condition
@@ -34,6 +34,7 @@ import android.tools.common.traces.component.ComponentNameMatcher.Companion.LAUN
 import android.tools.common.traces.component.ComponentNameMatcher.Companion.SNAPSHOT
 import android.tools.common.traces.component.ComponentNameMatcher.Companion.SPLASH_SCREEN
 import android.tools.common.traces.component.ComponentNameMatcher.Companion.SPLIT_DIVIDER
+import android.tools.common.traces.component.ComponentNameMatcher.Companion.TRANSITION_SNAPSHOT
 import android.tools.common.traces.component.IComponentMatcher
 import android.tools.common.traces.surfaceflinger.LayerTraceEntry
 import android.tools.common.traces.surfaceflinger.LayersTrace
@@ -115,9 +116,9 @@ constructor(
                 .onLog { msg, isError ->
                     lastMessage = msg
                     if (isError) {
-                        CrossPlatform.log.e(LOG_TAG, msg)
+                        Logger.e(LOG_TAG, msg)
                     } else {
-                        CrossPlatform.log.d(LOG_TAG, msg)
+                        Logger.d(LOG_TAG, msg)
                     }
                 }
                 .onRetry { SystemClock.sleep(retryIntervalMs) }
@@ -361,6 +362,10 @@ constructor(
         /** Waits until the [SPLASH_SCREEN] is gone */
         fun withSplashScreenGone() = add(ConditionsFactory.isLayerVisible(SPLASH_SCREEN).negate())
 
+        /** Waits until the [TRANSITION_SNAPSHOT] is gone */
+        fun withTransitionSnapshotGone() =
+                add(ConditionsFactory.isLayerVisible(TRANSITION_SNAPSHOT).negate())
+
         /** Waits until the is no top visible app window in the [WindowManagerState] */
         fun withoutTopVisibleAppWindows() =
             add("noAppWindowsOnTop") { it.wmState.topVisibleAppWindow == null }
@@ -426,16 +431,13 @@ constructor(
                 val activityWindowVisible = matchingWindowStates.isNotEmpty()
 
                 if (!activityWindowVisible) {
-                    CrossPlatform.log.i(
+                    Logger.i(
                         LOG_TAG,
                         "Activity window not visible: ${activityState.windowIdentifier}"
                     )
                     allActivityWindowsVisible = false
                 } else if (!state.wmState.isActivityVisible(activityState.activityMatcher)) {
-                    CrossPlatform.log.i(
-                        LOG_TAG,
-                        "Activity not visible: ${activityState.activityMatcher}"
-                    )
+                    Logger.i(LOG_TAG, "Activity not visible: ${activityState.activityMatcher}")
                     allActivityWindowsVisible = false
                 } else {
                     // Check if window is already the correct state requested by test.
@@ -461,7 +463,7 @@ constructor(
                         break
                     }
                     if (!windowInCorrectState) {
-                        CrossPlatform.log.i(LOG_TAG, "Window in incorrect stack: $activityState")
+                        Logger.i(LOG_TAG, "Window in incorrect stack: $activityState")
                         tasksInCorrectStacks = false
                     }
                 }
