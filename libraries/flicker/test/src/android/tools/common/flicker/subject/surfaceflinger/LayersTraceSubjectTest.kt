@@ -16,7 +16,6 @@
 
 package android.tools.common.flicker.subject.surfaceflinger
 
-import android.tools.CleanFlickerEnvironmentRule
 import android.tools.TestComponents
 import android.tools.assertFail
 import android.tools.assertThatErrorContainsDebugInfo
@@ -24,9 +23,10 @@ import android.tools.assertThrows
 import android.tools.common.Cache
 import android.tools.common.datatypes.Region
 import android.tools.common.flicker.subject.layers.LayersTraceSubject
-import android.tools.common.io.IReader
+import android.tools.common.io.Reader
 import android.tools.common.traces.component.ComponentNameMatcher
 import android.tools.getLayerTraceReaderFromAsset
+import android.tools.rules.CleanFlickerEnvironmentRule
 import androidx.test.filters.FlakyTest
 import com.google.common.truth.Truth
 import org.junit.Before
@@ -177,7 +177,7 @@ class LayersTraceSubjectTest {
         Truth.assertThat(error).hasMessageThat().contains("is not visible for 2 entries")
     }
 
-    private fun testCanDetectVisibleLayersMoreThanOneConsecutiveEntry(reader: IReader) {
+    private fun testCanDetectVisibleLayersMoreThanOneConsecutiveEntry(reader: Reader) {
         val trace = reader.readLayersTrace() ?: error("Unable to read layers trace")
         LayersTraceSubject(trace, reader)
             .visibleLayersShownMoreThanOneConsecutiveEntry()
@@ -346,6 +346,6 @@ class LayersTraceSubjectTest {
         private val DISPLAY_REGION = Region.from(0, 0, 1440, 2880)
         private val DISPLAY_REGION_ROTATED = Region.from(0, 0, 2160, 1080)
 
-        @ClassRule @JvmField val cleanFlickerEnvironmentRule = CleanFlickerEnvironmentRule()
+        @ClassRule @JvmField val ENV_CLEANUP = CleanFlickerEnvironmentRule()
     }
 }

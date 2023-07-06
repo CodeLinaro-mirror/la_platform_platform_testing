@@ -16,8 +16,8 @@
 
 package android.tools.common.traces.wm
 
-import android.tools.CleanFlickerEnvironmentRule
-import android.tools.common.CrossPlatform
+import android.tools.common.Timestamps
+import android.tools.rules.CleanFlickerEnvironmentRule
 import com.google.common.truth.Truth
 import org.junit.ClassRule
 import org.junit.FixMethodOrder
@@ -65,7 +65,7 @@ class WindowManagerTraceEntryBuilderTest {
 
         Truth.assertThat(entry.timestamp.elapsedNanos).isEqualTo(100)
         Truth.assertThat(entry.timestamp.systemUptimeNanos)
-            .isEqualTo(CrossPlatform.timestamp.empty().systemUptimeNanos)
+            .isEqualTo(Timestamps.empty().systemUptimeNanos)
         Truth.assertThat(entry.timestamp.unixNanos).isEqualTo(600)
     }
 
@@ -88,12 +88,11 @@ class WindowManagerTraceEntryBuilderTest {
 
         Truth.assertThat(entry.timestamp.elapsedNanos).isEqualTo(100)
         Truth.assertThat(entry.timestamp.systemUptimeNanos)
-            .isEqualTo(CrossPlatform.timestamp.empty().systemUptimeNanos)
-        Truth.assertThat(entry.timestamp.unixNanos)
-            .isEqualTo(CrossPlatform.timestamp.empty().unixNanos)
+            .isEqualTo(Timestamps.empty().systemUptimeNanos)
+        Truth.assertThat(entry.timestamp.unixNanos).isEqualTo(Timestamps.empty().unixNanos)
     }
 
     companion object {
-        @ClassRule @JvmField val cleanFlickerEnvironmentRule = CleanFlickerEnvironmentRule()
+        @ClassRule @JvmField val ENV_CLEANUP = CleanFlickerEnvironmentRule()
     }
 }
