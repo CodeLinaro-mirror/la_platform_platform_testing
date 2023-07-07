@@ -312,6 +312,24 @@ constructor(
                 .add(ConditionsFactory.isLayerVisible(componentMatcher))
 
         /**
+         * Wait until least one layer matching [componentMatcher] has [expectedRegion]
+         *
+         * @param componentMatcher Components to search
+         * @param expectedRegion of the target surface
+         */
+        fun withSurfaceVisibleRegion(componentMatcher: IComponentMatcher, expectedRegion: Region) =
+            add(
+                Condition("surfaceRegion") {
+                    val layer =
+                        it.layerState.visibleLayers.firstOrNull { layer ->
+                            componentMatcher.layerMatchesAnyOf(layer)
+                        }
+
+                    layer?.visibleRegion == expectedRegion
+                }
+            )
+
+        /**
          * Waits until the IME window and layer are visible
          *
          * @param displayId of the target display
@@ -330,7 +348,9 @@ constructor(
          */
         @JvmOverloads
         fun withImeGone(displayId: Int = Display.DEFAULT_DISPLAY) =
-            withAppTransitionIdle(displayId).add(ConditionsFactory.isLayerVisible(IME).negate())
+            withAppTransitionIdle(displayId)
+                .add(ConditionsFactory.isLayerVisible(IME).negate())
+                .add(ConditionsFactory.isImeShown(displayId).negate())
 
         /**
          * Waits until a window is in PIP mode. That is:
