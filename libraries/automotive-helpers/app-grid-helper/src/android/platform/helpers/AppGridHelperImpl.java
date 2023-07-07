@@ -21,9 +21,10 @@ import android.platform.helpers.ScrollUtility.ScrollActions;
 import android.platform.helpers.ScrollUtility.ScrollDirection;
 import android.platform.helpers.exceptions.UnknownUiException;
 import android.platform.spectatio.exceptions.MissingUiElementException;
-import android.support.test.uiautomator.By;
-import android.support.test.uiautomator.BySelector;
-import android.support.test.uiautomator.UiObject2;
+
+import androidx.test.uiautomator.By;
+import androidx.test.uiautomator.BySelector;
+import androidx.test.uiautomator.UiObject2;
 
 /** Helper class for functional test for App Grid test */
 public class AppGridHelperImpl extends AbstractStandardAppHelper implements IAutoAppGridHelper {
@@ -104,7 +105,7 @@ public class AppGridHelperImpl extends AbstractStandardAppHelper implements IAut
     @Override
     public void exit() {
         if (isAppInForeground()) {
-            mDevice.pressHome();
+            getSpectatioUiUtil().pressHome();
         }
     }
 
@@ -124,6 +125,7 @@ public class AppGridHelperImpl extends AbstractStandardAppHelper implements IAut
 
         validateUiObject(app, String.format("Given app %s", appName));
         getSpectatioUiUtil().clickAndWait(app);
+        getSpectatioUiUtil().wait5Seconds();
     }
 
     /** {@inherticDoc} */
@@ -233,6 +235,38 @@ public class AppGridHelperImpl extends AbstractStandardAppHelper implements IAut
                 mForwardButtonSelector,
                 mScrollableElementSelector,
                 String.format("Scroll forward on app grid"));
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public String getScreenBlockingMessage(String appName) {
+        BySelector screenBlockingSelector =
+                getUiElementFromConfig(AutomotiveConfigConstants.BLOCKING_SCREEN);
+        UiObject2 screenBlocking = getSpectatioUiUtil().findUiObject(screenBlockingSelector);
+        validateUiObject(
+                screenBlocking,
+                String.format("Screen Blocking message when opening %s app", appName));
+        BySelector screenBlockingMessageSelector =
+                getUiElementFromConfig(AutomotiveConfigConstants.BLOCKING_MESSAGE);
+        UiObject2 screenBlockingMessage =
+                getSpectatioUiUtil().findUiObject(screenBlockingMessageSelector);
+        validateUiObject(
+                screenBlockingMessage,
+                String.format("Screen Blocking message for %s app", appName));
+        return getSpectatioUiUtil().getTextForUiElement(screenBlockingMessage);
+    }
+
+    /** To verify if given package is in Foreground */
+    @Override
+    public boolean checkPackageInForeground(String packageName) {
+        String foregroundPackage = getPackageFromConfig(packageName);
+        return getSpectatioUiUtil().hasPackageInForeground(foregroundPackage);
+    }
+
+    @Override
+    public void goToHomePage() {
+        getSpectatioUiUtil().pressHome();
+        getSpectatioUiUtil().wait1Second();
     }
 
     private void validateUiObject(UiObject2 uiObject, String action) {
