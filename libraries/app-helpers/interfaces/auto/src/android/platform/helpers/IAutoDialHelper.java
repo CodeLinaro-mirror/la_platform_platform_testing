@@ -16,6 +16,8 @@
 
 package android.platform.helpers;
 
+import java.util.List;
+
 public interface IAutoDialHelper extends IAppHelper, Scrollable {
 
     /** enum class for contact list order type. */
@@ -235,4 +237,25 @@ public interface IAutoDialHelper extends IAppHelper, Scrollable {
      * <p>This method is used to open contact list
      */
     void openContacts();
+
+    /**
+     * Setup expectations: The app is open and there is an ongoing call.
+     *
+     * <p>This method is used check if ongoing call is displayed on home.
+     */
+    boolean isOngoingCallDisplayedOnHome();
+
+    /**
+     * Setup expectations: The home screen is open
+     *
+     * <p>This method is used for opening phone app from homescreen
+     */
+    void openPhoneAppFromHome();
+
+    /**
+     * Setup expectations: The app is open.
+     *
+     * <p>This method is used to get visible contacts list
+     */
+    List<String> getListOfAllVisibleContacts();
 }
