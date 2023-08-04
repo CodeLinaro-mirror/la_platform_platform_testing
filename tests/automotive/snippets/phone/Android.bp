@@ -22,6 +22,7 @@ android_test {
         "automotive-dial-app-helper",
         "automotive-vehiclehardkeys-app-helper",
         "automotive-settings-app-helper",
+        "automotive-sms-helper",
         "mobly-snippet-lib",
         "mobly-bundled-snippets-lib",
     ],
