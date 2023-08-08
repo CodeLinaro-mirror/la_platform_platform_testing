@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package android.tools.common.flicker.config
+package android.tools.common.flicker
 
-import android.tools.common.flicker.assertors.AssertionTemplate
-import android.tools.common.flicker.extractors.ScenarioExtractor
-
-interface ScenarioConfig {
-    val extractor: ScenarioExtractor
-    val assertionTemplates: Collection<AssertionTemplate>
-    val enabled: Boolean
-    val type: FaasScenarioType
+fun String.camelToSnakeCase(): String {
+    return this.fold(StringBuilder()) { acc, c ->
+            acc.let {
+                val lowerC = c.lowercase()
+                acc.append(if (acc.isNotEmpty() && c.isUpperCase()) "_$lowerC" else lowerC)
+            }
+        }
+        .toString()
 }

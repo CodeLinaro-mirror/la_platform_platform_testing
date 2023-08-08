@@ -28,6 +28,7 @@ instrumentation_tests := \
     FrameworksMockingServicesTests \
     WmTests \
     WmPerfTests \
+    DisplayServiceTests \
     JobTestApp \
     SuspendTestApp \
     FrameworksUtilTests \

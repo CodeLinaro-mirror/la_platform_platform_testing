@@ -14,10 +14,17 @@
  * limitations under the License.
  */
 
-package android.tools.device.flicker.annotation
+package android.platform.test.flag.junit;
 
-import android.tools.common.flicker.config.FaasScenarioType
+/** A Fake Flags to test the {@code AconfigFlagsValueProvider}. */
+public class Flags {
+    /** Returns the flag value. */
+    public static boolean flagName1() {
+        return true;
+    }
 
-@Target(AnnotationTarget.FUNCTION)
-@Retention(AnnotationRetention.RUNTIME)
-annotation class FlickerTest(val expected: Array<FaasScenarioType>)
+    /** Returns a non-boolean flag value. */
+    public static int flagName2() {
+        return 1;
+    }
+}
