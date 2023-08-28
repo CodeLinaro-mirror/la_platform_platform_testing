@@ -25,7 +25,10 @@ import androidx.test.uiautomator.By;
 import androidx.test.uiautomator.BySelector;
 import androidx.test.uiautomator.UiObject2;
 
-/** Helper for Notifications on Automotive device */
+/**
+ * Helper for Notifications on Automotive device openNotification() for swipeDown is removed- Not
+ * supported in UDC- bug b/285387870
+ */
 public class AutoNotificationHelperImpl extends AbstractStandardAppHelper
         implements IAutoNotificationHelper {
 
@@ -175,13 +178,6 @@ public class AutoNotificationHelperImpl extends AbstractStandardAppHelper
         getSpectatioUiUtil().wait5Seconds();
     }
 
-    /** {@inheritDoc} */
-    @Override
-    public void openNotification() {
-        // Swipe Down From top of screen to the bottom in one step
-        getSpectatioUiUtil().swipeDown();
-    }
-
     private boolean checkIfClearAllButtonExist(BySelector selector) {
         open();
         UiObject2 clr_btn = findInNotificationList(selector);
@@ -265,6 +261,36 @@ public class AutoNotificationHelperImpl extends AbstractStandardAppHelper
             }
         }
         return object;
+    }
+
+    @Override
+    public boolean isRecentNotification() {
+        BySelector recentNotificationsPanel =
+                getUiElementFromConfig(AutomotiveConfigConstants.RECENT_NOTIFICATIONS);
+        UiObject2 recentNotificationLayOut =
+                getSpectatioUiUtil().findUiObject(recentNotificationsPanel);
+        validateUiObject(recentNotificationLayOut, AutomotiveConfigConstants.RECENT_NOTIFICATIONS);
+        BySelector testNotification =
+                getUiElementFromConfig(AutomotiveConfigConstants.TEST_NOTIFICATION);
+        UiObject2 testNotificationLayout =
+                getSpectatioUiUtil()
+                        .findUiObjectInGivenElement(recentNotificationLayOut, testNotification);
+        return testNotificationLayout != null;
+    }
+
+    @Override
+    public boolean isOlderNotification() {
+        BySelector olderNotificationsPanel =
+                getUiElementFromConfig(AutomotiveConfigConstants.OLDER_NOTIFICATIONS);
+        UiObject2 olderNotificationLayOut =
+                getSpectatioUiUtil().findUiObject(olderNotificationsPanel);
+        validateUiObject(olderNotificationLayOut, AutomotiveConfigConstants.OLDER_NOTIFICATIONS);
+        BySelector testNotification =
+                getUiElementFromConfig(AutomotiveConfigConstants.TEST_NOTIFICATION);
+        UiObject2 testNotificationLayout =
+                getSpectatioUiUtil()
+                        .findUiObjectInGivenElement(olderNotificationLayOut, testNotification);
+        return testNotificationLayout != null;
     }
 
     private void validateUiObject(UiObject2 uiObject, String action) {

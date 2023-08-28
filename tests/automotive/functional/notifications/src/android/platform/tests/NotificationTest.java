@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ package android.platform.tests;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
 
-import android.platform.helpers.AutoUtility;
 import android.platform.helpers.HelperAccessor;
 import android.platform.helpers.IAutoNotificationHelper;
 import android.platform.helpers.IAutoNotificationMockingHelper;
@@ -28,7 +27,6 @@ import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -44,10 +42,6 @@ public class NotificationTest {
         mNotificationMockingHelper = new HelperAccessor<>(IAutoNotificationMockingHelper.class);
     }
 
-    @BeforeClass
-    public static void exitSuw() {
-        AutoUtility.exitSuw();
-    }
 
     @Before
     public void clearAllNotification() {
@@ -99,17 +93,26 @@ public class NotificationTest {
     }
 
     @Test
-    public void testSwipeDownNotification() {
-        mNotificationHelper.get().openNotification();
-        assertTrue("Notification is not open", mNotificationHelper.get().isAppInForeground());
-    }
-
-    @Test
     public void testManageButton() {
         mNotificationMockingHelper.get().postNotifications(1);
         mNotificationHelper.get().clickManageBtn();
         assertTrue(
                 "Notification Settings did not open.",
                 mNotificationHelper.get().isNotificationSettingsOpened());
+    }
+
+    @Test
+    public void testRecentAndOlderNotifications() {
+        mNotificationHelper.get().tapClearAllBtn();
+        mNotificationMockingHelper.get().postNotifications(1);
+        mNotificationHelper.get().open();
+        assertTrue(
+                "Notification are not present under recent category",
+                mNotificationHelper.get().isRecentNotification());
+        mNotificationHelper.get().exit();
+        mNotificationHelper.get().open();
+        assertTrue(
+                "Notification are not present under older category",
+                mNotificationHelper.get().isOlderNotification());
     }
 }

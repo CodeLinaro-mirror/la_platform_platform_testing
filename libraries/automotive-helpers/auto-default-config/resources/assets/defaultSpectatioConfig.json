@@ -6,8 +6,8 @@
     "SECURITY_SETTINGS_PACKAGE": "com.android.car.settings",
     "LOCK_SCREEN_PACKAGE": "com.android.systemui",
     "SETTINGS_PACKAGE": "com.android.car.settings",
-    "NUMBER_PICKER_WIDGET_CLASS" : "android.widget.NumberPicker",
-    "EDIT_TEXT_WIDGET_CLASS" : "android.widget.EditText",
+    "NUMBER_PICKER_WIDGET_CLASS": "android.widget.NumberPicker",
+    "EDIT_TEXT_WIDGET_CLASS": "android.widget.EditText",
     "USER_SETTINGS_PACKAGE": "com.android.car.settings",
     "MEDIA_CENTER_PACKAGE": "com.android.car.media",
     "CONTACTS_PACKAGE": "com.android.contacts",
@@ -30,7 +30,7 @@
     "SYSTEM_SETTINGS_SCROLL_DIRECTION": "VERTICAL",
     "SYSTEM_SETTINGS_SCROLL_MARGIN": "6",
     "SYSTEM_SETTINGS_SCROLL_WAIT_TIME": "2",
-    "APP_INFO_SETTINGS_SCROLL_ACTION" : "USE_GESTURE",
+    "APP_INFO_SETTINGS_SCROLL_ACTION": "USE_GESTURE",
     "APP_INFO_SETTINGS_SCROLL_DIRECTION": "VERTICAL",
     "APP_INFO_SETTINGS_SCROLL_MARGIN": "10",
     "APP_INFO_SETTINGS_SCROLL_WAIT_TIME": "2",
@@ -48,10 +48,10 @@
     "DATE_TIME_SETTINGS_SCROLL_DIRECTION": "VERTICAL",
     "USER_SETTINGS_SCROLL_ACTION": "USE_GESTURE",
     "USER_SETTINGS_SCROLL_DIRECTION": "VERTICAL",
-    "USER_SETTINGS_SCROLL_MARGIN":"6",
-    "USER_SETTINGS_SCROLL_WAIT_TIME":"2",
-    "ACCOUNT_SETTINGS_SCROLL_ACTION" : "USE_GESTURE",
-    "ACCOUNT_SETTINGS_SCROLL_DIRECTION" : "VERTICAL",
+    "USER_SETTINGS_SCROLL_MARGIN": "6",
+    "USER_SETTINGS_SCROLL_WAIT_TIME": "2",
+    "ACCOUNT_SETTINGS_SCROLL_ACTION": "USE_GESTURE",
+    "ACCOUNT_SETTINGS_SCROLL_DIRECTION": "VERTICAL",
     "SETTINGS_SUB_SETTING_SCROLL_ACTION": "USE_GESTURE",
     "SETTINGS_SUB_SETTING_SCROLL_DIRECTION": "VERTICAL",
     "MEDIA_APP_SCROLL_ACTION": "USE_GESTURE",
@@ -65,7 +65,7 @@
     "OPEN_NOTIFICATIONS_COMMAND": "service call statusbar 1",
     "STOP_SETTING_APP_COMMAND": "am force-stop com.android.car.settings",
     "OPEN_SETTINGS_COMMAND": "am start -a android.settings.SETTINGS",
-    "MEDIA_LAUNCH_COMMAND":"am start -a android.car.intent.action.MEDIA_TEMPLATE -e android.car.intent.extra.MEDIA_COMPONENT com.android.bluetooth/com.android.bluetooth.avrcpcontroller.BluetoothMediaBrowserService"
+    "MEDIA_LAUNCH_COMMAND": "am start -a android.car.intent.action.MEDIA_TEMPLATE -e android.car.intent.extra.MEDIA_COMPONENT com.android.bluetooth/com.android.bluetooth.avrcpcontroller.BluetoothMediaBrowserService"
   },
   "UI_ELEMENTS": {
     "MAKE_CALL": {
@@ -275,6 +275,19 @@
       "VALUE": "contact_details_favorite_button",
       "PACKAGE": "com.android.car.dialer"
     },
+    "ADD_CONTACT_TO_FAVORITE_FROM_DIALOG_BOX": {
+      "TYPE": "RESOURCE_ID",
+      "VALUE": "car_ui_list_item_action_container",
+      "PACKAGE": "com.android.car.dialer"
+    },
+    "ADD_TO_FAVORITE_BUTTON": {
+      "TYPE": "TEXT",
+      "VALUE": "Add a favorite"
+    },
+    "ADD_TO_FAVORITE_DIALOG_OK": {
+      "TYPE": "TEXT",
+      "VALUE": "OK"
+    },
     "CONTACT_TYPE_HOME": {
       "TYPE": "TEXT",
       "VALUE": "Home"
@@ -330,6 +343,38 @@
       "VALUE": "scene_card",
       "PACKAGE": "com.android.car.carlauncher"
     },
+    "STATUS_BAR_BRIGHTNESS_BUTTON": {
+      "TYPE": "RESOURCE_ID",
+      "VALUE": "qc_display_status_icon",
+      "PACKAGE": "com.android.systemui"
+    },
+    "STATUS_BAR_DISPLAY_BRIGHTNESS_PALETTE": {
+      "TYPE": "RESOURCE_ID",
+      "VALUE": "qc_seekbar",
+      "PACKAGE": "com.android.systemui"
+    },
+    "STATUS_BAR_ADAPTIVE_BRIGHTNESS": {
+      "TYPE": "RESOURCE_ID",
+      "VALUE": "switch_widget",
+      "PACKAGE": "android"
+    },
+    "HOME_PROFILE_ICON_BUTTON": {
+      "TYPE": "RESOURCE_ID",
+      "VALUE": "user_name_text",
+      "PACKAGE": "com.android.systemui"
+    },
+    "HOME_GUEST_BUTTON": {
+      "TYPE": "TEXT",
+      "VALUE": "Guest"
+    },
+    "HOME_DRIVER_BUTTON": {
+      "TYPE": "TEXT",
+      "VALUE": "Driver"
+    },
+    "HOME_SECONDARY_USER_BUTTON": {
+      "TYPE": "TEXT",
+      "VALUE": "SecondaryUser"
+    },
     "HOME_ASSISTANT_CARD": {
       "TYPE": "TEXT",
       "VALUE": "Assistant"
@@ -338,9 +383,34 @@
       "TYPE": "TEXT",
       "VALUE": "Phone"
     },
+    "HOME_BLUETOOTH_BUTTON": {
+      "TYPE": "RESOURCE_ID",
+      "VALUE": "qc_bluetooth_status_icon",
+      "PACKAGE": "com.android.systemui"
+    },
+    "HOME_DISPLAY_BRIGHTNESS_BUTTON": {
+      "TYPE": "RESOURCE_ID",
+      "VALUE": "qc_display_status_icon",
+      "PACKAGE": "com.android.systemui"
+    },
+    "HOME_NETWORK_BUTTON": {
+      "TYPE": "RESOURCE_ID",
+      "VALUE": "qc_signal_status_icon",
+      "PACKAGE": "com.android.systemui"
+    },
+    "HOME_PROFILE_GUEST_ICON": {
+      "TYPE": "RESOURCE_ID",
+      "VALUE": "user_name_text",
+      "PACKAGE": "com.android.systemui"
+    },
     "HOME_FACET_BUTTON": {
       "TYPE": "RESOURCE_ID",
       "VALUE": "home",
+      "PACKAGE": "com.android.systemui"
+    },
+    "HOME_TEMPERATURE_BUTTON": {
+      "TYPE": "RESOURCE_ID",
+      "VALUE": "hvac_temperature_text",
       "PACKAGE": "com.android.systemui"
     },
     "PHONE_FACET_BUTTON": {
@@ -544,8 +614,8 @@
           "TYPE": "HAS_DESCENDANT",
           "MAX_DEPTH": 2,
           "DESCENDANT": {
-          "TYPE": "CLASS",
-          "VALUE": "android.widget.FrameLayout"
+            "TYPE": "CLASS",
+            "VALUE": "android.widget.FrameLayout"
           }
         }
       ]
@@ -675,6 +745,15 @@
       "VALUE": "About",
       "PACKAGE": "com.android.car.settings"
     },
+    "DEVELOPER_OPTIONS": {
+      "TYPE": "TEXT",
+      "VALUE": "Developer options"
+    },
+    "DEVELOPER_OPTIONS_SWITCH": {
+      "TYPE": "RESOURCE_ID",
+      "VALUE": "switch_widget",
+      "PACKAGE": "android"
+    },
     "RESET_OPTIONS_MENU": {
       "TYPE": "TEXT",
       "VALUE": "Reset options",
@@ -684,6 +763,33 @@
       "TYPE": "TEXT",
       "VALUE": "Languages & input",
       "PACKAGE": "com.android.car.settings"
+    },
+    "STATUS_BAR_BLUETOOTH_BUTTON": {
+      "TYPE": "RESOURCE_ID",
+      "VALUE": "qc_bluetooth_status_icon",
+      "PACKAGE": "com.android.systemui"
+    },
+    "STATUS_BAR_BLUETOOTH_TOGGLE_ON": {
+      "TYPE": "RESOURCE_ID",
+      "VALUE": "switch_widget",
+      "PACKAGE": "android"
+    },
+    "STATUS_BAR_BLUETOOTH_TOGGLE_ON_MESSAGE": {
+      "TYPE": "TEXT",
+      "VALUE": "To pair a device, open Bluetooth settings"
+    },
+    "STATUS_BAR_BLUETOOTH_TOGGLE_OFF_MESSAGE": {
+      "TYPE": "TEXT",
+      "VALUE": "To see your devices, turn on Bluetooth"
+    },
+    "STATUS_BAR_BLUETOOTH_SETTINGS": {
+      "TYPE": "RESOURCE_ID",
+      "VALUE": "qc_bluetooth_footer_button",
+      "PACKAGE": "com.android.systemui"
+    },
+    "STATUS_BAR_BLUETOOTH_SETTINGS_PAGE_TITLE": {
+      "TYPE": "TEXT",
+      "VALUE": "Bluetooth"
     },
     "DEVICE_MODEL": {
       "TYPE": "TEXT",
@@ -740,7 +846,6 @@
       "VALUE": "Idiomas",
       "PACKAGE": "com.android.car.settings"
     },
-
     "SETTINGS_SUMMARY": {
       "TYPE": "RESOURCE_ID",
       "VALUE": "summary",
@@ -762,8 +867,8 @@
       "PACKAGE": "com.android.car.ui.sharedlibrary"
     },
     "DISPLAY_SETTINGS_ADAPTIVE_BRIGHTNESS_TOGGLE": {
-    "TYPE": "MULTIPLE",
-    "SPECIFIERS": [
+      "TYPE": "MULTIPLE",
+      "SPECIFIERS": [
         {
           "TYPE": "CLASS",
           "VALUE": "android.widget.Switch"
@@ -786,6 +891,28 @@
       "TYPE": "RESOURCE_ID",
       "VALUE": "fragment_container",
       "PACKAGE": "com.android.car.settings"
+    },
+    "RECENT_NOTIFICATIONS": {
+      "TYPE": "HAS_DESCENDANT",
+      "MAX_DEPTH": 1,
+      "DESCENDANT": {
+        "TYPE": "RESOURCE_ID",
+        "VALUE": "notification_recents",
+        "PACKAGE": "com.android.systemui"
+      }
+    },
+    "OLDER_NOTIFICATIONS": {
+      "TYPE": "HAS_DESCENDANT",
+      "MAX_DEPTH": 1,
+      "DESCENDANT": {
+        "TYPE": "RESOURCE_ID",
+        "VALUE": "notification_older",
+        "PACKAGE": "com.android.systemui"
+      }
+    },
+    "TEST_NOTIFICATION": {
+      "TYPE": "TEXT",
+      "VALUE": "AUTO TEST NOTIFICATION"
     },
     "SYSTEM_SETTINGS_SCROLL_FORWARD_BUTTON": {
       "TYPE": "RESOURCE_ID",
@@ -1095,9 +1222,16 @@
       "PACKAGE": "com.android.settings.intelligence"
     },
     "SEARCH_RESULTS": {
-      "TYPE": "RESOURCE_ID",
-      "VALUE": "car_ui_recycler_view",
-      "PACKAGE": "com.android.car.ui.sharedlibrary"
+      "TYPE": "MULTIPLE",
+      "SPECIFIERS": [
+        {
+          "TYPE": "DESCRIPTION",
+          "VALUE": "com.android.car.ui.utils.ROTARY_CONTAINER"
+        },{
+          "TYPE": "CLASS",
+          "VALUE": "androidx.recyclerview.widget.RecyclerView"
+        }
+      ]
     },
     "PAGE_TITLE": {
       "TYPE": "RESOURCE_ID",
@@ -1125,6 +1259,11 @@
       "TYPE": "RESOURCE_ID",
       "VALUE": "car_ui_internal_recycler_view",
       "PACKAGE": "com.chassis.car.ui.plugin"
+    },
+    "SETTINGS_UI_SUB_SETTING_SCROLL_ELEMENT": {
+      "TYPE": "RESOURCE_ID",
+      "VALUE": "fragment_container",
+      "PACKAGE": "com.android.car.settings"
     },
     "BLOCKING_MESSAGE": {
       "TYPE": "RESOURCE_ID",
@@ -1267,9 +1406,88 @@
       "TYPE": "RESOURCE_ID",
       "VALUE": "title",
       "PACKAGE": "com.android.car.dialer"
+    },
+    "LOCATION_ACCESS": {
+      "TYPE": "TEXT",
+      "VALUE": "Location access"
+    },
+    "TOGGLE_LOCATION": {
+      "TYPE": "TEXT",
+      "VALUE": "Use location"
+    },
+    "LOCATION_SWITCH": {
+      "TYPE": "CLASS",
+      "VALUE": "android.widget.Switch"
+    },
+    "LOCATION_WIDGET": {
+      "TYPE": "RESOURCE_ID",
+      "VALUE": "qc_location_status_icon",
+      "PACKAGE": "com.android.systemui"
+    },
+    "RECENTLY_CLOSED_TEXT": {
+      "TYPE": "TEXT",
+      "VALUE": "Recently accessed"
+    },
+    "LOCATION_SETTINGS_RECENTLY_ACCESSED_MAPS": {
+      "TYPE": "TEXT",
+      "VALUE": "Maps"
+    },
+    "LOCATION_SETTINGS_VIEW_ALL": {
+      "TYPE": "TEXT",
+      "VALUE": "View all"
+    },
+    "MICROPHONE": {
+      "TYPE": "TEXT",
+      "VALUE": "Microphone"
+    },
+    "LOCATION": {
+      "TYPE": "TEXT",
+      "VALUE": "Location"
+    },
+    "APP_PERMISSION": {
+      "TYPE": "TEXT",
+      "VALUE": "App permissions"
+    },
+    "INFOTAINMENT_SYSTEM_DATA": {
+      "TYPE": "TEXT",
+      "VALUE": "Infotainment system data"
+    },
+    "DATA_SHARING_WITH_GOOGLE": {
+      "TYPE": "TEXT",
+      "VALUE": "Data Sharing with Google"
+    },
+    "SETTINGS_BACK_BUTTON": {
+      "TYPE": "DESCRIPTION",
+      "VALUE": "Back"
+    },
+    "STORAGE_SYSTEM_SUB_SETTINGS": {
+      "TYPE": "TEXT",
+      "VALUE": "Storage"
+    },
+    "STORAGE_MUSIC_AUDIO_SETTINGS": {
+      "TYPE": "TEXT",
+      "VALUE": "Music & audio"
+    },
+    "STORAGE_OTHER_APPS_SETTINGS": {
+      "TYPE": "TEXT",
+      "VALUE": "Other apps"
+    },
+    "STORAGE_FILES_SETTINGS": {
+      "TYPE": "TEXT",
+      "VALUE": "Files"
+    },
+    "STORAGE_SYSTEM_SETTINGS": {
+      "TYPE": "TEXT",
+      "VALUE": "System"
+    },
+    "STORAGE_OPTIONS_SUMMARY": {
+      "TYPE": "RESOURCE_ID",
+      "VALUE": "summary",
+      "PACKAGE": "android"
     }
   },
   "WORKFLOWS": {
+    "DIAL_CONTACT_WORKFLOW": [],
     "DISMISS_APPS_INITIAL_DIALOGS": [
       {
         "NAME": "Allow Button",
@@ -1278,6 +1496,41 @@
           "UI_ELEMENT": {
             "TYPE": "TEXT",
             "VALUE": "Allow"
+          }
+        }
+      }
+    ],
+    "OPEN_LOCATION_SETTINGS_WORKFLOW": [
+      {
+        "NAME": "Go to Home",
+        "TYPE": "PRESS",
+        "CONFIG": {
+          "TEXT": "HOME"
+        }
+      },
+      {
+        "NAME": "Open Settings",
+        "TYPE": "COMMAND",
+        "CONFIG": {
+          "TEXT": "am start -a android.settings.SETTINGS"
+        }
+      },
+      {
+        "NAME": "Open Location Settings",
+        "TYPE": "SCROLL_TO_FIND_AND_CLICK",
+        "CONFIG": {
+          "UI_ELEMENT": {
+            "TYPE": "TEXT",
+            "VALUE": "Location"
+          }
+        },
+        "SCROLL_CONFIG": {
+          "SCROLL_ACTION": "USE_GESTURE",
+          "SCROLL_DIRECTION": "VERTICAL",
+          "SCROLL_ELEMENT": {
+            "TYPE": "RESOURCE_ID",
+            "VALUE": "top_level_menu_container",
+            "PACKAGE": "com.android.car.settings"
           }
         }
       }
@@ -1490,7 +1743,7 @@
             "PACKAGE": "com.android.car.settings"
           },
           "SCROLL_MARGIN": "8",
-          "SCROLL_WAIT_TIME":"3"
+          "SCROLL_WAIT_TIME": "3"
         }
       }
     ],
@@ -1562,7 +1815,7 @@
             "PACKAGE": "com.android.car.settings"
           },
           "SCROLL_MARGIN": "8",
-          "SCROLL_WAIT_TIME":"3"
+          "SCROLL_WAIT_TIME": "3"
         }
       }
     ],
@@ -1657,3 +1910,5 @@
     ]
   }
 }
+
+

@@ -17,11 +17,12 @@
 package android.tools.rules
 
 import android.tools.common.Cache
+import android.tools.common.ICache
 import org.junit.rules.TestWatcher
 import org.junit.runner.Description
 
 class CacheCleanupRule : TestWatcher() {
-    private var cacheBackup: Cache.Backup? = null
+    private var cacheBackup: ICache.Backup? = null
     override fun starting(description: Description?) {
         super.starting(description)
         cacheBackup = Cache.backup()

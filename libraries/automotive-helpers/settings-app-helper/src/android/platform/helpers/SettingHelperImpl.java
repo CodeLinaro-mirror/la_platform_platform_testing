@@ -276,7 +276,6 @@ public class SettingHelperImpl extends AbstractStandardAppHelper implements IAut
 
         for (BySelector selector : selectors) {
             List<UiObject2> pageTitles = getSpectatioUiUtil().findUiObjects(selector);
-            validateUiObject(pageTitles, String.format("Page title"));
             if (pageTitles != null && pageTitles.size() > 0) {
                 return pageTitles.get(pageTitles.size() - 1);
             }
@@ -422,5 +421,24 @@ public class SettingHelperImpl extends AbstractStandardAppHelper implements IAut
         return menuButton;
     }
 
-
+    /** {@inheritDoc} */
+    @Override
+    public boolean isRecentAppDisplayedInLocationSettings(String app) {
+        UiObject2 recentApp = getSpectatioUiUtil().findUiObject("Maps");
+        validateUiObject(recentApp, String.format("Recently accessed app - %s", app));
+        UiObject2 recentAppsTime = recentApp.getParent();
+        if (recentAppsTime.getChildren().size() < 2) {
+            throw new RuntimeException("TimeStamp not displayed for Recently accessed app");
+        }
+        BySelector recentAppTimeStampSelector =
+                getUiElementFromConfig(AutomotiveConfigConstants.RECENT_APPS_TIMESTAMP);
+        UiObject2 timestampObject =
+                getSpectatioUiUtil()
+                        .findUiObjectInGivenElement(recentAppsTime, recentAppTimeStampSelector);
+        validateUiObject(timestampObject, String.format("timestamp object"));
+        String timestamp = timestampObject.getText();
+        String recentAppTimeStampTxt =
+                getActionFromConfig(AutomotiveConfigConstants.RECENT_APPS_TIMESTAMP_TEXT);
+        return timestamp.contains(recentAppTimeStampTxt);
+    }
 }

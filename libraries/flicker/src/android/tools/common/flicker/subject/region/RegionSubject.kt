@@ -266,10 +266,10 @@ class RegionSubject(
                 ExceptionMessageBuilder()
                     .forSubject(this)
                     .forIncorrectRegion("region. $region area should not be bigger than $testArea")
-                    .setExpected(other)
+                    .setExpected(testArea)
                     .setActual(area)
-                    .addExtraDescription("Expected area", testArea)
-                    .addExtraDescription("Actual area", area)
+                    .addExtraDescription("Expected region", other)
+                    .addExtraDescription("Actual region", regionEntry.region)
             throw IncorrectRegionException(errorMsgBuilder)
         }
     }
@@ -395,6 +395,24 @@ class RegionSubject(
                     .addExtraDescription("Other aspect ratio", otherAspectRatio)
             throw IncorrectRegionException(errorMsgBuilder)
         }
+    }
+
+    /** {@inheritDoc} */
+    override fun hasSameBottomPosition(displayRect: Rect): RegionSubject = apply {
+        assertEquals("bottom", Region(arrayOf(displayRect))) { it.bottom }
+    }
+
+    /** {@inheritDoc} */
+    override fun hasSameTopPosition(displayRect: Rect): RegionSubject = apply {
+        assertEquals("top", Region(arrayOf(displayRect))) { it.top }
+    }
+
+    override fun hasSameLeftPosition(displayRect: Rect): RegionSubject = apply {
+        assertEquals("left", Region(arrayOf(displayRect))) { it.left }
+    }
+
+    override fun hasSameRightPosition(displayRect: Rect): RegionSubject = apply {
+        assertEquals("right", Region(arrayOf(displayRect))) { it.right }
     }
 
     fun isSameAspectRatio(other: RegionSubject, threshold: Double = 0.1): IRegionSubject =

@@ -16,14 +16,9 @@
 
 package android.platform.helpers;
 
-public interface IAutoHomeHelper extends IAppHelper {
+import java.util.List;
 
-    /**
-     * Setup expectations: Should be on home screen.
-     *
-     * Checks if exists a map widget.
-     */
-    boolean hasMapWidget();
+public interface IAutoHomeHelper extends IAppHelper {
 
     /**
      * Setup expectations: Should be on home screen.
@@ -40,7 +35,67 @@ public interface IAutoHomeHelper extends IAppHelper {
     boolean hasAssistantWidget();
 
     /**
-     * Opens Media Widget from home screen.
+     * Setup expectations: Should be on home screen.
+     *
+     * <p>Checks if exists a bluetooth widget.
      */
+    boolean hasBluetoothButton();
+
+    /**
+     * Setup expectations: Should be on home screen.
+     *
+     * <p>Checks if exists a network widget.
+     */
+    boolean hasNetworkButton();
+
+    /**
+     * Setup expectations: Should be on home screen.
+     *
+     * <p>Checks if exists a Brightness widget.
+     */
+    boolean hasDisplayBrightness();
+
+    /**
+     * Setup expectations: Verifying the Guest label displayed in profile icon in status bar
+     *
+     * <p>Get the text of the Guest profile
+     */
+    String getUserProfileName();
+
+    /** Opens Media Widget from home screen. */
     void openMediaWidget();
+
+    /**
+     * Setup expectations: Should be on home screen.
+     *
+     * <p>Checks if exists a brightness palette.
+     */
+    boolean hasDisplayBrightessPalette();
+
+    /**
+     * Setup expectations: Should be on home screen.
+     *
+     * <p>Checks if exists a adaptive brightness.
+     */
+    boolean hasAdaptiveBrightness();
+
+    /** Click on brightness button. */
+    void openBrightnessPalette();
+
+    /** Get temperature from home screen */
+    List<String> getTemperature();
+
+    /**
+     * Setup expectations: To Open Profile Icon button.
+     *
+     * <p>Opens Profile Icon button on status bar.
+     */
+    void openStatusBarProfiles();
+
+    /**
+     * Setup expectations: To get Profiles in a List
+     *
+     * <p>Getting Profiles in a list and comparing based on position
+     */
+    List<String> getUserProfileNames();
 }

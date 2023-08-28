@@ -229,14 +229,17 @@ constructor(
          * Waits until a [WindowState] matching [componentMatcher] has a state of [activityState]
          *
          * @param componentMatcher Components to search
-         * @param activityState expected activity state
+         * @param activityStates expected activity states
          */
-        fun withActivityState(componentMatcher: IComponentMatcher, activityState: String) =
+        fun withActivityState(componentMatcher: IComponentMatcher, vararg activityStates: String) =
             add(
                 Condition(
-                    "state of ${componentMatcher.toActivityIdentifier()} to be $activityState"
+                    "state of ${componentMatcher.toActivityIdentifier()} to be any of " +
+                        activityStates.joinToString()
                 ) {
-                    it.wmState.hasActivityState(componentMatcher, activityState)
+                    activityStates.any { state ->
+                        it.wmState.hasActivityState(componentMatcher, state)
+                    }
                 }
             )
 
@@ -312,6 +315,24 @@ constructor(
                 .add(ConditionsFactory.isLayerVisible(componentMatcher))
 
         /**
+         * Wait until least one layer matching [componentMatcher] has [expectedRegion]
+         *
+         * @param componentMatcher Components to search
+         * @param expectedRegion of the target surface
+         */
+        fun withSurfaceVisibleRegion(componentMatcher: IComponentMatcher, expectedRegion: Region) =
+            add(
+                Condition("surfaceRegion") {
+                    val layer =
+                        it.layerState.visibleLayers.firstOrNull { layer ->
+                            componentMatcher.layerMatchesAnyOf(layer)
+                        }
+
+                    layer?.visibleRegion == expectedRegion
+                }
+            )
+
+        /**
          * Waits until the IME window and layer are visible
          *
          * @param displayId of the target display
@@ -330,7 +351,9 @@ constructor(
          */
         @JvmOverloads
         fun withImeGone(displayId: Int = Display.DEFAULT_DISPLAY) =
-            withAppTransitionIdle(displayId).add(ConditionsFactory.isLayerVisible(IME).negate())
+            withAppTransitionIdle(displayId)
+                .add(ConditionsFactory.isLayerVisible(IME).negate())
+                .add(ConditionsFactory.isImeShown(displayId).negate())
 
         /**
          * Waits until a window is in PIP mode. That is:

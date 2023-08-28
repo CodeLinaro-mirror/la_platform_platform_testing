@@ -71,6 +71,11 @@ public class AutomotiveConfigConstants {
     public static final String DIGIT_EIGHT = "8";
     public static final String DIGIT_NINE = "9";
     public static final String ADD_CONTACT_TO_FAVORITE = "ADD_CONTACT_TO_FAVORITE";
+    public static final String ADD_CONTACT_TO_FAVORITE_FROM_DIALOG_BOX =
+            "ADD_CONTACT_TO_FAVORITE_FROM_DIALOG_BOX";
+    public static final String ADD_TO_FAVORITE_BUTTON = "ADD_TO_FAVORITE_BUTTON";
+    public static final String ADD_TO_FAVORITE_DIALOG_OK = "ADD_TO_FAVORITE_DIALOG_OK";
+
     public static final String CONTACT_TYPE_HOME = "CONTACT_TYPE_HOME";
     public static final String CONTACT_TYPE_WORK = "CONTACT_TYPE_WORK";
     public static final String CONTACT_TYPE_MOBILE = "CONTACT_TYPE_MOBILE";
@@ -83,9 +88,7 @@ public class AutomotiveConfigConstants {
     public static final String DIAL_PAD_MENU = "DIAL_PAD_MENU";
     public static final String FAVORITES_MENU = "FAVORITES_MENU";
     public static final String DIALER_VIEW = "DIALER_VIEW";
-
     public static final String CONTACT_NAME_TITLE = "CONTACT_NAME_TITLE";
-
     // Home App Constants
     public static final String HOME_PACKAGE = "HOME_PACKAGE";
     public static final String HOME_BOTTOM_CARD = "HOME_BOTTOM_CARD";
@@ -93,6 +96,7 @@ public class AutomotiveConfigConstants {
     public static final String HOME_MAP_CARD = "HOME_MAP_CARD";
     public static final String HOME_ASSISTANT_CARD = "HOME_ASSISTANT_CARD";
     public static final String HOME_PHONE_CARD = "HOME_PHONE_CARD";
+    public static final String HOME_TEMPERATURE_BUTTON = "HOME_TEMPERATURE_BUTTON";
 
     // App Grid Constants
     public static final String OPEN_APP_GRID_COMMAND = "OPEN_APP_GRID_COMMAND";
@@ -179,6 +183,8 @@ public class AutomotiveConfigConstants {
             "SYSTEM_SETTINGS_SCROLL_BACKWARD_BUTTON";
     public static final String SYSTEM_SETTINGS_SCROLL_ELEMENT = "SYSTEM_SETTINGS_SCROLL_ELEMENT";
     public static final String ABOUT_MENU = "ABOUT_MENU";
+    public static final String DEVELOPER_OPTIONS = "DEVELOPER_OPTIONS";
+    public static final String DEVELOPER_OPTIONS_SWITCH = "DEVELOPER_OPTIONS_SWITCH";
     public static final String RESET_OPTIONS_MENU = "RESET_OPTIONS_MENU";
     public static final String LANGUAGES_AND_INPUT_MENU = "LANGUAGES_AND_INPUT_MENU";
     public static final String DEVICE_MODEL = "DEVICE_MODEL";
@@ -197,7 +203,9 @@ public class AutomotiveConfigConstants {
     public static final String SYSTEM_SETTINGS_SCROLL_MARGIN = "SYSTEM_SETTINGS_SCROLL_MARGIN";
     public static final String SYSTEM_SETTINGS_SCROLL_WAIT_TIME =
             "SYSTEM_SETTINGS_SCROLL_WAIT_TIME";
-
+    public static final String RECENT_NOTIFICATIONS = "RECENT_NOTIFICATIONS";
+    public static final String OLDER_NOTIFICATIONS = "OLDER_NOTIFICATIONS";
+    public static final String TEST_NOTIFICATION = "TEST_NOTIFICATION";
     // Display Settings Constants
     public static final String BRIGHTNESS_SEEKBAR = "BRIGHTNESS_SEEKBAR";
 
@@ -314,6 +322,7 @@ public class AutomotiveConfigConstants {
     public static final String SEARCH_RESULTS = "SEARCH_RESULTS";
     public static final String PAGE_TITLE = "PAGE_TITLE";
     public static final String PERMISSIONS_PAGE_TITLE = "PERMISSIONS_PAGE_TITLE";
+    public static final String DIAL_CONTACT_WORKFLOW = "DIAL_CONTACT_WORKFLOW";
     public static final String SOUND_SETTINGS = "OPEN_SOUND_SETTINGS_WORKFLOW";
     public static final String NETWORK_AND_INTERNET_SETTINGS =
             "OPEN_NETWORK_AND_INTERNET_SETTINGS_WORKFLOW";
@@ -334,6 +343,9 @@ public class AutomotiveConfigConstants {
     public static final String SETTINGS_SUB_SETTING_SCROLL_ELEMENT =
             "SETTINGS_SUB_SETTING_SCROLL_ELEMENT";
     public static final String SETTINGS_TITLE_TEXT = "SETTINGS_TITLE_TEXT";
+    public static final String LOCATION_SETTINGS_RECENTLY_ACCESSED_MAPS =
+            "LOCATION_SETTINGS_RECENTLY_ACCESSED_MAPS";
+    public static final String LOCATION_SETTINGS_VIEW_ALL = "LOCATION_SETTINGS_VIEW_ALL";
 
     // App Info Settings Constants
     public static final String APP_INFO_SETTINGS_APP_NAME_ELEMENT =
@@ -459,4 +471,62 @@ public class AutomotiveConfigConstants {
     public static final String MANAGE_ACTIVITY_CONTROL_TEXT = "MANAGE_ACTIVITY_CONTROL_TEXT";
     public static final String RECENT_APPS_TIMESTAMP_TEXT = "RECENT_APPS_TIMESTAMP_TEXT";
     public static final String RECENT_APPS_TIMESTAMP = "RECENT_APPS_TIMESTAMP";
+
+
+    // Status Bar Constants
+    public static final String STATUS_BAR_BRIGHTNESS_BUTTON = "STATUS_BAR_BRIGHTNESS_BUTTON";
+    public static final String STATUS_BAR_DISPLAY_BRIGHTNESS_PALETTE =
+            "STATUS_BAR_DISPLAY_BRIGHTNESS_PALETTE";
+    public static final String STATUS_BAR_ADAPTIVE_BRIGHTNESS = "STATUS_BAR_ADAPTIVE_BRIGHTNESS";
+
+    // Quick Controls
+    public static final String HOME_BLUETOOTH_BUTTON = "HOME_BLUETOOTH_BUTTON";
+    public static final String HOME_NETWORK_BUTTON = "HOME_NETWORK_BUTTON";
+    public static final String HOME_DISPLAY_BRIGHTNESS_BUTTON = "HOME_DISPLAY_BRIGHTNESS_BUTTON";
+
+    // status bar constants
+    public static final String STATUS_BAR_BLUETOOTH_TOGGLE_ON = "STATUS_BAR_BLUETOOTH_TOGGLE_ON";
+    public static final String STATUS_BAR_BLUETOOTH_TOGGLE_OFF = "STATUS_BAR_BLUETOOTH_TOGGLE_OFF";
+    public static final String STATUS_BAR_BLUETOOTH_TOGGLE_ON_MESSAGE =
+            "STATUS_BAR_BLUETOOTH_TOGGLE_ON_MESSAGE";
+    public static final String STATUS_BAR_BLUETOOTH_TOGGLE_OFF_MESSAGE =
+            "STATUS_BAR_BLUETOOTH_TOGGLE_OFF_MESSAGE";
+    public static final String STATUS_BAR_BLUETOOTH_SETTINGS = "STATUS_BAR_BLUETOOTH_SETTINGS";
+    public static final String STATUS_BAR_BLUETOOTH_SETTINGS_PAGE_TITLE =
+            "STATUS_BAR_BLUETOOTH_SETTINGS_PAGE_TITLE";
+    public static final String STATUS_BAR_BLUETOOTH_BUTTON = "STATUS_BAR_BLUETOOTH_BUTTON";
+
+    public static final String TOGGLE_LOCATION = "TOGGLE_LOCATION";
+    public static final String LOCATION_ACCESS = "LOCATION_ACCESS";
+    public static final String LOCATION_SWITCH = "LOCATION_SWITCH";
+    public static final String LOCATION_WIDGET = "LOCATION_WIDGET";
+    public static final String RECENTLY_CLOSED_TEXT = "RECENTLY_CLOSED_TEXT";
+
+    // Guest Profile
+    public static final String HOME_PROFILE_GUEST_ICON = "HOME_PROFILE_GUEST_ICON";
+
+    public static final String HOME_PROFILE_ICON_BUTTON = "HOME_PROFILE_ICON_BUTTON";
+    public static final String HOME_GUEST_BUTTON = "HOME_GUEST_BUTTON";
+    public static final String HOME_DRIVER_BUTTON = "HOME_DRIVER_BUTTON";
+    public static final String HOME_SECONDARY_USER_BUTTON = "HOME_SECONDARY_USER_BUTTON";
+
+    // Privacy UI Options
+    public static final String MICROPHONE = "MICROPHONE";
+    public static final String LOCATION = "LOCATION";
+    public static final String APP_PERMISSION = "APP_PERMISSION";
+    public static final String INFOTAINMENT_SYSTEM_DATA = "INFOTAINMENT_SYSTEM_DATA";
+    public static final String DATA_SHARING_WITH_GOOGLE = "DATA_SHARING_WITH_GOOGLE";
+    public static final String SETTINGS_BACK_BUTTON = "SETTINGS_BACK_BUTTON";
+    public static final String SETTINGS_UI_SUB_SETTING_SCROLL_ELEMENT =
+            "SETTINGS_UI_SUB_SETTING_SCROLL_ELEMENT";
+    public static final String SETTINGS_PERMISSIONS_BACK_BUTTON =
+            "SETTINGS_PERMISSIONS_BACK_BUTTON";
+
+    // Storage Settings
+    public static final String STORAGE_SYSTEM_SUB_SETTINGS = "STORAGE_SYSTEM_SUB_SETTINGS";
+    public static final String STORAGE_MUSIC_AUDIO_SETTINGS = "STORAGE_MUSIC_AUDIO_SETTINGS";
+    public static final String STORAGE_OTHER_APPS_SETTINGS = "STORAGE_OTHER_APPS_SETTINGS";
+    public static final String STORAGE_OPTIONS_SUMMARY = "STORAGE_OPTIONS_SUMMARY";
+    public static final String STORAGE_FILES_SETTINGS = "STORAGE_FILES_SETTINGS";
+    public static final String STORAGE_SYSTEM_SETTINGS = "STORAGE_SYSTEM_SETTINGS";
 }

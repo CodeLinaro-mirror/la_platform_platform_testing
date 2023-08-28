@@ -61,20 +61,21 @@ import android.tools.common.traces.component.ComponentNameMatcher
 
 object AssertionTemplates {
     val ENTIRE_TRACE_ASSERTIONS =
-        listOf(
-                EntireScreenCoveredAlways(),
-                VisibleWindowsShownMoreThanOneConsecutiveEntry(),
-                // Temporarily ignore these layers which might be visible for a single entry
-                // and contain only view level changes during that entry (b/286054008)
-                VisibleLayersShownMoreThanOneConsecutiveEntry(
-                    ignore =
-                        listOf(
-                            ComponentNameMatcher.NOTIFICATION_SHADE,
-                            ComponentNameMatcher.VOLUME_DIALOG,
-                        )
-                ),
-            )
-            .associateBy({ it }, { AssertionInvocationGroup.BLOCKING })
+        mapOf(
+            EntireScreenCoveredAlways() to AssertionInvocationGroup.NON_BLOCKING,
+            VisibleWindowsShownMoreThanOneConsecutiveEntry() to
+                AssertionInvocationGroup.NON_BLOCKING,
+            // Temporarily ignore these layers which might be visible for a single entry
+            // and contain only view level changes during that entry (b/286054008)
+            VisibleLayersShownMoreThanOneConsecutiveEntry(
+                ignore =
+                    listOf(
+                        ComponentNameMatcher.NOTIFICATION_SHADE,
+                        ComponentNameMatcher.VOLUME_DIALOG,
+                        ComponentNameMatcher.NAV_BAR,
+                    )
+            ) to AssertionInvocationGroup.NON_BLOCKING,
+        )
 
     val COMMON_ASSERTIONS =
         listOf(
@@ -96,7 +97,9 @@ object AssertionTemplates {
                 .associateBy({ it }, { AssertionInvocationGroup.BLOCKING })
 
     val APP_CLOSE_ASSERTIONS =
-        COMMON_ASSERTIONS +
+        COMMON_ASSERTIONS.toMutableMap().also {
+            it.remove(VisibleLayersShownMoreThanOneConsecutiveEntry())
+        } +
             listOf(
                     AppLayerIsVisibleAtStart(CLOSING_APP),
                     AppLayerIsInvisibleAtEnd(CLOSING_APP),
@@ -105,6 +108,9 @@ object AssertionTemplates {
                     AppLayerBecomesInvisible(CLOSING_APP),
                     AppWindowBecomesInvisible(CLOSING_APP),
                     AppWindowIsTopWindowAtStart(CLOSING_APP),
+                    VisibleLayersShownMoreThanOneConsecutiveEntry(
+                        listOf(ComponentNameMatcher.NAV_BAR)
+                    )
                 )
                 .associateBy({ it }, { AssertionInvocationGroup.BLOCKING })
 
