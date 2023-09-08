@@ -472,12 +472,17 @@ public class AutomotiveConfigConstants {
     public static final String RECENT_APPS_TIMESTAMP_TEXT = "RECENT_APPS_TIMESTAMP_TEXT";
     public static final String RECENT_APPS_TIMESTAMP = "RECENT_APPS_TIMESTAMP";
 
-
     // Status Bar Constants
     public static final String STATUS_BAR_BRIGHTNESS_BUTTON = "STATUS_BAR_BRIGHTNESS_BUTTON";
     public static final String STATUS_BAR_DISPLAY_BRIGHTNESS_PALETTE =
             "STATUS_BAR_DISPLAY_BRIGHTNESS_PALETTE";
     public static final String STATUS_BAR_ADAPTIVE_BRIGHTNESS = "STATUS_BAR_ADAPTIVE_BRIGHTNESS";
+    public static final String NETWORK_PALETTE = "NETWORK_PALETTE";
+    public static final String NETWORK_PALETTE_HOTSPOT = "NETWORK_PALETTE_HOTSPOT";
+    public static final String NETWORK_PALETTE_WIFI = "NETWORK_PALETTE_WIFI";
+    public static final String NETWORK_PALETTE_SUMMARY = "NETWORK_PALETTE_SUMMARY";
+    public static final String NETWORK_PALETTE_SWITCH_WIDGET = "NETWORK_PALETTE_SWITCH_WIDGET";
+    public static final String FORGET_WIFI = "FORGET_WIFI";
 
     // Quick Controls
     public static final String HOME_BLUETOOTH_BUTTON = "HOME_BLUETOOTH_BUTTON";
@@ -504,7 +509,6 @@ public class AutomotiveConfigConstants {
 
     // Guest Profile
     public static final String HOME_PROFILE_GUEST_ICON = "HOME_PROFILE_GUEST_ICON";
-
     public static final String HOME_PROFILE_ICON_BUTTON = "HOME_PROFILE_ICON_BUTTON";
     public static final String HOME_GUEST_BUTTON = "HOME_GUEST_BUTTON";
     public static final String HOME_DRIVER_BUTTON = "HOME_DRIVER_BUTTON";
@@ -529,4 +533,21 @@ public class AutomotiveConfigConstants {
     public static final String STORAGE_OPTIONS_SUMMARY = "STORAGE_OPTIONS_SUMMARY";
     public static final String STORAGE_FILES_SETTINGS = "STORAGE_FILES_SETTINGS";
     public static final String STORAGE_SYSTEM_SETTINGS = "STORAGE_SYSTEM_SETTINGS";
+
+    // Car Sms Messenger
+    public static final String SMS_PACKAGE = "SMS_PACKAGE";
+    public static final String OPEN_SMS_ACTIVITY_COMMAND = "OPEN_SMS_ACTIVITY_COMMAND";
+    public static final String SMS_BLUETOOTH_ERROR = "SMS_BLUETOOTH_ERROR";
+
+    // Bluetooth Tests Constants
+    public static final String BLUETOOTH_BUTTON = "BLUETOOTH_BUTTON";
+    public static final String BLUETOOTH_CONNECTED_DISCONNECTED_TEXT =
+            "BLUETOOTH_CONNECTED_DISCONNECTED_TEXT";
+
+    // BT
+    public static final String PHONE_BUTTON = "PHONE_BUTTON";
+    public static final String MEDIA_BUTTON = "MEDIA_BUTTON";
+    public static final String DEVICE_NAME = "DEVICE_NAME";
+    public static final String DISABLED_PHONE_PROFILE = "DISABLED_PHONE_PROFILE";
+    public static final String DISABLED_MEDIA_PROFILE = "DISABLED_MEDIA_PROFILE";
 }
