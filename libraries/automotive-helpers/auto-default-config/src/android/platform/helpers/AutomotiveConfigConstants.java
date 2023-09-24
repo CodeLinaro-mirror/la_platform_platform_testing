@@ -472,6 +472,7 @@ public class AutomotiveConfigConstants {
     public static final String RECENT_APPS_TIMESTAMP_TEXT = "RECENT_APPS_TIMESTAMP_TEXT";
     public static final String RECENT_APPS_TIMESTAMP = "RECENT_APPS_TIMESTAMP";
 
+
     // Status Bar Constants
     public static final String STATUS_BAR_BRIGHTNESS_BUTTON = "STATUS_BAR_BRIGHTNESS_BUTTON";
     public static final String STATUS_BAR_DISPLAY_BRIGHTNESS_PALETTE =
@@ -500,6 +501,8 @@ public class AutomotiveConfigConstants {
     public static final String STATUS_BAR_BLUETOOTH_SETTINGS_PAGE_TITLE =
             "STATUS_BAR_BLUETOOTH_SETTINGS_PAGE_TITLE";
     public static final String STATUS_BAR_BLUETOOTH_BUTTON = "STATUS_BAR_BLUETOOTH_BUTTON";
+    public static final String NIGHT_MODE_COMMAND = "NIGHT_MODE_COMMAND";
+    public static final String DAY_MODE_COMMAND = "DAY_MODE_COMMAND";
 
     public static final String TOGGLE_LOCATION = "TOGGLE_LOCATION";
     public static final String LOCATION_ACCESS = "LOCATION_ACCESS";
@@ -548,6 +551,8 @@ public class AutomotiveConfigConstants {
     public static final String PHONE_BUTTON = "PHONE_BUTTON";
     public static final String MEDIA_BUTTON = "MEDIA_BUTTON";
     public static final String DEVICE_NAME = "DEVICE_NAME";
+
+    public static final String DEVICE_TITLE = "DEVICE_TITLE";
     public static final String DISABLED_PHONE_PROFILE = "DISABLED_PHONE_PROFILE";
     public static final String DISABLED_MEDIA_PROFILE = "DISABLED_MEDIA_PROFILE";
     public static final String ASSISTANT_PERMISSION = "OPEN_GOOGLE_ASSISTANT_PERMISSION";
@@ -569,4 +574,5 @@ public class AutomotiveConfigConstants {
     public static final String CALENDAR_PERMISSION = "OPEN_CALENDAR_PERMISSION_PAGE";
     public static final String PRIVACY_CALENDAR = "PRIVACY_CALENDAR";
     public static final String RECENT_PERMISSION_DECISIONS = "RECENT_PERMISSION_DECISIONS";
+
 }

@@ -37,6 +37,7 @@ instrumentation_tests := \
     DocumentsUITests \
     ShellTests \
     SystemUITests \
+    TvSystemUITests \
     TestablesTests \
     FrameworksWifiApiTests \
     FrameworksWifiNonUpdatableApiTests \
