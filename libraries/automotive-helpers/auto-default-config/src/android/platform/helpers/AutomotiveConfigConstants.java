@@ -55,6 +55,12 @@ public class AutomotiveConfigConstants {
     public static final String SORT_BY_LAST_NAME = "SORT_BY_LAST_NAME";
     public static final String CONTACTS_MENU = "CONTACTS_MENU";
     public static final String CONTACT_NAME = "CONTACT_NAME";
+
+    public static final String CONTACT_ADDRESS = "CONTACT_ADDRESS";
+
+    public static final String CONTACT_HOME_ADDRESS = "CONTACT_HOME_ADDRESS";
+
+    public static final String CONTACT_DETAILS_PAGE = "CONTACT_DETAILS_PAGE";
     public static final String CONTACT_DETAIL = "CONTACT_DETAIL";
     public static final String CALL_HISTORY_INFO = "CALL_HISTORY_INFO";
     public static final String SEARCH_CONTACT = "SEARCH_CONTACT";
@@ -89,6 +95,7 @@ public class AutomotiveConfigConstants {
     public static final String FAVORITES_MENU = "FAVORITES_MENU";
     public static final String DIALER_VIEW = "DIALER_VIEW";
     public static final String CONTACT_NAME_TITLE = "CONTACT_NAME_TITLE";
+
     // Home App Constants
     public static final String HOME_PACKAGE = "HOME_PACKAGE";
     public static final String HOME_BOTTOM_CARD = "HOME_BOTTOM_CARD";
@@ -484,6 +491,7 @@ public class AutomotiveConfigConstants {
     public static final String NETWORK_PALETTE_SUMMARY = "NETWORK_PALETTE_SUMMARY";
     public static final String NETWORK_PALETTE_SWITCH_WIDGET = "NETWORK_PALETTE_SWITCH_WIDGET";
     public static final String FORGET_WIFI = "FORGET_WIFI";
+    public static final String CLOCK_TIME = "CLOCK_TIME";
 
     // Quick Controls
     public static final String HOME_BLUETOOTH_BUTTON = "HOME_BLUETOOTH_BUTTON";
@@ -516,6 +524,7 @@ public class AutomotiveConfigConstants {
     public static final String HOME_GUEST_BUTTON = "HOME_GUEST_BUTTON";
     public static final String HOME_DRIVER_BUTTON = "HOME_DRIVER_BUTTON";
     public static final String HOME_SECONDARY_USER_BUTTON = "HOME_SECONDARY_USER_BUTTON";
+
 
     // Privacy UI Options
     public static final String MICROPHONE = "MICROPHONE";
@@ -574,5 +583,9 @@ public class AutomotiveConfigConstants {
     public static final String CALENDAR_PERMISSION = "OPEN_CALENDAR_PERMISSION_PAGE";
     public static final String PRIVACY_CALENDAR = "PRIVACY_CALENDAR";
     public static final String RECENT_PERMISSION_DECISIONS = "RECENT_PERMISSION_DECISIONS";
+    public static final String MICROPHONE_PERMISSIONS_PAGE = "MICROPHONE_PERMISSIONS_PAGE";
 
+    // BT related
+    public static final String BT_CONNECTED_STATUS = "BT_CONNECTED_STATUS";
+    public static final String BT_DISCONNECTED_STATUS = "BT_DISCONNECTED_STATUS";
 }

@@ -97,6 +97,11 @@ public class PhoneSnippet implements Snippet {
         return mDialerHelper.get().getDialInNumber();
     }
 
+    @Rpc(description = "Get the home address from an open contacts page.")
+    public String getHomeAddress() {
+        return mDialerHelper.get().getHomeAddress();
+    }
+
     @Rpc(description = "Get the contact name for dialed number when the call is in progress.")
     public String getDialedContactName() {
         return mDialerHelper.get().getDialedContactName();
@@ -207,6 +212,11 @@ public class PhoneSnippet implements Snippet {
     @Rpc(description = "Open details page for given contact.")
     public void openDetailsPage(String contact) {
         mDialerHelper.get().openDetailsPage(contact);
+    }
+
+    @Rpc(description = "Open details page for the first contact.")
+    public void openFirstContactDetails() {
+        mDialerHelper.get().openFirstContactDetails();
     }
 
     @Rpc(description = "Open Contacts List.")
@@ -323,6 +333,16 @@ public class PhoneSnippet implements Snippet {
     @Rpc(description = "Verify Disabled Media Profile")
     public boolean verifyDisabledMediaProfile() {
         return mStatusBarHelper.get().verifyDisabledMediaProfile();
+    }
+
+    @Rpc(description = "is Mobile Connected")
+    public boolean isBluetoothConnectedToMobile() {
+        return mStatusBarHelper.get().isBluetoothConnectedToMobile();
+    }
+
+    @Rpc(description = "is Mobile Disconnected")
+    public boolean isBluetoothDisconnected() {
+        return mStatusBarHelper.get().isBluetoothDisconnected();
     }
 
     @Override

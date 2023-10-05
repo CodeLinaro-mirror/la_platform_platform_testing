@@ -37,21 +37,23 @@ import platform.test.screenshot.matchers.BitmapMatcher
 
 /** A rule for View screenshot diff unit tests. */
 open class ViewScreenshotTestRule(
-    emulationSpec: DeviceEmulationSpec,
+    private val emulationSpec: DeviceEmulationSpec,
     pathManager: GoldenImagePathManager,
     private val matcher: BitmapMatcher = UnitTestBitmapMatcher
 ) : TestRule {
     private val colorsRule = MaterialYouColorsRule()
+    private val timeZoneRule = TimeZoneRule()
     private val deviceEmulationRule = DeviceEmulationRule(emulationSpec)
     protected val screenshotRule = ScreenshotTestRule(pathManager)
     private val activityRule = ActivityScenarioRule(ScreenshotActivity::class.java)
-    private val roboRule =
+    private val commonRule =
         RuleChain.outerRule(deviceEmulationRule).around(screenshotRule).around(activityRule)
-    private val delegateRule = RuleChain.outerRule(colorsRule).around(roboRule)
+    private val deviceRule = RuleChain.outerRule(colorsRule).around(commonRule)
+    private val roboRule = RuleChain.outerRule(timeZoneRule).around(commonRule)
     private val isRobolectric = if (Build.FINGERPRINT.contains("robolectric")) true else false
 
     override fun apply(base: Statement, description: Description): Statement {
-        val ruleToApply = if (isRobolectric) roboRule else delegateRule
+        val ruleToApply = if (isRobolectric) roboRule else deviceRule
         return ruleToApply.apply(base, description)
     }
 
@@ -87,11 +89,14 @@ open class ViewScreenshotTestRule(
             beforeScreenshot(activity)
         }
 
-        return if (isRobolectric) {
-            contentView?.captureToBitmap()?.get(10, TimeUnit.SECONDS)
-                ?: error("timeout while trying to capture view to bitmap")
+        if (isRobolectric) {
+            val originalBitmap = contentView?.captureToBitmap()?.get(10, TimeUnit.SECONDS)
+            if (originalBitmap == null) {
+                error("timeout while trying to capture view to bitmap")
+            }
+            return bitmapWithMaterialYouColorsSimulation(originalBitmap, emulationSpec.isDarkTheme)
         } else {
-            contentView?.toBitmap() ?: error("contentView is null")
+            return contentView?.toBitmap() ?: error("contentView is null")
         }
     }
 
