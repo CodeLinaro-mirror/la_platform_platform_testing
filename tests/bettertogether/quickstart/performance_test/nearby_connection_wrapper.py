@@ -15,6 +15,8 @@
 """Utils for handling Nearby Connection rpc."""
 
 import datetime
+import random
+import time
 
 from mobly import asserts
 from mobly import utils
@@ -24,6 +26,10 @@ from mobly.controllers.android_device_lib import snippet_client_v2
 from mobly.snippet import callback_event
 
 from performance_test import nc_constants
+
+# This number should be large enough to cover advertising interval, firmware
+# scheduling timing interval and user action delay
+ADVERTISING_TO_DISCOVERY_MAX_DELAY_SEC = 4
 
 
 class NearbyConnectionWrapper:
@@ -289,6 +295,10 @@ class NearbyConnectionWrapper:
     # Start advertising.
     self.start_advertising()
 
+    # Add a random delay between adversting and discovery
+    # to mimic the random delay between two devices' user action
+    time.sleep(ADVERTISING_TO_DISCOVERY_MAX_DELAY_SEC * random.random())
+
     # Start discovery.
     self.start_discovery(timeout=timeouts.discovery_timeout)
 
@@ -307,10 +317,11 @@ class NearbyConnectionWrapper:
     self.stop_advertising()
 
   def transfer_file(
-      self, file_size_kb: int, timeout: datetime.timedelta) -> float:
+      self, file_size_kb: int, timeout: datetime.timedelta,
+      payload_type: nc_constants.PayloadType) -> float:
     """Sends payloads and returns the transfer speed in kBS."""
     try:
-      transfer_speed_kbs = self._transfer_file(file_size_kb, timeout)
+      transfer_speed_kbs = self._transfer_file(file_size_kb, timeout, payload_type)
     finally:
       # clean up
       utils.concurrent_exec(
@@ -320,14 +331,15 @@ class NearbyConnectionWrapper:
     return transfer_speed_kbs
 
   def _transfer_file(
-      self, file_size_kb: int, timeout: datetime.timedelta
+      self, file_size_kb: int, timeout: datetime.timedelta,
+      payload_type: nc_constants.PayloadType
   ) -> float:
     """Sends payloads and returns the transfer speed in kBS."""
     # Creates a file and send it to the advertiser.
     file_name = utils.rand_ascii_str(8)
-    self.discoverer.log.info('Start sending payloads')
-    payload_id = self.discoverer_nearby.sendPayload(
-        self._advertiser_endpoint_id, file_name, file_size_kb
+    self.discoverer.log.info(f'Start sending payloads with type: {payload_type.name}')
+    payload_id = self.discoverer_nearby.sendPayloadWithType(
+        self._advertiser_endpoint_id, file_name, file_size_kb, payload_type
     )
 
     # Waits for the advertiser received.

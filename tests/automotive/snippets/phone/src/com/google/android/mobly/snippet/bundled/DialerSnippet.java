@@ -1,26 +1,24 @@
 /*
- * Copyright (C) 2022 Google Inc.
+ * Copyright (C) 2023 The Android Open Source Project
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package com.google.android.mobly.snippet.bundled;
 
 import android.platform.helpers.HelperAccessor;
 import android.platform.helpers.IAutoCarSmsMessengerHelper;
-import android.platform.helpers.IAutoDialContactDetailsHelper;
 import android.platform.helpers.IAutoDialHelper;
-import android.platform.helpers.IAutoPrivacySettingsHelper;
 import android.platform.helpers.IAutoStatusBarHelper;
 import android.platform.helpers.IAutoVehicleHardKeysHelper;
 
@@ -30,21 +28,17 @@ import com.google.android.mobly.snippet.rpc.Rpc;
 import java.util.List;
 
 /** Snippet class for exposing Phone/Dial App APIs. */
-public class PhoneSnippet implements Snippet {
+public class DialerSnippet implements Snippet {
     private final HelperAccessor<IAutoDialHelper> mDialerHelper;
-    private final HelperAccessor<IAutoDialContactDetailsHelper> mContactsDetailsHelper;
     private final HelperAccessor<IAutoVehicleHardKeysHelper> mHardKeysHelper;
-    private final HelperAccessor<IAutoPrivacySettingsHelper> mPrivacySettingsHelper;
     private final HelperAccessor<IAutoCarSmsMessengerHelper> mCarSmsMessengerHelper;
     private final HelperAccessor<IAutoStatusBarHelper> mStatusBarHelper;
 
-    public PhoneSnippet() {
+    public DialerSnippet() {
         mDialerHelper = new HelperAccessor<>(IAutoDialHelper.class);
-        mContactsDetailsHelper = new HelperAccessor<>(IAutoDialContactDetailsHelper.class);
-        mHardKeysHelper = new HelperAccessor<>(IAutoVehicleHardKeysHelper.class);
-        mPrivacySettingsHelper = new HelperAccessor<>(IAutoPrivacySettingsHelper.class);
         mCarSmsMessengerHelper = new HelperAccessor<>(IAutoCarSmsMessengerHelper.class);
         mStatusBarHelper = new HelperAccessor<>(IAutoStatusBarHelper.class);
+        mHardKeysHelper = new HelperAccessor<>(IAutoVehicleHardKeysHelper.class);
     }
 
     @Rpc(description = "Open Phone Application.")
@@ -229,45 +223,9 @@ public class PhoneSnippet implements Snippet {
         mDialerHelper.get().pressDeviceOnPrompt();
     }
 
-    @Rpc(description = "Add and remove contact ( contact details are open ) from favorites.")
-    public void addRemoveFavoriteContact() {
-        mContactsDetailsHelper.get().addRemoveFavoriteContact();
-    }
-
-    @Rpc(description = "Make call to number with type Work from contact details page.")
-    public void makeCallFromDetailsPageByTypeWork() {
-        mContactsDetailsHelper
-                .get()
-                .makeCallFromDetailsPageByType(IAutoDialContactDetailsHelper.ContactType.WORK);
-    }
-
-    @Rpc(description = "Make call to number with type Home from contact details page.")
-    public void makeCallFromDetailsPageByTypeHome() {
-        mContactsDetailsHelper
-                .get()
-                .makeCallFromDetailsPageByType(IAutoDialContactDetailsHelper.ContactType.HOME);
-    }
-
-    @Rpc(description = "Make call to number with type Mobile from contact details page.")
-    public void makeCallFromDetailsPageByTypeMobile() {
-        mContactsDetailsHelper
-                .get()
-                .makeCallFromDetailsPageByType(IAutoDialContactDetailsHelper.ContactType.MOBILE);
-    }
-
-    @Rpc(description = "Close contact details page.")
-    public void closeDetailsPage() {
-        mContactsDetailsHelper.get().closeDetailsPage();
-    }
-
     @Rpc(description = "Get list of visible contacts")
     public List<String> getListOfAllContacts() {
         return mDialerHelper.get().getListOfAllVisibleContacts();
-    }
-
-    @Rpc(description = "Microphone Chip.")
-    public boolean isMicChipPresentOnStatusBar() {
-        return mPrivacySettingsHelper.get().isMicChipPresentOnStatusBar();
     }
 
     @Rpc(description = "Add Favorites from favorites tab")
@@ -335,14 +293,29 @@ public class PhoneSnippet implements Snippet {
         return mStatusBarHelper.get().verifyDisabledMediaProfile();
     }
 
-    @Rpc(description = "is Mobile Connected")
-    public boolean isBluetoothConnectedToMobile() {
-        return mStatusBarHelper.get().isBluetoothConnectedToMobile();
+    @Rpc(description = "Open Phone Button in Bluetooth Palette")
+    public void clickPhoneButton() {
+        mDialerHelper.get().clickPhoneButton();
     }
 
-    @Rpc(description = "is Mobile Disconnected")
-    public boolean isBluetoothDisconnected() {
-        return mStatusBarHelper.get().isBluetoothDisconnected();
+    @Rpc(description = "is Recents displayed in Dialer page ")
+    public boolean verifyDialerRecentsTab() {
+        return mDialerHelper.get().verifyDialerRecentsTab();
+    }
+
+    @Rpc(description = "is Contacts displayed in Dialer page ")
+    public boolean verifyDialerContactsTab() {
+        return mDialerHelper.get().verifyDialerContactsTab();
+    }
+
+    @Rpc(description = "is Favorites displayed in Dialer page ")
+    public boolean verifyDialerFavoritesTab() {
+        return mDialerHelper.get().verifyDialerFavoritesTab();
+    }
+
+    @Rpc(description = "is Dialpad displayed in Dialer page ")
+    public boolean verifyDialerDialpadTab() {
+        return mDialerHelper.get().verifyDialerDialpadTab();
     }
 
     @Override
