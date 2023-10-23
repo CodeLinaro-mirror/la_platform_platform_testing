@@ -69,7 +69,9 @@
     "OPEN_SETTINGS_COMMAND": "am start -a android.settings.SETTINGS",
     "MEDIA_LAUNCH_COMMAND": "am start -a android.car.intent.action.MEDIA_TEMPLATE -e android.car.intent.extra.MEDIA_COMPONENT com.android.bluetooth/com.android.bluetooth.avrcpcontroller.BluetoothMediaBrowserService",
     "NIGHT_MODE_COMMAND": "dumpsys activity service com.android.car/.CarService day-night-mode  night",
-    "DAY_MODE_COMMAND": "dumpsys activity service com.android.car/.CarService day-night-mode  day"
+    "DAY_MODE_COMMAND": "dumpsys activity service com.android.car/.CarService day-night-mode  day",
+    "OPEN_SYSTEM_UI": "am crash com.android.systemui",
+    "OPEN_CAR_UI": "am crash com.android.car"
   },
   "UI_ELEMENTS": {
     "MAKE_CALL": {
@@ -203,6 +205,10 @@
       "TYPE": "RESOURCE_ID",
       "VALUE": "title",
       "PACKAGE": "com.android.car.dialer"
+    },
+    "BLUETOOTH_DISCONNECTED_LABEL": {
+      "TYPE": "TEXT",
+      "VALUE": "Bluetooth audio disconnected"
     },
     "CONTACT_HOME_ADDRESS": {
       "TYPE": "MULTIPLE",
@@ -393,6 +399,10 @@
       "TYPE": "RESOURCE_ID",
       "VALUE": "switch_widget",
       "PACKAGE": "android"
+    },
+    "HOME_MAPS_WIDGET": {
+      "TYPE": "TEXT",
+      "VALUE": "Open Maps"
     },
     "HOME_PROFILE_ICON_BUTTON": {
       "TYPE": "RESOURCE_ID",
@@ -1267,9 +1277,16 @@
       "PACKAGE": "com.android.settings.intelligence"
     },
     "SEARCH_RESULTS": {
-      "TYPE": "RESOURCE_ID",
-      "VALUE": "car_ui_recycler_view",
-      "PACKAGE": "com.android.car.ui.sharedlibrary"
+      "TYPE": "MULTIPLE",
+      "SPECIFIERS": [
+        {
+          "TYPE": "DESCRIPTION",
+          "VALUE": "com.android.car.ui.utils.ROTARY_CONTAINER"
+        },{
+          "TYPE": "CLASS",
+          "VALUE": "androidx.recyclerview.widget.RecyclerView"
+        }
+      ]
     },
     "PAGE_TITLE": {
       "TYPE": "RESOURCE_ID",
@@ -1562,18 +1579,8 @@
       "PACKAGE": "com.android.car.messenger"
     },
     "BLUETOOTH_BUTTON": {
-      "TYPE": "MULTIPLE",
-      "SPECIFIERS": [
-        {
-          "TYPE": "RESOURCE_ID",
-          "VALUE": "qc_toggle_button",
-          "PACKAGE": "com.android.systemui"
-        },
-        {
-          "TYPE": "DESCRIPTION",
-          "VALUE": "Bluetooth"
-        }
-      ]
+      "TYPE": "RESOURCE_ID",
+      "VALUE": "qc_toggle_button"
     },
     "PHONE_BUTTON": {
       "TYPE": "DESCRIPTION",

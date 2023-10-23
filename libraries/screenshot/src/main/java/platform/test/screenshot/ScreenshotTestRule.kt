@@ -22,16 +22,22 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.Rect
+import android.os.Build
 import android.os.Bundle
 import android.platform.uiautomator_helpers.DeviceHelpers.shell
 import android.provider.Settings.System
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.runner.screenshot.Screenshot
+import com.android.internal.app.SimpleIconFactory
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import java.io.IOException
-import androidx.test.runner.screenshot.Screenshot
-import com.android.internal.app.SimpleIconFactory
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+import kotlin.io.path.outputStream
+import kotlin.io.path.writeText
 import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
@@ -79,6 +85,23 @@ open class ScreenshotTestRule(
 
     open fun getTestIdentifier(description: Description): String =
             "${description.className}_${description.methodName}"
+
+    private val isRobolectric = Build.FINGERPRINT.contains("robolectric")
+    private fun isGradle(): Boolean =
+            java.lang.System.getProperty("java.class.path").contains("gradle-worker.jar")
+
+    fun Bitmap.writeTo(path: Path) {
+        // Make sure we either create a new file or overwrite an existing one.
+        check(!Files.exists(path) || Files.isRegularFile(path))
+
+        // Make sure the parent directory exists.
+        Files.createDirectories(path.parent)
+
+        // Write the Bitmap to the given file.
+        path.outputStream().use { stream ->
+            this@writeTo.compress(Bitmap.CompressFormat.PNG, 0, stream)
+        }
+    }
 
     private fun fetchExpectedImage(goldenIdentifier: String): Bitmap? {
         val instrument = InstrumentationRegistry.getInstrumentation()
@@ -216,7 +239,6 @@ open class ScreenshotTestRule(
                 expected = highlightedBitmap(expected, regions),
                 diff = comparisonResult.diff
             )
-
             throw AssertionError(
                 "Image mismatch! Comparison stats: '${comparisonResult
                     .comparisonStatistics}'"
@@ -285,6 +307,58 @@ open class ScreenshotTestRule(
         }
 
         InstrumentationRegistry.getInstrumentation().sendStatus(bundleStatusInProgress, report)
+
+        if (isGradle() && isRobolectric) {
+            val localDir = Paths.get("/tmp/screenshots")
+            val actualDir = localDir.resolve("actual")
+            val expectedDir = localDir.resolve("expected")
+            val diffDir = localDir.resolve("diff")
+            val reportDir = localDir.resolve("report")
+
+            val imagePath = goldenImagePathManager.goldenIdentifierResolver(goldenIdentifier)
+            val actualImagePath = actualDir.resolve(imagePath)
+            val expectedImagePath = expectedDir.resolve(imagePath)
+            val diffImagePath = diffDir.resolve(imagePath)
+
+            actual.writeTo(actualImagePath)
+            expected?.writeTo(expectedImagePath)
+            diff?.writeTo(diffImagePath)
+
+            check(imagePath.endsWith(imageExtension))
+
+            val reportPath =
+                reportDir.resolve(
+                    imagePath.substring(0, imagePath.length - imageExtension.length) + ".html"
+                )
+
+            println("file://$reportPath")
+            Files.createDirectories(reportPath.parent)
+
+            fun html(bitmap: Bitmap?, image: Path, name: String, alt: String): String {
+                return if (bitmap == null) {
+                    ""
+                } else {
+                    """
+                        <p>
+                            <h2><a href="file://$image">$name</a></h2>
+                            <img src="$image" alt="$alt"/>
+                        </p>
+                    """.trimIndent()
+                }
+            }
+
+            reportPath.writeText(
+                """
+                    <!DOCTYPE html>
+                    <meta charset="utf-8">
+                    <title>$imagePath</title>
+                    <p><h1>$testIdentifier</h1></p>
+                    ${html(expected, expectedImagePath, "Expected", "Golden")}
+                    ${html(actual, actualImagePath, "Actual", "Actual")}
+                    ${html(diff, diffImagePath, "Diff", "Diff")}
+                """.trimIndent()
+            )
+        }
     }
 
     internal fun getPathOnDeviceFor(fileType: OutputFileType, goldenIdentifier: String): File {
