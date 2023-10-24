@@ -20,6 +20,7 @@ import android.app.Instrumentation
 import android.tools.common.FLICKER_TAG
 import android.tools.common.Logger
 import android.tools.common.Scenario
+import android.tools.device.flicker.junit.Utils
 import android.tools.device.traces.io.ResultWriter
 import android.tools.device.traces.monitors.ITransitionMonitor
 import android.tools.device.traces.parsers.WindowManagerStateHelper
@@ -48,6 +49,17 @@ class TraceMonitorRule(
             override fun evaluate() {
                 try {
                     doStartMonitors(description)
+                } catch (e: Throwable) {
+                    Logger.e(
+                        FLICKER_TAG,
+                        "Failed to start trace monitors" +
+                            " - stopping all trace monitors to recover a clean state"
+                    )
+                    runCatching { doStopMonitors(description) }
+                    throw e
+                }
+
+                try {
                     base?.evaluate()
                 } finally {
                     doStopMonitors(description)
@@ -59,7 +71,14 @@ class TraceMonitorRule(
     private fun doStartMonitors(description: Description?) {
         Logger.withTracing("doStartMonitors") {
             Utils.notifyRunnerProgress(scenario, "Starting traces for $description")
-            traceMonitors.forEach { it.start() }
+            traceMonitors.forEach {
+                try {
+                    it.start()
+                } catch (e: Throwable) {
+                    Logger.e(FLICKER_TAG, "Unable to start $it", e)
+                    throw e
+                }
+            }
         }
     }
 

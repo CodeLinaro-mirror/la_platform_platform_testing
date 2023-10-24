@@ -21,7 +21,11 @@ import android.tools.common.CrossPlatform
 import android.tools.common.FLICKER_TAG
 import android.tools.common.Logger
 import android.tools.common.TimestampFactory
+import android.tools.common.flicker.FlickerConfig
+import android.tools.common.flicker.FlickerService
 import android.tools.common.flicker.annotation.FlickerTest
+import android.tools.common.flicker.config.FlickerConfig
+import android.tools.common.flicker.config.FlickerServiceConfig
 import android.tools.common.flicker.config.ScenarioId
 import android.tools.device.AndroidLogger
 import android.tools.device.flicker.FlickerServiceResultsCollector
@@ -48,9 +52,11 @@ open class FlickerServiceRule
 @JvmOverloads
 constructor(
     enabled: Boolean = true,
-    failTestOnFaasFailure: Boolean = enabled,
+    failTestOnFlicker: Boolean = enabled,
+    config: FlickerConfig = FlickerConfig().use(FlickerServiceConfig.DEFAULT),
     private val metricsCollector: IFlickerServiceResultsCollector =
         FlickerServiceResultsCollector(
+            flickerService = FlickerService(config),
             tracesCollector = FlickerServiceTracesCollector(getDefaultFlickerOutputDir()),
             instrumentation = InstrumentationRegistry.getInstrumentation()
         ),
@@ -59,11 +65,13 @@ constructor(
         InstrumentationRegistry.getArguments().getString("faas:enabled")?.let { it.toBoolean() }
             ?: enabled
 
-    private val failTestOnFaasFailure: Boolean =
-        InstrumentationRegistry.getArguments().getString("faas:failTestOnFaasFailure")?.let {
+    private val failTestOnFlicker: Boolean =
+        InstrumentationRegistry.getArguments().getString("faas:failTestOnFlicker")?.let {
             it.toBoolean()
         }
-            ?: failTestOnFaasFailure
+            ?: failTestOnFlicker
+
+    private var testFailed = false
 
     init {
         CrossPlatform.setLogger(AndroidLogger())
@@ -108,6 +116,7 @@ constructor(
     private fun handleStarting(description: Description) {
         Logger.i(LOG_TAG, "Test starting $description")
         metricsCollector.testStarted(description)
+        testFailed = false
     }
 
     private fun handleSucceeded(description: Description) {
@@ -115,12 +124,13 @@ constructor(
     }
 
     private fun handleFailed(e: Throwable?, description: Description) {
-        Logger.e(LOG_TAG, "$description test failed  with $e")
+        Logger.e(LOG_TAG, "$description test failed with", e)
         metricsCollector.testFailure(Failure(description, e))
+        testFailed = true
     }
 
     private fun handleSkipped(e: AssumptionViolatedException, description: Description) {
-        Logger.i(LOG_TAG, "Test skipped $description with $e")
+        Logger.i(LOG_TAG, "Test skipped $description with", e)
         metricsCollector.testSkipped(description)
     }
 
@@ -142,7 +152,13 @@ constructor(
         for (executionError in metricsCollector.executionErrors) {
             Logger.e(LOG_TAG, "FaaS reported execution errors", executionError)
         }
-        if (failTestOnFaasFailure && testContainsFlicker(description)) {
+        if (testFailed || metricsCollector.executionErrors.isNotEmpty()) {
+            // If we had an execution error or the underlying test failed, then we have no
+            // guarantees about the correctness of the flicker assertions and detect scenarios,
+            // so we should not check those and instead return immediately.
+            return
+        }
+        if (failTestOnFlicker && testContainsFlicker(description)) {
             throw metricsCollector
                 .resultsForTest(description)
                 .first { it.failed }
@@ -152,7 +168,7 @@ constructor(
         }
         val flickerTestAnnotation: FlickerTest? =
             description.annotations.filterIsInstance<FlickerTest>().firstOrNull()
-        if (failTestOnFaasFailure && flickerTestAnnotation != null) {
+        if (failTestOnFlicker && flickerTestAnnotation != null) {
             val detectedScenarios = metricsCollector.detectedScenariosForTest(description)
             Truth.assertThat(detectedScenarios)
                 .containsAtLeastElementsIn(flickerTestAnnotation.expected.map { ScenarioId(it) })

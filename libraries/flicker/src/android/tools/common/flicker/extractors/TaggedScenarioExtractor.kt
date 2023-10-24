@@ -28,7 +28,8 @@ import kotlin.math.min
 class TaggedScenarioExtractor(
     private val targetTag: CujType,
     private val transitionMatcher: TransitionMatcher?,
-    private val adjustCuj: CujAdjust
+    private val adjustCuj: CujAdjust,
+    private val ignoreIfNoMatchingTransition: Boolean = false,
 ) : ScenarioExtractor {
     override fun extract(reader: Reader): List<TraceSlice> {
         val cujTrace = reader.readCujTrace() ?: error("Missing CUJ trace")
@@ -44,9 +45,13 @@ class TaggedScenarioExtractor(
             return emptyList()
         }
 
-        return targetCujEntries.map { cujEntry ->
+        return targetCujEntries.mapNotNull { cujEntry ->
             val associatedTransition =
                 transitionMatcher?.getMatches(reader, cujEntry)?.firstOrNull()
+
+            if (ignoreIfNoMatchingTransition && associatedTransition == null) {
+                return@mapNotNull null
+            }
 
             require(
                 cujEntry.startTimestamp.hasAllTimestamps && cujEntry.endTimestamp.hasAllTimestamps
@@ -113,17 +118,13 @@ class TaggedScenarioExtractor(
 
         return Timestamps.from(
             elapsedNanos =
-                max(
-                    cujEntry.endTimestamp.elapsedNanos,
-                    interpolatedEndTimestamp?.elapsedNanos ?: -1L
-                ),
+                max(cujEntry.endTimestamp.elapsedNanos, interpolatedEndTimestamp.elapsedNanos),
             systemUptimeNanos =
                 max(
                     cujEntry.endTimestamp.systemUptimeNanos,
-                    interpolatedEndTimestamp?.systemUptimeNanos ?: -1L
+                    interpolatedEndTimestamp.systemUptimeNanos
                 ),
-            unixNanos =
-                max(cujEntry.endTimestamp.unixNanos, interpolatedEndTimestamp?.unixNanos ?: -1L)
+            unixNanos = max(cujEntry.endTimestamp.unixNanos, interpolatedEndTimestamp.unixNanos)
         )
     }
 }

@@ -12,7 +12,7 @@ from mobly import test_runner
 from mobly.controllers import android_device
 
 # Number of seconds for the target to stay discoverable on Bluetooth.
-DISCOVERABLE_TIME = 60
+DISCOVERABLE_TIME = 120
 
 class MultiDeviceTest(base_test.BaseTestClass):
 
@@ -22,7 +22,7 @@ class MultiDeviceTest(base_test.BaseTestClass):
         self.ads = self.register_controller(android_device, min_number=2)
         # The device used to discover Bluetooth devices.
         self.discoverer = android_device.get_device(
-            self.ads, label='hu')
+            self.ads, label='auto')
         # Sets the tag that represents this device in logs.
         self.discoverer.debug_tag = 'discoverer'
         # The device that is expected to be discovered
@@ -61,5 +61,9 @@ class MultiDeviceTest(base_test.BaseTestClass):
 
 
 if __name__ == '__main__':
-    # Take test args
+    # Pass test arguments after '--' to the test runner.
+    # Needed for Mobly Test Runner
+    if '--' in sys.argv:
+        index = sys.argv.index('--')
+        sys.argv = sys.argv[:1] + sys.argv[index + 1:]
     test_runner.main()

@@ -45,6 +45,7 @@ public class DialHelperImpl extends AbstractStandardAppHelper implements IAutoDi
     private BySelector mForwardButtonSelector;
     private BySelector mScrollableElementSelector;
     private ScrollDirection mScrollDirection;
+    private UiObject2 mHomeAddress;
 
     public DialHelperImpl(Instrumentation instr) {
         super(instr);
@@ -72,6 +73,16 @@ public class DialHelperImpl extends AbstractStandardAppHelper implements IAutoDi
     @Override
     public void dismissInitialDialogs() {
         // Nothing to dismiss
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void pressDeviceOnPrompt() {
+        BySelector deviceButtonSelector =
+                getUiElementFromConfig(AutomotiveConfigConstants.DEVICE_TITLE);
+        UiObject2 deviceButton = getSpectatioUiUtil().findUiObject(deviceButtonSelector);
+
+        if (deviceButton != null) getSpectatioUiUtil().clickAndWait(deviceButton);
     }
 
     /** {@inheritDoc} */
@@ -279,9 +290,12 @@ public class DialHelperImpl extends AbstractStandardAppHelper implements IAutoDi
     public String getContactName() {
         BySelector contactNameSelector =
                 getUiElementFromConfig(AutomotiveConfigConstants.DIALED_CONTACT_TITLE);
+        String action =
+                String.format(
+                        "Find contact name using BySelector: %s", contactNameSelector.toString());
+
         UiObject2 contactName = getSpectatioUiUtil().findUiObject(contactNameSelector);
-        getSpectatioUiUtil()
-                .validateUiObject(contactName, AutomotiveConfigConstants.DIALED_CONTACT_TITLE);
+        getSpectatioUiUtil().validateUiObject(contactName, action);
         return contactName.getText();
     }
 
@@ -441,6 +455,7 @@ public class DialHelperImpl extends AbstractStandardAppHelper implements IAutoDi
     }
 
     /** {@inheritDoc} */
+    @Override
     public boolean isContactInFavorites(String contact) {
         openFavorites();
         UiObject2 uiObject = getSpectatioUiUtil().findUiObject(contact);
@@ -516,6 +531,32 @@ public class DialHelperImpl extends AbstractStandardAppHelper implements IAutoDi
         getSpectatioUiUtil().clickAndWait(contactDetailButton);
     }
 
+    /** {@inheritDoc} */
+    @Override
+    public String getHomeAddress() {
+
+        BySelector homeAddressSelector =
+                getUiElementFromConfig(AutomotiveConfigConstants.CONTACT_HOME_ADDRESS);
+
+        BySelector detailsScrollableSelector =
+                getUiElementFromConfig(AutomotiveConfigConstants.CONTACT_DETAILS_PAGE);
+
+        UiObject2 homeAddress =
+                mScrollUtility.scrollAndFindUiObject(
+                        mScrollAction,
+                        mScrollDirection,
+                        mForwardButtonSelector,
+                        mBackwardButtonSelector,
+                        detailsScrollableSelector,
+                        homeAddressSelector,
+                        String.format("scroll to find home address."));
+
+        getSpectatioUiUtil()
+                .validateUiObject(homeAddress, AutomotiveConfigConstants.CONTACT_HOME_ADDRESS);
+
+        return homeAddress.getText();
+    }
+
     /** This method is used to get the first history in the Recents tab. */
     private UiObject2 getCallHistory() {
         BySelector callHistorySelector =
@@ -535,6 +576,16 @@ public class DialHelperImpl extends AbstractStandardAppHelper implements IAutoDi
         getSpectatioUiUtil()
                 .validateUiObject(contactMenuButton, AutomotiveConfigConstants.CONTACTS_MENU);
         getSpectatioUiUtil().clickAndWait(contactMenuButton);
+    }
+
+    /** This method opens the details page of the first contact on the page. */
+    public void openFirstContactDetails() {
+        BySelector contactDetailsSelector =
+                getUiElementFromConfig(AutomotiveConfigConstants.CONTACT_DETAIL);
+        UiObject2 contactDetailButton = getSpectatioUiUtil().findUiObject(contactDetailsSelector);
+        getSpectatioUiUtil()
+                .validateUiObject(contactDetailButton, AutomotiveConfigConstants.CONTACT_DETAIL);
+        getSpectatioUiUtil().clickAndWait(contactDetailButton);
     }
 
     /** This method opens the contact search window. */
@@ -646,5 +697,46 @@ public class DialHelperImpl extends AbstractStandardAppHelper implements IAutoDi
             throw new UnknownUiException("Unable to find any contacts on the screen");
         }
         return listOfContactsResults;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void clickPhoneButton() {
+        BySelector phoneSelector =
+                getUiElementFromConfig(AutomotiveConfigConstants.CLICK_PHONE_BUTTON);
+        UiObject2 phoneLink = getSpectatioUiUtil().findUiObject(phoneSelector);
+        getSpectatioUiUtil()
+                .validateUiObject(phoneLink, AutomotiveConfigConstants.CLICK_PHONE_BUTTON);
+        getSpectatioUiUtil().clickAndWait(phoneLink);
+        getSpectatioUiUtil().wait5Seconds();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean verifyDialerRecentsTab() {
+        BySelector dialerRecentsSelector =
+                getUiElementFromConfig(AutomotiveConfigConstants.DIALER_RECENTS);
+        return getSpectatioUiUtil().hasUiElement(dialerRecentsSelector);
+    }
+    /** {@inheritDoc} */
+    @Override
+    public boolean verifyDialerContactsTab() {
+        BySelector dialerContactsSelector =
+                getUiElementFromConfig(AutomotiveConfigConstants.DIALER_CONTACTS);
+        return getSpectatioUiUtil().hasUiElement(dialerContactsSelector);
+    }
+    /** {@inheritDoc} */
+    @Override
+    public boolean verifyDialerFavoritesTab() {
+        BySelector dialerFavoritesSelector =
+                getUiElementFromConfig(AutomotiveConfigConstants.DIALER_FAVORITES);
+        return getSpectatioUiUtil().hasUiElement(dialerFavoritesSelector);
+    }
+    /** {@inheritDoc} */
+    @Override
+    public boolean verifyDialerDialpadTab() {
+        BySelector dialerDialpadSelector =
+                getUiElementFromConfig(AutomotiveConfigConstants.DIALER_DIALPAD);
+        return getSpectatioUiUtil().hasUiElement(dialerDialpadSelector);
     }
 }

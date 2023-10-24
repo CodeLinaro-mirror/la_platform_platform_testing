@@ -41,6 +41,15 @@ public interface IAutoDialHelper extends IAppHelper, Scrollable {
     void dialANumber(String phoneNumber);
 
     /**
+     * Setup expectations: A prompt allowing the user to select "Device" is open.
+     *
+     * <p>This method is meant to be used when contacts are being uploaded onto a device (the
+     * confirmation dialogue allows either the device to be selected for upload, or for
+     * cancellation.
+     */
+    void pressDeviceOnPrompt();
+
+    /**
      * Setup expectations: The app is open and there is an ongoing call.
      *
      * <p>This method is used to end call using softkey.
@@ -209,6 +218,13 @@ public interface IAutoDialHelper extends IAppHelper, Scrollable {
     String getFirstContactFromContactList();
 
     /**
+     * Setup expectations: A Contact details page is open.
+     *
+     * <p>This method is used to get the home address from the currently-open contact.
+     */
+    String getHomeAddress();
+
+    /**
      * Setup expectations: The app is open.
      *
      * <p>This method is used to verify if a contact is added to Favorites.
@@ -237,6 +253,14 @@ public interface IAutoDialHelper extends IAppHelper, Scrollable {
      * <p>This method is used to open contact list
      */
     void openContacts();
+
+    /**
+     * Setup expectations: The contacts page is open.
+     *
+     * <p>This method is used to open the contact details page of the first visible contact. Throws
+     * an error if no contacts are visible.
+     */
+    void openFirstContactDetails();
 
     /**
      * Setup expectations: The app is open and there is an ongoing call.
@@ -272,4 +296,34 @@ public interface IAutoDialHelper extends IAppHelper, Scrollable {
      * <p>This method is adding favorites from the Favorites Tab
      */
     void addFavoritesFromFavoritesTab(String contact);
+    /**
+     * Setup expectations: The bluetooth palette is open
+     *
+     * <p>This method is used for clicking phone button from bluetooth palette
+     */
+    void clickPhoneButton();
+    /**
+     * Setup expectations: The dialer page is open
+     *
+     * <p>This method is used to check if Recents tab is present in dialer page
+     */
+    boolean verifyDialerRecentsTab();
+    /**
+     * Setup expectations: The dialer page is open
+     *
+     * <p>This method is used to check if Contacts tab is present in dialer page
+     */
+    boolean verifyDialerContactsTab();
+    /**
+     * Setup expectations: The dialer page is open
+     *
+     * <p>This method is used to check if Favorites tab is present in dialer page
+     */
+    boolean verifyDialerFavoritesTab();
+    /**
+     * Setup expectations: The dialer page is open
+     *
+     * <p>This method is used to check if Dialpad tab is present in dialer page
+     */
+    boolean verifyDialerDialpadTab();
 }
