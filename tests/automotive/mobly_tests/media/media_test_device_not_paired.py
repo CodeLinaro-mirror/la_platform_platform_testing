@@ -23,8 +23,8 @@ from mobly import test_runner
 class DeviceNotPairedTest(bluetooth_base_test.BluetoothBaseTest):
 
     def setup_test(self):
-        # Disable BT on devices
-        self.target.mbs.btDisable()
+        """Enable and disable BT on Head unit"""
+        self.discoverer.mbs.btEnable()
         self.discoverer.mbs.btDisable()
 
     def test_device_not_paired(self):
@@ -32,10 +32,6 @@ class DeviceNotPairedTest(bluetooth_base_test.BluetoothBaseTest):
         self.call_utils.open_bluetooth_media_app()
         asserts.assert_true(self.call_utils.is_bluetooth_audio_disconnected_label_visible(),
                             '<Bluetooth Audio disconnected> label should be present')
-
-    def teardown_test(self):
-        # TODO(b/302283016) remove teardown_test after bug resolved
-        pass
 
 
 if __name__ == '__main__':
