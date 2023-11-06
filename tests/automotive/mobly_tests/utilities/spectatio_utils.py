@@ -15,13 +15,15 @@
 import logging
 import time
 
-
 from mobly.controllers import android_device
 from mbs_utils import constants
 
 """ This exception may be expanded in the future to provide better error discoverability."""
+
+
 class CallUtilsError(Exception):
     pass
+
 
 class CallUtils:
     """Calling sequence utility for BT calling test using Spectatio UI APIs.
@@ -41,12 +43,10 @@ class CallUtils:
         logging.info('Dial phone number <%s>', callee_number)
         self.device.mbs.dialANumber(callee_number)
 
-
     def end_call(self):
         """  End the call. Throws an error if non call is currently ongoing. """
         logging.info('End the call')
         self.device.mbs.endCall()
-
 
     def execute_shell_on_device(self, device_target, shell_command):
         """Execute any shell command on any device"""
@@ -55,8 +55,7 @@ class CallUtils:
             shell_command,
             device_target.serial,
         )
-        device_target.adb.shell(shell_command)
-
+        return device_target.adb.shell(shell_command)
 
     def get_dialing_number(self):
         """ Get dialing phone number"""
@@ -127,7 +126,6 @@ class CallUtils:
         logging.info('Attempting to press \'Forget\'')
         self.device.mbs.pressForget()
 
-
     def press_home_screen_on_status_bar(self):
         """Presses the Home screen button on the status bar
         (to return the device to the home screen."""
@@ -137,7 +135,7 @@ class CallUtils:
     def press_home(self):
         """ Press the Home button to go back to the home page."""
         logging.info("Pressing HOME ")
-        self.device.mbs.pressHome();
+        self.device.mbs.pressHome()
 
     def press_enter_on_device(self, device_target):
         """Press ENTER on device"""
@@ -183,9 +181,8 @@ class CallUtils:
     def open_bluetooth_media_app(self):
         """ Open Bluetooth Audio app """
         logging.info('Open Bluetooth Audio app')
-        self.device.mbs.openMediaApp();
+        self.device.mbs.openBluetoothMediaApp();
         self.wait_with_log(constants.WAIT_ONE_SEC)
-
 
     def open_bluetooth_palette(self):
         logging.info('Open Bluetooth Palette')
@@ -207,3 +204,21 @@ class CallUtils:
         logging.info('<Bluetooth Audio disconnected> label is present: %s',
                      actual_disconnected_label_status)
         return actual_disconnected_label_status
+
+    def update_device_timezone(self, expected_timezone):
+        logging.info('Update the device timezone to %s',
+                     expected_timezone)
+        self.device.mbs.setTimeZone(expected_timezone)
+        actual_timezone = self.device.mbs.getTimeZone()
+        logging.info('<actual timezone> : %s  and <expected_timezone> %s',
+                     actual_timezone, expected_timezone)
+        if expected_timezone not in actual_timezone:
+            raise CallUtilsError(
+                "Time Zone did not set properly."
+            )
+
+    def is_bluetooth_hfp_error_displayed(self):
+        logging.info('Verify Bluetooth HFP error is displayed,'
+                             'when bluetooth is disconnected')
+        return self.device.mbs.isBluetoothHfpErrorDisplayed()
+
