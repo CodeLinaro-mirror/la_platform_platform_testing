@@ -46,7 +46,6 @@ class SelectSongFromPlaylist(bluetooth_base_test.BluetoothBaseTest):
         self.media_utils.scroll_playlist_to_the_button()
         self.media_utils.select_song_from_playlist()
         self.call_utils.wait_with_log(2)
-        self.media_utils.minimize_now_playing()
         current_next_phone_song_title = self.media_utils.get_song_title_from_phone()
         current_next_hu_song_title = self.media_utils.get_song_title_from_hu()
         # Assert song titles are different after scrolling
