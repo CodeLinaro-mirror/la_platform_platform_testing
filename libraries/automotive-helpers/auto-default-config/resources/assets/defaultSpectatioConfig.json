@@ -120,13 +120,11 @@
     },
     "CONTACT_LIST_SCROLL_FORWARD": {
       "TYPE": "RESOURCE_ID",
-      "VALUE": "car_ui_scrollbar_page_down",
-      "PACKAGE": "com.chassis.car.ui.plugin"
+      "VALUE": "car_ui_scrollbar_page_down"
     },
     "CONTACT_LIST_SCROLL_BACKWARD": {
       "TYPE": "RESOURCE_ID",
-      "VALUE": "car_ui_scrollbar_page_up",
-      "PACKAGE": "com.chassis.car.ui.plugin"
+      "VALUE": "car_ui_scrollbar_page_up"
     },
     "CONTACT_LIST_SCROLL_ELEMENT": {
       "TYPE": "RESOURCE_ID",
@@ -1226,6 +1224,21 @@
       "TYPE": "RESOURCE_ID",
       "VALUE": "car_ui_toolbar_title",
       "PACKAGE": "com.android.car.carlauncher"
+    },
+    "MEDIA_SCROLL_DOWN_BUTTON": {
+      "TYPE": "RESOURCE_ID",
+      "VALUE": "car_ui_scrollbar_page_down",
+      "PACKAGE": "com.android.car.media"
+    },
+    "MEDIA_SCROLL_UP_BUTTON": {
+      "TYPE": "RESOURCE_ID",
+      "VALUE": "car_ui_scrollbar_page_up",
+      "PACKAGE": "com.android.car.media"
+    },
+    "MEDIA_SONG_IN_PLAYLIST": {
+      "TYPE": "RESOURCE_ID",
+      "VALUE": "item_container",
+      "PACKAGE": "com.android.car.media"
     },
     "PREVIOUS_BUTTON_HOME_SCREEN": {
       "TYPE": "RESOURCE_ID",
