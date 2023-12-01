@@ -23,6 +23,7 @@ from mobly.controllers import android_device
 # Number of seconds for the target to stay discoverable on Bluetooth.
 DISCOVERABLE_TIME = 60
 TIME_FOR_PROMPT_TO_LOAD = 2
+ALLOW_TEXT = "Allow"
 
 
 class BTUtils:
@@ -70,16 +71,35 @@ class BTUtils:
         self.discoverer.mbs.btPairDevice(target_address)
         logging.info('Allowing time for contacts to sync.')
         time.sleep(constants.SYNC_WAIT_TIME)
+        self.press_allow_on_phone()
         paired_devices = self.discoverer.mbs.btGetPairedDevices()
         _, paired_addresses = self.get_info_from_devices(paired_devices)
         asserts.assert_true(
             target_address in paired_addresses,
             'Failed to pair the target device %s over Bluetooth.' %
             target_address)
-    def press_allow_on_device(self):
+
+    def unpair(self):
+        # unpair target from discoverer
+        discoverer_address = self.discoverer.mbs.btGetAddress()
+        target_paired_devices = self.target.mbs.btGetPairedDevices()
+        _, target_paired_addresses = self.get_info_from_devices(target_paired_devices)
+        if discoverer_address in target_paired_addresses:
+            logging.info(f"forget {discoverer_address}")
+            self.target.mbs.btUnpairDevice(discoverer_address)
+        # unpair discoverer from target
+        target_address = self.target.mbs.btGetAddress()
+        discoverer_paired_devices = self.discoverer.mbs.btGetPairedDevices()
+        _, discoverer_paired_addresses = self.get_info_from_devices(discoverer_paired_devices)
+        if target_address in discoverer_paired_addresses:
+            logging.info(f"forget {target_address}")
+            self.discoverer.mbs.btUnpairDevice(target_address)
+
+    def press_allow_on_phone(self):
         """ Repeatedly presses "Allow" on prompts until no more prompts appear"""
         logging.info('Attempting to press ALLOW')
-        while (self.target.mbs.btPressAllow()):
+        while (self.target.mbs.hasUIElementWithText(ALLOW_TEXT)):
+            self.target.mbs.clickUIElementWithText(ALLOW_TEXT)
             logging.info('ALLOW pressed!')
             time.sleep(TIME_FOR_PROMPT_TO_LOAD)
 

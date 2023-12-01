@@ -27,6 +27,12 @@ DEVICE_CONNECT_WAIT_TIME = 20 # Waiting for device pairing to complete.
 MOBILE_DEVICE_NAME = 'target'
 AUTOMOTIVE_DEVICE_NAME = 'discoverer'
 REBOOT = 'reboot'
+DIALER_THREE_DIGIT_NUMBER = "511"
+EXPECTED_CONTACT_FULL_NAME = "John Smith"
+FIRST_DIGIT_OF_SEARCH_CONTACT_NUMBER = "6"
+EXPECTED_PHONE_NUMBER = "611"
+ROOT = "root"
+DATE_CMD = "date"
 
 # The word or phrase present in a device summary that is connected.
 CONNECTED_SUMMARY_STATUS = "Connected"
@@ -89,15 +95,6 @@ IMPOST_CONTACTS_SHELL_COMAND = (
 
 ONE_SEC = 1
 
-TIMEZONE_DICT = {
-    "PST": "Pacific Standard Time",
-    "PDT": "Pacific Daylight Time",
-    "EST": "Eastern Standard Time",
-    "EDT": "Eastern Daylight Time"
-}
-
-DATE_CMD = "date"
-
 # KeyEvents
 KEYCODE_ENTER = 'keyevent KEYCODE_ENTER'
 KEYCODE_TAB = 'keyevent KEYCODE_TAB'
@@ -114,3 +111,14 @@ STOP_YOUTUBE_MEDIA_SHELL = 'am force-stop ' + YOUTUBE_MUSIC_PACKAGE
 GET_DUMPSYS_METADATA = 'dumpsys media_session'
 SONG_METADATA_PATTERN = r"description=.[^\n]*"
 DEFAULT_YOUTUBE_MUSIC_PLAYLIST = 'am start -a android.intent.action.VIEW -d https://music.youtube.com/watch?v=sjuOaAf9C70'
+
+# SMS
+SMS_TEXT = "sms_test"
+TIMEZONE_DICT = {
+    "PST": "Pacific Standard Time",
+    "PDT": "Pacific Daylight Time",
+    "EST": "Eastern Standard Time",
+    "EDT": "Eastern Daylight Time"
+}
+CLEAR_MESSAGING_APP = 'pm clear com.google.android.apps.messaging'
+DELETE_MESSAGING_DB = 'rm /data/data/com.android.providers.telephony/databases/mmssms.db'

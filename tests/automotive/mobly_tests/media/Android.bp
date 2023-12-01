@@ -17,6 +17,33 @@ package {
 }
 
 python_test_host {
+    name: "BTMediaIsCategoriesSelectableTest",
+    main: "media_test_categories_playlists_selectable.py",
+    srcs: ["media_test_categories_playlists_selectable.py"],
+    libs: [
+        "mobly",
+        "utilities",
+        "bluetooth_test",
+    ],
+    test_suites: [
+        "catbox",
+    ],
+    test_options: {
+        unit_test: false,
+    },
+    data: [
+        // Package the snippet with the mobly test
+        ":AutomotiveSnippet",
+        ":PhoneSnippet",
+    ],
+    version: {
+        py3: {
+            embedded_launcher: true,
+        },
+    },
+}
+
+python_test_host {
     name: "BTMediaIsDeviceSynchedAfterStartHuTest",
     main: "media_test_device_sync_after_hu_start.py",
     srcs: ["media_test_device_sync_after_hu_start.py"],
@@ -155,6 +182,33 @@ python_test_host {
      name: "BTMediaIsSongPlayingAfterReboot",
      main: "media_test_play_status_after_reboot.py",
      srcs: ["media_test_play_status_after_reboot.py"],
+      libs: [
+          "mobly",
+          "utilities",
+          "bluetooth_test"
+      ],
+      test_suites: [
+          "catbox",
+      ],
+      test_options: {
+          unit_test: false,
+      },
+      data: [
+          // Package the snippet with the mobly test
+          ":AutomotiveSnippet",
+          ":PhoneSnippet",
+      ],
+      version: {
+          py3: {
+              embedded_launcher: true,
+          },
+      },
+  }
+
+ python_test_host {
+     name: "BTMediaIsMediaMetadataValidOnHu",
+     main: "media_test_song_metadata_validation.py",
+     srcs: ["media_test_song_metadata_validation.py"],
       libs: [
           "mobly",
           "utilities",
