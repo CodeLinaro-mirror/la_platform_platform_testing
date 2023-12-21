@@ -34,6 +34,7 @@ import android.tools.device.traces.monitors.ITransitionMonitor
 import android.tools.device.traces.monitors.PerfettoTraceMonitor
 import android.tools.device.traces.monitors.ScreenRecorder
 import android.tools.device.traces.monitors.events.EventLogMonitor
+import android.tools.device.traces.monitors.view.ViewTraceMonitor
 import android.tools.device.traces.monitors.wm.ShellTransitionTraceMonitor
 import android.tools.device.traces.monitors.wm.WindowManagerTraceMonitor
 import android.tools.device.traces.monitors.wm.WmTransitionTraceMonitor
@@ -45,9 +46,9 @@ import android.tools.device.traces.parsers.wm.TransitionTraceParser
 import android.tools.device.traces.parsers.wm.WindowManagerTraceParser
 import android.tools.rules.DataStoreCleanupRule
 import android.tools.utils.CleanFlickerEnvironmentRule
-import android.tools.utils.InMemoryArtifact
 import android.tools.utils.ParsedTracesReader
 import android.tools.utils.TEST_SCENARIO
+import android.tools.utils.TestArtifact
 import android.tools.utils.readAsset
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.UiDevice
@@ -70,7 +71,7 @@ internal fun getTraceReaderFromScenario(scenario: String): Reader {
         }
 
     return ParsedTracesReader(
-        artifact = InMemoryArtifact(scenario),
+        artifact = TestArtifact(scenario),
         wmTrace = WindowManagerTraceParser().parse(scenarioTraces.wmTrace.readBytes()),
         layersTrace = layersTrace,
         transitionsTrace =
@@ -153,6 +154,7 @@ fun captureTrace(scenario: Scenario, actions: () -> Unit): ResultReader {
             WmTransitionTraceMonitor(),
             ShellTransitionTraceMonitor(),
             WindowManagerTraceMonitor(),
+            ViewTraceMonitor(),
             PerfettoTraceMonitor().enableLayersTrace().enableTransactionsTrace(),
         )
     try {
