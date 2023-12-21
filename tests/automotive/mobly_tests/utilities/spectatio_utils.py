@@ -67,7 +67,7 @@ class CallUtils:
 
     def get_dialing_number(self):
         """Get dialing phone number"""
-        return self.device.mbs.getDialedNumber()
+        return self.device.mbs.getDialingNumber()
 
     def get_home_address_from_details(self):
         """Return the home address of the contact whose details are currently being displayed"""
@@ -101,6 +101,11 @@ class CallUtils:
         logging.info("Opening contacts")
         self.device.mbs.openContacts()
 
+    def open_dialpad(self):
+        """Open the dial pad from the dialer main screen"""
+        logging.info("Opening the dialpad")
+        self.device.mbs.openDialPad()
+
     def open_phone_app(self):
         logging.info("Opening phone app")
         self.device.mbs.openPhoneApp()
@@ -120,6 +125,10 @@ class CallUtils:
     def press_bluetooth_toggle_on_device(self, device_name):
         logging.info('Attempting to press the bluetooth toggle on device: \'%s\'' % device_name)
         self.device.mbs.pressBluetoothToggleOnDevice(device_name)
+
+    def press_contact_search_result(self, expected_first_name):
+        logging.info('Attempting to press the contact result with name \'%s\'' % expected_first_name)
+        self.device.mbs.pressContactResult(expected_first_name)
 
     def press_device_entry_on_list_of_paired_devices(self, device_name):
         logging.info('Attempting to press the device entry on device: ' + device_name)
@@ -407,6 +416,8 @@ class CallUtils:
         )
         return actual_recent_call_from_history
 
+
+
     def verify_last_dialed_number(self, expected_last_dialed_number):
         actual_last_dialed_number = self.get_recent_call_history()
         actual_last_dialed_number = ''.join(
@@ -431,7 +442,8 @@ class CallUtils:
         logging.info('Searching <%s> in contacts', search_contact_name)
         self.device.mbs.searchContactsByName(search_contact_name)
 
-    # Get first search result
+
+    # Get first search result on contact search
     def get_first_search_result(self):
         logging.info('Getting first search result')
         actual_first_search_result = self.device.mbs.getFirstSearchResult()
@@ -439,7 +451,7 @@ class CallUtils:
         return actual_first_search_result
 
     # Verify search result contains expected searach input
-    def verify_search_result_contain_target_search(self, expected_search_result):
+    def verify_search_results_contain_target_search(self, expected_search_result):
         actual_search_result = self.get_first_search_result()
         logging.info(
             'Expected search result: <%s>, Actual search result: <%s>',
@@ -544,7 +556,7 @@ class CallUtils:
         return self.device.mbs.isBluetoothMediaButtonEnabled()
 
     def get_dial_in_number(self):
-        return self.device.mbs.getDialInNumber()
+        return self.device.mbs.getNumberInDialPad()
 
     # Verify dialed number on Dial Pad the same as expected
     def verify_dialed_number_on_dial_pad(self, expected_dialed_number):
@@ -614,3 +626,8 @@ class CallUtils:
         """Performs click operation on Bluetooth Palette media button"""
         self.device.mbs.clickOnBluetoothPaletteMediaButton()
         logging.info("Clicked on bluetooth palette media button")
+
+    def open_notification_on_phone(self, device_target):
+        """Open notifications on Phone"""
+        logging.debug('Open notifications on Phone')
+        self.execute_shell_on_device(device_target, constants.OPEN_NOTIFICATION)
