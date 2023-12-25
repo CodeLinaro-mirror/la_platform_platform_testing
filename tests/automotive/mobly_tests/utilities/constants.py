@@ -119,9 +119,14 @@ STOP_YOUTUBE_MEDIA_SHELL = 'am force-stop ' + YOUTUBE_MUSIC_PACKAGE
 GET_DUMPSYS_METADATA = 'dumpsys media_session'
 SONG_METADATA_PATTERN = r"description=.[^\n]*"
 DEFAULT_YOUTUBE_MUSIC_PLAYLIST = 'am start -a android.intent.action.VIEW -d https://music.youtube.com/watch?v=sjuOaAf9C70'
+BLUETOOTH_AUDIO_APP = "Bluetooth Audio"
+YOUTUBE_MUSIC_APP = "YouTube Music"
 
 # SMS
 SMS_TEXT = "sms_test"
+REPLY_SMS= "Okay"
+SMS_REPLY_TEXT = "SMS Reply"
+SMS_TEXT_DRIVE_MODE="Tap to read aloud"
 TIMEZONE_DICT = {
     "PST": "Pacific Standard Time",
     "PDT": "Pacific Daylight Time",

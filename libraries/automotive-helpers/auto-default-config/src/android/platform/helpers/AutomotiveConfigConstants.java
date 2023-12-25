@@ -614,6 +614,8 @@ public class AutomotiveConfigConstants {
     // BT
     public static final String PHONE_BUTTON = "PHONE_BUTTON";
     public static final String MEDIA_BUTTON = "MEDIA_BUTTON";
+    public static final String TOGGLE_DEVICE_MEDIA = "TOGGLE_DEVICE_MEDIA";
+    public static final String TOGGLE_DEVICE_PHONE = "TOGGLE_DEVICE_PHONE";
     public static final String DEVICE_NAME = "DEVICE_NAME";
 
     public static final String DEVICE_TITLE = "DEVICE_TITLE";
@@ -659,4 +661,7 @@ public class AutomotiveConfigConstants {
     public static final String MOBILE_PHONE_ICON = "MOBILE_PHONE_ICON";
     public static final String PHONE_DEVICE_PACKAGE = "PHONE_DEVICE_PACAKAGE";
     public static final String MOBILE_DIALPAD_INPUT = "MOBILE_DIALPAD_INPUT";
+
+    // Phone Card Identifiers
+    public static final String PHONE_CARD_DIALER_BUTTON = "PHONE_CARD_DIALER_BUTTON";
 }
