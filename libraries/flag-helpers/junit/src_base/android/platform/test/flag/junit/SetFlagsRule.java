@@ -73,8 +73,8 @@ public final class SetFlagsRule implements TestRule {
     @Deprecated
     public void initAllFlagsToReleaseConfigDefault() {
         if (!mIsInitWithDefault) {
-            mFlagsClassToRealFlagsImpl.clear();
-            mFlagsClassToFakeFlagsImpl.clear();
+            // If you've already set any flags, it's too late to change the defaults.
+            ensureFlagsAreUnset();
         }
         mIsInitWithDefault = true;
     }
@@ -144,6 +144,9 @@ public final class SetFlagsRule implements TestRule {
      *     {packageName}.{flagName}
      */
     public void enableFlags(String... fullFlagNames) {
+        if (!mIsRuleEvaluating) {
+            throw new IllegalStateException("Not allowed to set flags outside test and setup code");
+        }
         for (String fullFlagName : fullFlagNames) {
             if (mLockedFlagNames.contains(fullFlagName)) {
                 throw new FlagSetException(fullFlagName, "Not allowed to change locked flags");
@@ -159,6 +162,9 @@ public final class SetFlagsRule implements TestRule {
      *     {packageName}.{flagName}
      */
     public void disableFlags(String... fullFlagNames) {
+        if (!mIsRuleEvaluating) {
+            throw new IllegalStateException("Not allowed to set flags outside test and setup code");
+        }
         for (String fullFlagName : fullFlagNames) {
             if (mLockedFlagNames.contains(fullFlagName)) {
                 throw new FlagSetException(fullFlagName, "Not allowed to change locked flags");
@@ -200,7 +206,7 @@ public final class SetFlagsRule implements TestRule {
 
     private void ensureFlagsAreUnset() {
         if (!mFlagsClassToFakeFlagsImpl.isEmpty()) {
-            throw new AssertionError("Some flags were set before the rule was initialized");
+            throw new IllegalStateException("Some flags were set before the rule was initialized");
         }
     }
 
@@ -308,6 +314,7 @@ public final class SetFlagsRule implements TestRule {
         }
         try {
             for (Field field : flagClass.getFields()) {
+                if (field.getName().startsWith("_")) continue; // fixes robolectric; b/317279678
                 String fullFlagName = (String) field.get(null);
                 Flag flag = Flag.createFlag(fullFlagName);
                 boolean value = getFlagValue(realFlagsImpl, flag);
