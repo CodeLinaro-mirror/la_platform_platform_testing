@@ -15,8 +15,9 @@ import time
 
 from bluetooth_test import bluetooth_base_test
 from mobly import asserts
-from mbs_utils.media_utils import MediaUtils
-from mbs_utils.main_utils import common_main
+from utilities.media_utils import MediaUtils
+from utilities.common_utils import CommonUtils
+from utilities.main_utils import common_main
 
 
 class IsMediaSynchronizedForReconnectedDevice(bluetooth_base_test.BluetoothBaseTest):
@@ -24,8 +25,11 @@ class IsMediaSynchronizedForReconnectedDevice(bluetooth_base_test.BluetoothBaseT
     def setup_class(self):
         super().setup_class()
         self.media_utils = MediaUtils(self.target, self.discoverer)
+        self.common_utils = CommonUtils(self.target, self.discoverer)
 
     def setup_test(self):
+        self.common_utils.grant_local_mac_address_permission()
+        self.common_utils.enable_wifi_on_phone_device()
         self.bt_utils.pair_primary_to_secondary()
 
     def test_is_media_synchronized_after_reconnect_device(self):

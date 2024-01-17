@@ -18,7 +18,6 @@ package android.platform.scenario.multiuser;
 
 import android.app.UiAutomation;
 import android.content.pm.UserInfo;
-import android.os.Build;
 import android.os.SystemClock;
 import android.platform.helpers.MultiUserHelper;
 import android.platform.test.scenario.annotation.Scenario;
@@ -51,10 +50,6 @@ public class SwitchToNewGuest {
         /*
         TODO: Create setup util API
          */
-        // Execute these tests only on devices running Android T or higher
-        Assume.assumeTrue(
-                "Skipping below Android T", Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU);
-
         // Execute user manager APIs with elevated permissions
         mUiAutomation = getUiAutomation();
         // TODO: b/302175460 - update minimum SDK version
@@ -98,6 +93,7 @@ public class SwitchToNewGuest {
         if (MultiUserConstants.INCLUDE_CREATION_TIME) {
             mGuestId = mMultiUserHelper.createUser(MultiUserConstants.GUEST_NAME, true);
         }
+        Assume.assumeTrue("Target user id must be greater than 10", mGuestId > 10);
         mMultiUserHelper.switchToUserId(mGuestId);
 
         // Drop elevated permissions

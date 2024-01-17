@@ -25,6 +25,7 @@ import android.tools.common.Timestamps
 import android.tools.common.io.Reader
 import android.tools.common.io.ResultArtifactDescriptor
 import android.tools.common.io.RunStatus
+import android.tools.device.rules.StopAllTracesRule
 import android.tools.device.traces.io.ArtifactBuilder
 import android.tools.device.traces.io.ResultWriter
 import android.tools.device.traces.parsers.perfetto.LayersTraceParser
@@ -33,8 +34,8 @@ import android.tools.device.traces.parsers.wm.WindowManagerDumpParser
 import android.tools.device.traces.parsers.wm.WindowManagerTraceParser
 import android.tools.rules.CacheCleanupRule
 import android.tools.rules.InitializeCrossPlatformRule
-import android.tools.rules.StopAllTracesRule
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.uiautomator.UiDevice
 import com.google.common.io.ByteStreams
 import com.google.common.truth.Truth
 import java.io.File
@@ -110,7 +111,7 @@ fun getWmTraceReaderFromAsset(
     legacyTrace: Boolean = false,
 ): Reader {
     return ParsedTracesReader(
-        artifact = InMemoryArtifact(relativePath),
+        artifact = TestArtifact(relativePath),
         wmTrace =
             WindowManagerTraceParser(legacyTrace)
                 .parse(
@@ -125,7 +126,7 @@ fun getWmTraceReaderFromAsset(
 
 fun getWmDumpReaderFromAsset(relativePath: String): Reader {
     return ParsedTracesReader(
-        artifact = InMemoryArtifact(relativePath),
+        artifact = TestArtifact(relativePath),
         wmTrace = WindowManagerDumpParser().parse(readAsset(relativePath), clearCache = false)
     )
 }
@@ -146,7 +147,7 @@ fun getLayerTraceReaderFromAsset(
                 }
                 .parse(session, from, to)
         }
-    return ParsedTracesReader(artifact = InMemoryArtifact(relativePath), layersTrace = layersTrace)
+    return ParsedTracesReader(artifact = TestArtifact(relativePath), layersTrace = layersTrace)
 }
 
 @Throws(Exception::class)
@@ -198,3 +199,6 @@ fun createDefaultArtifactBuilder(
         .withOutputDir(outputDir)
         .withStatus(status)
         .withFiles(files)
+
+fun getLauncherPackageName() =
+    UiDevice.getInstance(InstrumentationRegistry.getInstrumentation()).launcherPackageName

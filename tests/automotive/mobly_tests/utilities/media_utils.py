@@ -17,7 +17,7 @@ import pprint
 import time
 import re
 
-from mbs_utils import constants
+from utilities import constants
 from mobly import asserts
 from mobly.controllers import android_device
 
@@ -37,6 +37,15 @@ class MediaUtils:
             self.target.serial,
         )
         return self.target.adb.shell(shell_command)
+
+    # Execute any shell command on HU
+    def execute_shell_on_hu_device(self, shell_command):
+        self.target.log.info(
+            'Executing shell command: <%s> on HU device <%s>',
+            shell_command,
+            self.discoverer.serial,
+        )
+        return self.discoverer.adb.shell(shell_command)
 
     # Start YouTube Music app on phone device
     def open_youtube_music_app(self):
@@ -97,9 +106,9 @@ class MediaUtils:
         regex_pattern = re.compile(constants.SONG_METADATA_PATTERN)
         # match regex
         actual_song_metadata = regex_pattern.findall(dumpsys_metadata)[0]
-        logging.info("Actual song metadata: %s", actual_song_metadata)
+        logging.info("Actual song metadata on phone device: %s", actual_song_metadata)
         parsed_song_metadata = actual_song_metadata.split('=')[1]
-        logging.info("Parsed song metadata: %s", parsed_song_metadata)
+        logging.info("Parsed song metadata on phone device: %s", parsed_song_metadata)
         return parsed_song_metadata
 
     # Get song title from phone device
@@ -124,20 +133,116 @@ class MediaUtils:
         self.discoverer.mbs.clickNextTrack()
         time.sleep(constants.WAIT_FOR_LOAD)
 
+    # Click on PREVIOUS track on HU
+    def click_previous_track_on_hu(self):
+        logging.info("Click on PREVIOUS track on HU")
+        self.discoverer.mbs.clickPreviousTrack()
+        time.sleep(constants.WAIT_FOR_LOAD)
+
     # Open Media app on HU
     def open_media_app_on_hu(self):
         logging.info("Open Media app on HU")
         self.discoverer.mbs.openMediaApp()
 
+    # Pause Media app on HU
     def pause_media_on_hu(self):
         logging.info("Press PAUSE button on HU")
         self.discoverer.mbs.pauseMedia()
 
+    # Play Media app on HU
     def play_media_on_hu(self):
         logging.info("Press PLAY button on HU")
         self.discoverer.mbs.playMedia()
 
+    # Click on CANCEL button on Connect BT Audio page on HU
     def click_on_cancel_bt_audio_connection_button_on_hu(self):
         logging.info("Click on Cancel Bluetooth Audio connection button on HU")
         self.discoverer.mbs.cancelBluetoothAudioConncetion()
+
+    # Reboot HU
+    def reboot_hu(self):
+        logging.info("Starting HU reboot...")
+        self.execute_shell_on_hu_device(constants.REBOOT)
+
+    # Is song playing on HU
+    def is_song_playing_on_hu(self):
+        logging.info("Checking is song playing on HU")
+        actual_song_playing_status = self.discoverer.mbs.isPlaying()
+        logging.info("Is song playing: %s", actual_song_playing_status)
+        return actual_song_playing_status
+
+    # Maximize playing song
+    def maximize_now_playing(self):
+        logging.info("Maximizing playing song on HU")
+        self.discoverer.mbs.maximizeNowPlaying()
+
+    # Minimize playing song
+    def minimize_now_playing(self):
+        logging.info("Maximizing playing song on HU")
+        self.discoverer.mbs.minimizeNowPlaying()
+
+    # Open playlist
+    def open_media_playlist(self):
+        logging.info("Open Playlist content on HU")
+        self.discoverer.mbs.openMediaAppMenuItems()
+
+    # Scroll playlist to the button
+    def scroll_playlist_to_the_button(self):
+        logging.info("Scroll Playlist to the button on HU")
+        self.discoverer.mbs.scrollPlayListDown()
+
+    # Select first visible song from playlist
+    def select_song_from_playlist(self):
+        logging.info("Select song from playlist on HU")
+        self.discoverer.mbs.clickOnSongFromPlaylist()
+
+    # Get playing Album title
+    def get_album_title_on_hu(self):
+        logging.info("Getting Album title on HU")
+        actual_album_title = self.discoverer.mbs.getAlbumTitle()
+        logging.info("Actual Album title on HU: <%s>", actual_album_title)
+        return actual_album_title
+
+    # Get Artist title on HU
+    def get_artist_title_on_hu(self):
+        logging.info("Getting Artist title on HU")
+        actual_artist_title = self.discoverer.mbs.getArtistrTitle()
+        logging.info("Actual Artist title on HU: <%s>", actual_artist_title)
+        return actual_artist_title
+
+    # Get current song playing time on HU
+    def get_current_song_playing_time_on_hu(self):
+        logging.info("Getting current song playing time on HU")
+        actual_current_song_playing_time = self.discoverer.mbs.getSongCurrentPlayingTime()
+        logging.info("Actual current song playing time on HU: <%s>",
+                     actual_current_song_playing_time)
+        return actual_current_song_playing_time
+
+    def get_current_song_max_playing_time_on_hu(self):
+        logging.info("Getting current song max playing time on HU")
+        actual_current_song_max_playing_time = self.discoverer.mbs.getCurrentSongMaxPlayingTime()
+        logging.info("Actual current song max playing time on HU: <%s>",
+                     actual_current_song_max_playing_time)
+        return actual_current_song_max_playing_time
+
+    # Check is NOW PLAYING label displayed
+    def is_now_playing_label_displayed(self):
+        logging.info("Checking is <Now Playing> label displayed on HU")
+        actual_is_now_playing_label_display_status = self.discoverer.mbs.isNowPlayingLabelVisible()
+        logging.info("<Now Playing> label displayed: <%s>",
+                     actual_is_now_playing_label_display_status)
+        return actual_is_now_playing_label_display_status
+
+    # Check is PLAYLIST icon visible
+    def is_playlist_icon_visible(self):
+        logging.info("Checking is Playlist icon displayed on HU")
+        actual_is_playlist_icon_displayed = self.discoverer.mbs.isPlaylistIconVisible()
+        logging.info("Playlist icon displayed: <%s>",
+                     actual_is_playlist_icon_displayed)
+        return actual_is_playlist_icon_displayed
+
+    # Click on Playlist icon
+    def click_on_playlist_icon(self):
+        logging.info("Click on Playlist icon on HU")
+        self.discoverer.mbs.clickOnPlaylistIcon()
 

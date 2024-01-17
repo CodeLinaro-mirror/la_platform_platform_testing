@@ -16,8 +16,8 @@
 from bluetooth_test import bluetooth_base_test
 from mobly import asserts
 
-from mbs_utils import constants
-from mbs_utils.main_utils import common_main
+from utilities import constants
+from utilities.main_utils import common_main
 
 
 class BluetoothPalette(bluetooth_base_test.BluetoothBaseTest):
@@ -31,14 +31,10 @@ class BluetoothPalette(bluetooth_base_test.BluetoothBaseTest):
     def test_enable_disable_bluetooth_button(self):
         """Tests enable and disable functionality of bluetooth."""
         self.call_utils.open_bluetooth_palette()
-        self.call_utils.wait_with_log(
-            constants.DEFAULT_WAIT_TIME_FIVE_SECS
-        )
+        self.call_utils.wait_with_log(5)
         asserts.assert_true(self.call_utils.is_bluetooth_connected(), 'Bluetooth Connected')
         self.call_utils.click_bluetooth_button()
-        self.call_utils.wait_with_log(
-            constants.DEFAULT_WAIT_TIME_FIVE_SECS
-        )
+        self.call_utils.wait_with_log(5)
         asserts.assert_false(self.call_utils.is_bluetooth_connected(), 'Bluetooth Disconnected')
 
 

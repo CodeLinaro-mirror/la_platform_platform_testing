@@ -24,8 +24,10 @@
 """
 
 from mobly import asserts
-from mbs_utils import constants
-from mbs_utils.main_utils import common_main
+
+from utilities import constants
+from utilities.main_utils import common_main
+from bluetooth_test import bluetooth_base_test
 
 
 class CallContactSortTest(bluetooth_base_test.BluetoothBaseTest):

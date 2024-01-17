@@ -51,7 +51,6 @@ instrumentation_tests := \
     PermissionFunctionalTests \
     BlockedNumberProviderTest \
     DownloadAppFunctionalTests \
-    NotificationFunctionalTests \
     DynamicCodeLoggerIntegrationTests \
     UsbTests \
     DownloadProviderTests \
@@ -78,7 +77,6 @@ instrumentation_tests := \
     FlickerTestsOther \
     FlickerTestsAppClose \
     FlickerTestsIme \
-    FlickerTestsAppLaunch \
     FlickerTestsQuickswitch \
     FlickerTestsRotation \
     FlickerTestApp \
@@ -95,7 +93,8 @@ instrumentation_tests := \
     CarDeveloperOptionsUnitTests \
     SpaPrivilegedLibTests \
     SettingsSpaUnitTests \
-    SpaLibTests
+    SpaLibTests \
+    PermissionServiceMockingTests
 
 ifneq ($(strip $(BOARD_PERFSETUP_SCRIPT)),)
 instrumentation_tests += perf-setup

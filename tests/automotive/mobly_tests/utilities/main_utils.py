@@ -13,11 +13,29 @@
 #  limitations under the License.
 
 import sys
+# TODO(b/311467339): add asbl support for test runs in the lab
+# from absl import flags
 from mobly import test_runner
 
 
+"""Pass test arguments after '--' to the test runner. Needed for Mobly Test Runner.
+
+Splits the arguments vector by '--'. Anything before separtor is treated as absl flags.
+Everything after is a Mobly Test Runner arguments. Example:
+
+    python3 <test> --itreations=2 -- -c /tmp/config.yaml
+
+Example usage:
+
+    if __name__ == '__main__':
+        common_main()
+"""
 def common_main():
+    absl_argv = []
     if '--' in sys.argv:
         index = sys.argv.index('--')
+        absl_argv = sys.argv[:index]
         sys.argv = sys.argv[:1] + sys.argv[index + 1:]
+    # TODO(b/311467339): add asbl support for test runs in the lab
+    # flags.FLAGS(absl_argv)
     test_runner.main()

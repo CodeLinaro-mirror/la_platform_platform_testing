@@ -12,12 +12,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-import sys
 
 from bluetooth_test import bluetooth_base_test
 from mobly import asserts
-from mbs_utils.media_utils import MediaUtils
-from mbs_utils.main_utils import common_main
+from utilities.media_utils import MediaUtils
+from utilities.common_utils import CommonUtils
+from utilities.main_utils import common_main
 
 
 class IsSongPlayingTest(bluetooth_base_test.BluetoothBaseTest):
@@ -25,8 +25,11 @@ class IsSongPlayingTest(bluetooth_base_test.BluetoothBaseTest):
     def setup_class(self):
         super().setup_class()
         self.media_utils = MediaUtils(self.target, self.discoverer)
+        self.common_utils = CommonUtils(self.target, self.discoverer)
 
     def setup_test(self):
+        self.common_utils.grant_local_mac_address_permission()
+        self.common_utils.enable_wifi_on_phone_device()
         self.bt_utils.pair_primary_to_secondary()
 
     def test_media_is_song_playing(self):
@@ -50,6 +53,7 @@ class IsSongPlayingTest(bluetooth_base_test.BluetoothBaseTest):
     def teardown_test(self):
         # Close YouTube Music app
         self.media_utils.close_youtube_music_app()
+        super().teardown_test()
 
 
 if __name__ == '__main__':
