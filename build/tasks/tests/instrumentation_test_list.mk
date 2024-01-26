@@ -29,7 +29,6 @@ instrumentation_tests := \
     WmTests \
     WmPerfTests \
     DisplayServiceTests \
-    JobTestApp \
     SuspendTestApp \
     FrameworksUtilTests \
     MtpServiceTests \
