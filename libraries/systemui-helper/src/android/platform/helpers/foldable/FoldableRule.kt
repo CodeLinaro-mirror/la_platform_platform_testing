@@ -71,16 +71,11 @@ class FoldableRule(private val ensureScreenOn: Boolean = false) : TestWatcher() 
             val initialState = currentState
 
             controller.fold()
-            SystemClock.sleep(ANIMATION_TIMEOUT) // Let's wait for the unfold animation to finish.
 
-            // As per requirement, the behaviour has been changed to keep the outer display ON when
-            // the device is folded with an active wakelock.
-            // We send the sleep command to make the fold deterministic.
-            // If needed in the future this class can be changed to make this behaviour configured,
-            // but for now tests assume the screen being off after folding.
             uiDevice.sleep()
-
+            SystemClock.sleep(ANIMATION_TIMEOUT) // Wait for unfold + screen off animations
             ensureThat("screen is off after folding") { !screenOn }
+
             if (initialState == UNFOLDED || initialState == HALF_FOLDED) {
                 ensureThat("screen surface decreases after folding") {
                     displaySurface < initialScreenSurface
