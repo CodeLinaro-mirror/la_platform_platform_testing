@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package android.platform.test.scenario.dial;
 
-package android.tools.common
+import android.platform.test.microbenchmark.Microbenchmark;
+import android.platform.test.scenario.ColdAppStartupRunRule;
 
-import kotlin.js.JsExport
-import kotlin.js.JsName
+import org.junit.Rule;
+import org.junit.runner.RunWith;
 
-/** Common interface for Layer and WindowManager trace entries. */
-@JsExport
-interface ITraceEntry {
-    /** @return timestamp of current entry */
-    @JsName("timestamp") val timestamp: Timestamp
+@RunWith(Microbenchmark.class)
+public class OpenColdAppMicrobenchmark extends OpenApp {
+
+    @Rule
+    public ColdAppStartupRunRule mAppStartupRunRule = new ColdAppStartupRunRule<>(sHelper.get());
 }
