@@ -596,8 +596,8 @@
       "PACKAGE": "com.android.car.carlauncher"
     },
     "SECURITY_SETTINGS_TITLE": {
-      "TYPE": "RESOURCE_ID",
-      "VALUE": "car_ui_toolbar_title"
+      "TYPE": "TEXT",
+      "VALUE": "Security"
     },
     "SECURITY_SETTINGS_LOCK_TYPE_PASSWORD": {
       "TYPE": "TEXT",
@@ -1449,7 +1449,7 @@
     "MEDIA_APP_DROP_DOWN_MENU": {
       "TYPE": "RESOURCE_ID",
       "VALUE": "car_ui_toolbar_menu_item_icon",
-      "PACKAGE": "com.android.car.media"
+      "PACKAGE": "com.chassis.car.ui.plugin"
     },
     "MEDIA_APP_NO_LOGIN_MSG": {
       "TYPE": "RESOURCE_ID",
@@ -1529,8 +1529,7 @@
     },
     "TOGGLE_HOTSPOT": {
       "TYPE": "RESOURCE_ID",
-      "VALUE": "car_ui_secondary_action_concrete",
-      "PACKAGE": "com.android.car.settings"
+      "VALUE": "car_ui_secondary_action_concrete"
     },
     "TOGGLE_BLUETOOTH": {
       "TYPE": "DESCRIPTION",
@@ -1933,6 +1932,14 @@
       "VALUE": "date_time_view",
       "PACKAGE": "com.android.car.messenger"
     },
+    "TAP_TO_READ_ALOUD": {
+      "TYPE": "TEXT",
+      "VALUE": "Tap to read aloud"
+    },
+    "ASSISTANT_SMS_TRANSCRIPTION_PLATE": {
+      "TYPE": "RESOURCE_ID",
+      "VALUE": "transcription_immersive_container"
+    },
     "SMS_EMPTY_MESSAGE": {
       "TYPE": "RESOURCE_ID",
       "VALUE": "empty_message",
@@ -2042,19 +2049,13 @@
       "VALUE": "qc_summary",
       "PACKAGE": "com.android.systemui"
     },
+    "CONNECTED_WIFI": {
+      "TYPE": "TEXT",
+      "VALUE": "Connected"
+    },
     "FORGET_WIFI": {
-      "TYPE": "MULTIPLE",
-      "SPECIFIERS": [
-        {
-          "TYPE": "CLASS",
-          "VALUE": "android.widget.ImageView"
-        },
-        {
-          "TYPE": "RESOURCE_ID",
-          "VALUE": "car_ui_secondary_action_concrete",
-          "PACKAGE": "com.android.car.settings"
-        }
-      ]
+      "TYPE": "TEXT",
+      "VALUE": "Forget"
     },
     "NETWORK_PALETTE_WIFI": {
       "TYPE": "MULTIPLE",
@@ -2072,6 +2073,19 @@
             "TYPE": "TEXT_CONTAINS",
             "VALUE": "Wi‑Fi"
           }
+        }
+      ]
+    },
+    "PHONE_CARD_DIALER_BUTTON": {
+      "TYPE": "MULTIPLE",
+      "SPECIFIERS": [
+        {
+          "TYPE": "RESOURCE_ID",
+          "VALUE": "button_right"
+        },
+        {
+          "TYPE": "CLASS",
+          "VALUE": "android.widget.ImageButton"
         }
       ]
     },

@@ -138,6 +138,10 @@ class CallUtils:
         logging.info('Attempting to press the bluetooth toggle on device: \'%s\'' % device_name)
         self.device.mbs.pressBluetoothToggleOnDevice(device_name)
 
+    def press_media_toggle_on_device(self, device_name):
+        logging.info('Attempting to press the media toggle on device: \'%s\'' % device_name)
+        self.device.mbs.pressMediaToggleOnDevice(device_name)
+
     def press_contact_search_result(self, expected_first_name):
         logging.info('Attempting to press the contact result with name \'%s\'' % expected_first_name)
         self.device.mbs.pressContactResult(expected_first_name)
@@ -153,8 +157,12 @@ class CallUtils:
         self.device.mbs.pressHomeScreen()
 
     def press_phone_toggle_on_device(self, device_name):
-        logging.info('Attempting to press the media toggle on device: \'%s\'' % device_name)
+        logging.info('Attempting to press the phone toggle on device: \'%s\'' % device_name)
         self.device.mbs.pressPhoneToggleOnDevice(device_name)
+
+    def press_dialer_button_on_phone_card(self):
+        logging.info('Attempting to press the dialer button on the phone card')
+        self.device.mbs.pressDialerButtonOnPhoneCard()
 
     def device_displays_connected(self):
         """Assumes the device bluetooth connection settings page is open"""
@@ -432,8 +440,6 @@ class CallUtils:
         )
         return actual_recent_call_from_history
 
-
-
     def verify_last_dialed_number(self, expected_last_dialed_number):
         actual_last_dialed_number = self.get_recent_call_history()
         actual_last_dialed_number = ''.join(
@@ -458,8 +464,7 @@ class CallUtils:
         logging.info('Searching <%s> in contacts', search_contact_name)
         self.device.mbs.searchContactsByName(search_contact_name)
 
-
-    # Get first search result on contact search
+    # Get first search result
     def get_first_search_result(self):
         logging.info('Getting first search result')
         actual_first_search_result = self.device.mbs.getFirstSearchResult()
@@ -505,6 +510,18 @@ class CallUtils:
             raise CallUtilsError(
                 "SMS Preview Text- Actual and Expected doesn't match."
             )
+
+    def tap_to_read_aloud(self):
+        """Tap on Received Text message"""
+        logging.info('Click on the text >>> tap to read aloud ')
+        self.device.mbs.tapToReadAloud()
+
+    def is_assistant_sms_transcription_plate_displayed(self,expected):
+        """ Checks if assistant transcription plate has displayed """
+        visibility_status = self.device.mbs.isAssistantSMSTranscriptionPlateDisplayed()
+        if visibility_status == expected:
+            logging.info("Assistant SMS Transcription plate has opened upon tapping the SMS.")
+        return visibility_status
 
     def verify_sms_preview_timestamp(self, expected):
         """Verify sms preview timestamp"""
@@ -655,3 +672,6 @@ class CallUtils:
         """Open notifications on Phone"""
         logging.debug('Open notifications on Phone')
         self.execute_shell_on_device(device_target, constants.OPEN_NOTIFICATION)
+
+    def press_phone_home_icon_using_adb_command(self, device_target):
+        self.execute_shell_on_device(device_target, 'input keyevent KEYCODE_HOME')

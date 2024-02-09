@@ -42,7 +42,7 @@ DEFAULT_DIAL_PAD_ENTRY = "Dial a number"
 CONNECTED_SUMMARY_STATUS = "Connected"
 DISCONNECTED_SUMMARY_STATUS = "Disconnected"
 DECLINE_CALL_TEXT = "Decline"
-ACCEPT_CALL_TEXT = "Answer"
+ANSWER_CALL_TEXT = "Answer"
 ACCEPT_CALL_TEXT = "Accept"
 DISABLE_ANDROID_AUTO_POP_UP = "pm disable --user 10 com.google.android.embedded.projection"
 
@@ -119,9 +119,21 @@ STOP_YOUTUBE_MEDIA_SHELL = 'am force-stop ' + YOUTUBE_MUSIC_PACKAGE
 GET_DUMPSYS_METADATA = 'dumpsys media_session'
 SONG_METADATA_PATTERN = r"description=.[^\n]*"
 DEFAULT_YOUTUBE_MUSIC_PLAYLIST = 'am start -a android.intent.action.VIEW -d https://music.youtube.com/watch?v=sjuOaAf9C70'
+BLUETOOTH_AUDIO_APP = "Bluetooth Audio"
+YOUTUBE_MUSIC_APP = "YouTube Music"
+BLUETOOTH_PLAYER = "Bluetooth Player"
+YOUTUBE_MUSIC_DOWNLOADS = "Downloads"
+RADIO_APP = "Radio"
+FM_FREQUENCY_PATTERN = '^(10[1-7][13579])|(8[789][1357])|(9\\d[1357])$'
+RADIO_FM_RANGE = "FM"
+CONFIRM_RADIO_FREQUENCY = "Enter"
+DEFAULT_FM_FREQUENCY = "1013"
 
 # SMS
 SMS_TEXT = "sms_test"
+REPLY_SMS= "Okay"
+SMS_REPLY_TEXT = "SMS Reply"
+SMS_TEXT_DRIVE_MODE="Tap to read aloud"
 TIMEZONE_DICT = {
     "PST": "Pacific Standard Time",
     "PDT": "Pacific Daylight Time",

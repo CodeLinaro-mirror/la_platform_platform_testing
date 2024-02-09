@@ -43,6 +43,7 @@ public final class SetFlagsRule implements TestRule {
     private static final String FEATURE_FLAGS_CLASS_NAME = "FeatureFlags";
     private static final String FEATURE_FLAGS_FIELD_NAME = "FEATURE_FLAGS";
     private static final String FLAGS_CLASS_NAME = "Flags";
+    private static final String FLAG_CONSTANT_PREFIX = "FLAG_";
     private static final String SET_FLAG_METHOD_NAME = "setFlag";
     private static final String RESET_ALL_METHOD_NAME = "resetAll";
 
@@ -73,8 +74,8 @@ public final class SetFlagsRule implements TestRule {
     @Deprecated
     public void initAllFlagsToReleaseConfigDefault() {
         if (!mIsInitWithDefault) {
-            mFlagsClassToRealFlagsImpl.clear();
-            mFlagsClassToFakeFlagsImpl.clear();
+            // If you've already set any flags, it's too late to change the defaults.
+            ensureFlagsAreUnset();
         }
         mIsInitWithDefault = true;
     }
@@ -97,7 +98,7 @@ public final class SetFlagsRule implements TestRule {
     }
 
     public SetFlagsRule() {
-        this(DefaultInitValueType.NULL_DEFAULT);
+        this(DefaultInitValueType.DEVICE_DEFAULT);
     }
 
     public SetFlagsRule(DefaultInitValueType defaultType) {
@@ -144,6 +145,9 @@ public final class SetFlagsRule implements TestRule {
      *     {packageName}.{flagName}
      */
     public void enableFlags(String... fullFlagNames) {
+        if (!mIsRuleEvaluating) {
+            throw new IllegalStateException("Not allowed to set flags outside test and setup code");
+        }
         for (String fullFlagName : fullFlagNames) {
             if (mLockedFlagNames.contains(fullFlagName)) {
                 throw new FlagSetException(fullFlagName, "Not allowed to change locked flags");
@@ -159,6 +163,9 @@ public final class SetFlagsRule implements TestRule {
      *     {packageName}.{flagName}
      */
     public void disableFlags(String... fullFlagNames) {
+        if (!mIsRuleEvaluating) {
+            throw new IllegalStateException("Not allowed to set flags outside test and setup code");
+        }
         for (String fullFlagName : fullFlagNames) {
             if (mLockedFlagNames.contains(fullFlagName)) {
                 throw new FlagSetException(fullFlagName, "Not allowed to change locked flags");
@@ -200,7 +207,7 @@ public final class SetFlagsRule implements TestRule {
 
     private void ensureFlagsAreUnset() {
         if (!mFlagsClassToFakeFlagsImpl.isEmpty()) {
-            throw new AssertionError("Some flags were set before the rule was initialized");
+            throw new IllegalStateException("Some flags were set before the rule was initialized");
         }
     }
 
@@ -308,6 +315,10 @@ public final class SetFlagsRule implements TestRule {
         }
         try {
             for (Field field : flagClass.getFields()) {
+                if (!field.getName().startsWith(FLAG_CONSTANT_PREFIX)
+                        || !field.getType().isAssignableFrom(String.class)) {
+                    continue; // Only take the flag constants
+                }
                 String fullFlagName = (String) field.get(null);
                 Flag flag = Flag.createFlag(fullFlagName);
                 boolean value = getFlagValue(realFlagsImpl, flag);

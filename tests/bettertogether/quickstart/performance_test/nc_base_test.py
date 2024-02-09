@@ -43,6 +43,7 @@ class NCBaseTestClass(base_test.BaseTestClass):
     self.test_parameters: nc_constants.TestParameters = None
     self._nearby_snippet_apk_path: str = None
     self.performance_test_iterations: int = 1
+    self.num_bug_reports: int = 0
 
   def setup_class(self) -> None:
     self.ads = self.register_controller(android_device, min_number=2)
@@ -110,6 +111,17 @@ class NCBaseTestClass(base_test.BaseTestClass):
     setup_utils.disable_redaction(ad)
     setup_utils.enable_auto_reconnect(ad)
 
+    if (
+        self.test_parameters.upgrade_medium
+        == nc_constants.NearbyMedium.WIFIAWARE_ONLY.value
+    ):
+      setup_utils.enable_wifi_aware(ad)
+
+    if self.test_parameters.wifi_country_code:
+      setup_utils.set_wifi_country_code(
+          ad, self.test_parameters.wifi_country_code
+      )
+
   def setup_test(self):
     self._reset_nearby_connection()
 
@@ -168,10 +180,12 @@ class NCBaseTestClass(base_test.BaseTestClass):
     return test_parameters
 
   def on_fail(self, record: records.TestResultRecord) -> None:
-    logging.info('take bug report for failure')
-    android_device.take_bug_reports(
-        self.ads,
-        destination=self.current_test_info.output_path,
+    self.num_bug_reports = self.num_bug_reports + 1
+    if (self.num_bug_reports <= nc_constants.MAX_NUM_BUG_REPORT):
+      logging.info('take bug report for failure')
+      android_device.take_bug_reports(
+          self.ads,
+          destination=self.current_test_info.output_path,
     )
 
   def _stats_throughput_result(

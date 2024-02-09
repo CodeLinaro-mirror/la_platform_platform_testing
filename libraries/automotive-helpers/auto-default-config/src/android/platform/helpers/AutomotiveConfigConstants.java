@@ -540,6 +540,7 @@ public class AutomotiveConfigConstants {
     public static final String NETWORK_PALETTE_WIFI = "NETWORK_PALETTE_WIFI";
     public static final String NETWORK_PALETTE_SUMMARY = "NETWORK_PALETTE_SUMMARY";
     public static final String NETWORK_PALETTE_SWITCH_WIDGET = "NETWORK_PALETTE_SWITCH_WIDGET";
+    public static final String CONNECTED_WIFI = "CONNECTED_WIFI";
     public static final String FORGET_WIFI = "FORGET_WIFI";
     public static final String CLOCK_TIME = "CLOCK_TIME";
 
@@ -604,6 +605,9 @@ public class AutomotiveConfigConstants {
     public static final String SMS_UNREAD_BADGE = "SMS_UNREAD_BADGE";
     public static final String SMS_PREVIEW_TEXT = "SMS_PREVIEW_TEXT";
     public static final String SMS_PREVIEW_TIMESTAMP = "SMS_PREVIEW_TIMESTAMP";
+    public static final String TAP_TO_READ_ALOUD = "TAP_TO_READ_ALOUD";
+    public static final String ASSISTANT_SMS_TRANSCRIPTION_PLATE =
+            "ASSISTANT_SMS_TRANSCRIPTION_PLATE";
     public static final String SMS_EMPTY_MESSAGE = "SMS_EMPTY_MESSAGE";
 
     // Bluetooth Tests Constants
@@ -614,6 +618,8 @@ public class AutomotiveConfigConstants {
     // BT
     public static final String PHONE_BUTTON = "PHONE_BUTTON";
     public static final String MEDIA_BUTTON = "MEDIA_BUTTON";
+    public static final String TOGGLE_DEVICE_MEDIA = "TOGGLE_DEVICE_MEDIA";
+    public static final String TOGGLE_DEVICE_PHONE = "TOGGLE_DEVICE_PHONE";
     public static final String DEVICE_NAME = "DEVICE_NAME";
 
     public static final String DEVICE_TITLE = "DEVICE_TITLE";
@@ -659,4 +665,7 @@ public class AutomotiveConfigConstants {
     public static final String MOBILE_PHONE_ICON = "MOBILE_PHONE_ICON";
     public static final String PHONE_DEVICE_PACKAGE = "PHONE_DEVICE_PACAKAGE";
     public static final String MOBILE_DIALPAD_INPUT = "MOBILE_DIALPAD_INPUT";
+
+    // Phone Card Identifiers
+    public static final String PHONE_CARD_DIALER_BUTTON = "PHONE_CARD_DIALER_BUTTON";
 }
