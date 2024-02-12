@@ -16,14 +16,11 @@
 
 package android.tools.common.traces.surfaceflinger
 
-import android.tools.common.ITraceEntry
 import android.tools.common.Timestamp
-import kotlin.js.JsExport
-import kotlin.js.JsName
+import android.tools.common.TraceEntry
 
-@JsExport
 class TransactionsTraceEntry(
     override val timestamp: Timestamp,
-    @JsName("vSyncId") val vSyncId: Long,
-    @JsName("transactions") val transactions: Array<Transaction>
-) : ITraceEntry
+    val vSyncId: Long,
+    val transactions: Array<Transaction>
+) : TraceEntry
