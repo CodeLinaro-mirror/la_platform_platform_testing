@@ -32,7 +32,7 @@ import org.junit.ClassRule
 import org.junit.Test
 
 /** Tests for [WindowManagerTraceParser] */
-class LegacyWmTransitionTraceParserTest {
+class LegacyWmLegacyTransitionTraceParserTest {
     @Before
     fun before() {
         assumeFalse(Flags.perfettoTransitionTracing())
