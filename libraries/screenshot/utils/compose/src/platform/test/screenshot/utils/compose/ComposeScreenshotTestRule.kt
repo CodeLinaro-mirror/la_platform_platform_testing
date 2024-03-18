@@ -26,6 +26,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.ViewRootForTest
+import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onRoot
 import com.android.compose.theme.PlatformTheme
@@ -44,9 +45,8 @@ import platform.test.screenshot.ScreenshotAsserterFactory
 import platform.test.screenshot.ScreenshotTestRule
 import platform.test.screenshot.UnitTestBitmapMatcher
 import platform.test.screenshot.bitmapWithMaterialYouColorsSimulation
-import platform.test.screenshot.captureToBitmap
+import platform.test.screenshot.captureToBitmapAsync
 import platform.test.screenshot.dialogScreenshotTest
-import platform.test.screenshot.toBitmap
 
 /** A rule for Compose screenshot diff tests. */
 class ComposeScreenshotTestRule(
@@ -81,6 +81,7 @@ class ComposeScreenshotTestRule(
         goldenIdentifier: String,
         clearFocus: Boolean = false,
         beforeScreenshot: () -> Unit = {},
+        viewFinder: () -> SemanticsNodeInteraction = { composeRule.onRoot() },
         content: (@Composable () -> Unit)? = null,
     ) {
         // Make sure that the activity draws full screen and fits the whole display instead of the
@@ -123,16 +124,17 @@ class ComposeScreenshotTestRule(
         }
         composeRule.waitForIdle()
 
-        val view = (composeRule.onRoot().fetchSemanticsNode().root as ViewRootForTest).view
+        val view = (viewFinder().fetchSemanticsNode().root as ViewRootForTest).view
+        val bitmap = view.captureToBitmapAsync().get(10, TimeUnit.SECONDS)
         val viewBitmap =
             if (isRobolectric) {
                 bitmapWithMaterialYouColorsSimulation(
-                    view.captureToBitmap().get(10, TimeUnit.SECONDS),
+                    bitmap,
                     emulationSpec.isDarkTheme,
                     /* doPixelAveraging= */ false
                 )
             } else {
-                view.toBitmap()
+                bitmap
             }
         screenshotRule.assertBitmapAgainstGolden(viewBitmap, goldenIdentifier, matcher)
     }
