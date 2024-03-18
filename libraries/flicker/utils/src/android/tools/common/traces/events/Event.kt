@@ -16,9 +16,8 @@
 
 package android.tools.common.traces.events
 
-import android.tools.common.ITraceEntry
 import android.tools.common.Timestamp
-import kotlin.js.JsExport
+import android.tools.common.TraceEntry
 
 /**
  * Represents an Event from the [EventLog]
@@ -30,11 +29,10 @@ import kotlin.js.JsExport
  * @param threadId The thread which wrote the log entry
  * @param tag The type tag code of the entry
  */
-@JsExport
 open class Event(
     override val timestamp: Timestamp,
     val processId: Int,
     val uid: String,
     val threadId: Int,
     val tag: String
-) : ITraceEntry
+) : TraceEntry

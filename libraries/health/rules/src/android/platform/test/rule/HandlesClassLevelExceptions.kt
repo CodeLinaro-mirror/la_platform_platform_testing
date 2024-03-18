@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 The Android Open Source Project
+ * Copyright (C) 2024 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 
-package android.tools.common
+package android.platform.test.rule
 
-import kotlin.js.JsExport
-import kotlin.js.JsName
-
-/** Common interface for Layer and WindowManager trace entries. */
-@JsExport
-interface ITraceEntry {
-    /** @return timestamp of current entry */
-    @JsName("timestamp") val timestamp: Timestamp
-}
+/**
+ * Marks a JUnit runner class as being able to handle class-level exceptions in a way that works
+ * around AndroidJUnitRunner's limitations. (cf b/318533816)
+ */
+@Target(AnnotationTarget.CLASS)
+@Retention(AnnotationRetention.RUNTIME)
+annotation class HandlesClassLevelExceptions()

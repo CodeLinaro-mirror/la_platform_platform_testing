@@ -16,14 +16,12 @@
 
 package android.tools.common.traces.surfaceflinger
 
-import android.tools.common.ITraceEntry
 import android.tools.common.Timestamps
+import android.tools.common.TraceEntry
 import android.tools.common.datatypes.Rect
 import android.tools.common.datatypes.RectF
 import android.tools.common.traces.component.ComponentNameMatcher
 import android.tools.common.traces.component.IComponentMatcher
-import kotlin.js.JsExport
-import kotlin.js.JsName
 
 /**
  * Represents a single Layer trace entry.
@@ -31,40 +29,34 @@ import kotlin.js.JsName
  * This is a generic object that is reused by both Flicker and Winscope and cannot access internal
  * Java/Android functionality
  */
-@JsExport
 class LayerTraceEntry(
-    @JsName("elapsedTimestamp") val elapsedTimestamp: Long,
-    @JsName("clockTimestamp") val clockTimestamp: Long?,
+    val elapsedTimestamp: Long,
+    val clockTimestamp: Long?,
     val hwcBlob: String,
-    @JsName("where") val where: String,
-    @JsName("displays") val displays: Array<Display>,
-    @JsName("vSyncId") val vSyncId: Long,
-    _rootLayers: Array<Layer>
-) : ITraceEntry {
+    val where: String,
+    val displays: Collection<Display>,
+    val vSyncId: Long,
+    _rootLayers: Collection<Layer>
+) : TraceEntry {
     override val timestamp =
         Timestamps.from(systemUptimeNanos = elapsedTimestamp, unixNanos = clockTimestamp)
 
-    @JsName("stableId")
     val stableId: String = this::class.simpleName ?: error("Unable to determine class")
 
-    @JsName("flattenedLayers") val flattenedLayers: Array<Layer> = fillFlattenedLayers(_rootLayers)
+    val flattenedLayers: Collection<Layer> = fillFlattenedLayers(_rootLayers)
 
     // for winscope
-    @JsName("isVisible") val isVisible: Boolean = true
+    val isVisible: Boolean = true
 
-    @JsName("visibleLayers")
-    val visibleLayers: Array<Layer>
-        get() = flattenedLayers.filter { it.isVisible }.toTypedArray()
+    val visibleLayers: Collection<Layer>
+        get() = flattenedLayers.filter { it.isVisible }
 
-    @JsName("children")
-    val children: Array<Layer>
-        get() = flattenedLayers.filter { it.isRootLayer }.toTypedArray()
+    val children: Collection<Layer>
+        get() = flattenedLayers.filter { it.isRootLayer }
 
-    @JsName("physicalDisplay")
     val physicalDisplay: Display?
         get() = displays.firstOrNull { !it.isVirtual && it.isOn }
 
-    @JsName("physicalDisplayBounds")
     val physicalDisplayBounds: Rect?
         get() = physicalDisplay?.layerStackSpace
 
@@ -115,12 +107,11 @@ class LayerTraceEntry(
      *
      * @param componentMatcher Components to search
      */
-    @JsName("isVisibleComponent")
     fun isVisible(componentMatcher: IComponentMatcher): Boolean =
         componentMatcher.layerMatchesAnyOf(visibleLayers)
 
     /** @return A [LayersTrace] object containing this state as its only entry */
-    fun asTrace(): LayersTrace = LayersTrace(arrayOf(this))
+    fun asTrace(): LayersTrace = LayersTrace(listOf(this))
 
     override fun toString(): String = timestamp.toString()
 
@@ -132,13 +123,13 @@ class LayerTraceEntry(
         var result = timestamp.hashCode()
         result = 31 * result + hwcBlob.hashCode()
         result = 31 * result + where.hashCode()
-        result = 31 * result + displays.contentHashCode()
+        result = 31 * result + displays.hashCode()
         result = 31 * result + isVisible.hashCode()
-        result = 31 * result + flattenedLayers.contentHashCode()
+        result = 31 * result + flattenedLayers.hashCode()
         return result
     }
 
-    private fun fillFlattenedLayers(rootLayers: Array<Layer>): Array<Layer> {
+    private fun fillFlattenedLayers(rootLayers: Collection<Layer>): Collection<Layer> {
         val layers = mutableListOf<Layer>()
         val roots = rootLayers.fillOcclusionState().toMutableList()
         while (roots.isNotEmpty()) {
@@ -146,10 +137,10 @@ class LayerTraceEntry(
             layers.add(layer)
             roots.addAll(layer.children)
         }
-        return layers.toTypedArray()
+        return layers
     }
 
-    private fun Array<Layer>.topDownTraversal(): List<Layer> {
+    private fun Collection<Layer>.topDownTraversal(): List<Layer> {
         return this.sortedBy { it.z }.flatMap { it.topDownTraversal() }
     }
 
@@ -163,7 +154,7 @@ class LayerTraceEntry(
         return traverseList
     }
 
-    private fun Array<Layer>.fillOcclusionState(): Array<Layer> {
+    private fun Collection<Layer>.fillOcclusionState(): Collection<Layer> {
         val traversalList = topDownTraversal().reversed()
 
         val opaqueLayers = mutableListOf<Layer>()
@@ -180,27 +171,23 @@ class LayerTraceEntry(
 
             if (visible) {
                 val occludedBy =
-                    opaqueLayers
-                        .filter {
-                            it.stackId == layer.stackId &&
-                                it.contains(layer, displaySize) &&
-                                (!it.hasRoundedCorners || (layer.cornerRadius == it.cornerRadius))
-                        }
-                        .toTypedArray()
+                    opaqueLayers.filter {
+                        it.stackId == layer.stackId &&
+                            it.contains(layer, displaySize) &&
+                            (!it.hasRoundedCorners || (layer.cornerRadius == it.cornerRadius))
+                    }
                 layer.addOccludedBy(occludedBy)
                 val partiallyOccludedBy =
-                    opaqueLayers
-                        .filter {
-                            it.stackId == layer.stackId &&
-                                it.overlaps(layer, displaySize) &&
-                                it !in layer.occludedBy
-                        }
-                        .toTypedArray()
+                    opaqueLayers.filter {
+                        it.stackId == layer.stackId &&
+                            it.overlaps(layer, displaySize) &&
+                            it !in layer.occludedBy
+                    }
                 layer.addPartiallyOccludedBy(partiallyOccludedBy)
                 val coveredBy =
-                    transparentLayers
-                        .filter { it.stackId == layer.stackId && it.overlaps(layer, displaySize) }
-                        .toTypedArray()
+                    transparentLayers.filter {
+                        it.stackId == layer.stackId && it.overlaps(layer, displaySize)
+                    }
                 layer.addCoveredBy(coveredBy)
 
                 if (layer.isOpaque) {

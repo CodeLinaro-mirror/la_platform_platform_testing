@@ -18,23 +18,18 @@ package android.tools.common.traces.component
 
 import android.tools.common.traces.surfaceflinger.Layer
 import android.tools.common.traces.wm.Activity
-import android.tools.common.traces.wm.IWindowContainer
+import android.tools.common.traces.wm.WindowContainer
 
-class OrComponentMatcher(private val componentMatchers: Array<out IComponentMatcher>) :
+class OrComponentMatcher(private val componentMatchers: Collection<IComponentMatcher>) :
     IComponentMatcher {
 
     /** {@inheritDoc} */
-    override fun windowMatchesAnyOf(window: IWindowContainer): Boolean {
+    override fun windowMatchesAnyOf(window: WindowContainer): Boolean {
         return componentMatchers.any { it.windowMatchesAnyOf(window) }
     }
 
     /** {@inheritDoc} */
-    override fun windowMatchesAnyOf(windows: Collection<IWindowContainer>): Boolean {
-        return componentMatchers.any { it.windowMatchesAnyOf(windows) }
-    }
-
-    /** {@inheritDoc} */
-    override fun windowMatchesAnyOf(windows: Array<IWindowContainer>): Boolean {
+    override fun windowMatchesAnyOf(windows: Collection<WindowContainer>): Boolean {
         return componentMatchers.any { it.windowMatchesAnyOf(windows) }
     }
 
@@ -49,22 +44,12 @@ class OrComponentMatcher(private val componentMatchers: Array<out IComponentMatc
     }
 
     /** {@inheritDoc} */
-    override fun activityMatchesAnyOf(activities: Array<Activity>): Boolean {
-        return componentMatchers.any { it.activityMatchesAnyOf(activities) }
-    }
-
-    /** {@inheritDoc} */
     override fun layerMatchesAnyOf(layer: Layer): Boolean {
         return componentMatchers.any { it.layerMatchesAnyOf(layer) }
     }
 
     /** {@inheritDoc} */
     override fun layerMatchesAnyOf(layers: Collection<Layer>): Boolean {
-        return componentMatchers.any { it.layerMatchesAnyOf(layers) }
-    }
-
-    /** {@inheritDoc} */
-    override fun layerMatchesAnyOf(layers: Array<Layer>): Boolean {
         return componentMatchers.any { it.layerMatchesAnyOf(layers) }
     }
 

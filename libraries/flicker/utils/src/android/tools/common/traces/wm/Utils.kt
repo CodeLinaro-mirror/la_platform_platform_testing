@@ -17,7 +17,7 @@
 package android.tools.common.traces.wm
 
 object Utils {
-    internal fun IWindowContainer.traverseTopDown(): List<IWindowContainer> {
+    internal fun WindowContainer.traverseTopDown(): List<WindowContainer> {
         val traverseList = mutableListOf(this)
 
         this.children.reversed().forEach { childLayer ->
@@ -33,11 +33,11 @@ object Utils {
      *
      * @param predicate Filter function
      */
-    internal inline fun <reified T : IWindowContainer> IWindowContainer.collectDescendants(
+    internal inline fun <reified T : WindowContainer> WindowContainer.collectDescendants(
         predicate: (T) -> Boolean = { true }
-    ): Array<T> {
+    ): Collection<T> {
         val traverseList = traverseTopDown()
 
-        return traverseList.filterIsInstance<T>().filter { predicate(it) }.toTypedArray()
+        return traverseList.filterIsInstance<T>().filter { predicate(it) }
     }
 }

@@ -17,19 +17,17 @@
 package android.tools.common.traces.wm
 
 import android.tools.common.Timestamp
-import kotlin.js.JsExport
 
-@JsExport
 data class WmTransitionData(
     val createTime: Timestamp? = null,
     val sendTime: Timestamp? = null,
     val abortTime: Timestamp? = null,
     val finishTime: Timestamp? = null,
     val startingWindowRemoveTime: Timestamp? = null,
-    val startTransactionId: String? = null, // strings instead of longs for JS compatibility
-    val finishTransactionId: String? = null, // strings instead of longs for JS compatibility
+    val startTransactionId: Long? = null,
+    val finishTransactionId: Long? = null,
     val type: TransitionType? = null,
-    val changes: Array<TransitionChange>? = null,
+    val changes: Collection<TransitionChange>? = null,
 ) {
     init {
         // We should never have empty timestamps, those should be passed as null

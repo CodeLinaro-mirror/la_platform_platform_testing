@@ -16,22 +16,22 @@
 
 package android.tools.common.traces
 
-import android.tools.common.ITrace
-import android.tools.common.ITraceEntry
 import android.tools.common.Timestamp
 import android.tools.common.Timestamps
+import android.tools.common.Trace
+import android.tools.common.TraceEntry
 import android.tools.utils.assertThrows
 import com.google.common.truth.Truth
 import org.junit.Test
 
 /** To run this test: `atest FlickerLibTest:ITraceTest` */
-class ITraceTest {
+class TraceTest {
     @Test
     fun getEntryExactlyAtTest() {
         val entry1 = SimpleTraceEntry(Timestamps.from(1, 1, 1))
         val entry2 = SimpleTraceEntry(Timestamps.from(5, 5, 5))
         val entry3 = SimpleTraceEntry(Timestamps.from(25, 25, 25))
-        val trace = SimpleTrace(arrayOf(entry1, entry2, entry3))
+        val trace = SimpleTrace(listOf(entry1, entry2, entry3))
 
         Truth.assertThat(trace.getEntryExactlyAt(Timestamps.from(1, 1, 1))).isEqualTo(entry1)
         Truth.assertThat(trace.getEntryExactlyAt(Timestamps.from(5, 5, 5))).isEqualTo(entry2)
@@ -49,7 +49,7 @@ class ITraceTest {
         val entry1 = SimpleTraceEntry(Timestamps.from(2, 2, 2))
         val entry2 = SimpleTraceEntry(Timestamps.from(5, 5, 5))
         val entry3 = SimpleTraceEntry(Timestamps.from(25, 25, 25))
-        val trace = SimpleTrace(arrayOf(entry1, entry2, entry3))
+        val trace = SimpleTrace(listOf(entry1, entry2, entry3))
 
         Truth.assertThat(trace.getEntryAt(Timestamps.from(2, 2, 2))).isEqualTo(entry1)
         Truth.assertThat(trace.getEntryAt(Timestamps.from(5, 5, 5))).isEqualTo(entry2)
@@ -64,13 +64,10 @@ class ITraceTest {
             .contains("No entry at or before timestamp")
     }
 
-    class SimpleTraceEntry(override val timestamp: Timestamp) : ITraceEntry
+    class SimpleTraceEntry(override val timestamp: Timestamp) : TraceEntry
 
-    class SimpleTrace(override val entries: Array<ITraceEntry>) : ITrace<ITraceEntry> {
-        override fun slice(
-            startTimestamp: Timestamp,
-            endTimestamp: Timestamp
-        ): ITrace<ITraceEntry> {
+    class SimpleTrace(override val entries: List<TraceEntry>) : Trace<TraceEntry> {
+        override fun slice(startTimestamp: Timestamp, endTimestamp: Timestamp): Trace<TraceEntry> {
             error("Not yet implemented")
         }
     }

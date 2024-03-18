@@ -16,47 +16,54 @@
 
 package android.tools.device.traces.parsers.wm
 
+import android.app.Instrumentation
 import android.tools.common.Cache
-import android.tools.device.traces.monitors.wm.WindowManagerTraceMonitor
+import android.tools.device.apphelpers.MessagingAppHelper
+import android.tools.device.traces.monitors.wm.LegacyShellTransitionTraceMonitor
 import android.tools.utils.CleanFlickerEnvironmentRule
 import android.tools.utils.readAsset
+import android.tracing.Flags
+import androidx.test.filters.FlakyTest
 import androidx.test.platform.app.InstrumentationRegistry
-import androidx.test.uiautomator.UiDevice
+import com.android.launcher3.tapl.LauncherInstrumentation
 import com.google.common.truth.Truth
+import org.junit.Assume.assumeFalse
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Test
 
 /** Tests for [WindowManagerTraceParser] */
-class TransitionTraceParserTest {
+class LegacyShellLegacyTransitionTraceParserTest {
     @Before
     fun before() {
+        assumeFalse(Flags.perfettoTransitionTracing())
         Cache.clear()
     }
 
     @Test
     fun canParseAllEntriesFromStoredTrace() {
         val trace =
-            WindowManagerTraceParser(legacyTrace = true)
-                .parse(readAsset("wm_trace_openchrome.pb"), clearCache = false)
-        val firstEntry = trace.entries[0]
-        Truth.assertThat(firstEntry.timestamp.elapsedNanos).isEqualTo(9213763541297L)
-        Truth.assertThat(firstEntry.windowStates.size).isEqualTo(10)
-        Truth.assertThat(firstEntry.visibleWindows.size).isEqualTo(5)
-        Truth.assertThat(trace.entries[trace.entries.size - 1].timestamp.elapsedNanos)
-            .isEqualTo(9216093628925L)
+            ShellTransitionTraceParser()
+                .parse(readAsset("shell_transition_trace.winscope"), clearCache = false)
+        val firstEntry = trace.entries.first()
+        val lastEntry = trace.entries.last()
+        Truth.assertThat(firstEntry.timestamp.elapsedNanos).isEqualTo(760760231809L)
+        Truth.assertThat(lastEntry.timestamp.elapsedNanos).isEqualTo(2770678425968L)
     }
 
+    @FlakyTest(bugId = 318834436)
     @Test
     fun canParseAllEntriesFromNewTrace() {
-        val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
+        val instrumentation: Instrumentation = InstrumentationRegistry.getInstrumentation()
+        val tapl = LauncherInstrumentation()
         val data =
-            WindowManagerTraceMonitor().withTracing {
-                device.pressHome()
-                device.pressRecentApps()
+            LegacyShellTransitionTraceMonitor().withTracing {
+                MessagingAppHelper(instrumentation).open()
+                tapl.goHome().switchToAllApps()
+                tapl.goHome()
             }
-        val trace = WindowManagerTraceParser().parse(data, clearCache = false)
-        Truth.assertThat(trace.entries).asList().isNotEmpty()
+        val trace = ShellTransitionTraceParser().parse(data, clearCache = false)
+        Truth.assertThat(trace.entries).isNotEmpty()
     }
 
     companion object {

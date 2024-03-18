@@ -32,8 +32,8 @@ class TransactionsTraceParser :
 
     override val traceName = "Layers trace (SF)"
 
-    override fun createTrace(entries: List<TransactionsTraceEntry>): TransactionsTrace {
-        return TransactionsTrace(entries.toTypedArray())
+    override fun createTrace(entries: Collection<TransactionsTraceEntry>): TransactionsTrace {
+        return TransactionsTrace(entries)
     }
 
     override fun doDecodeByteArray(bytes: ByteArray): TraceProcessorSession {
@@ -42,20 +42,20 @@ class TransactionsTraceParser :
 
     override fun shouldParseEntry(entry: TransactionsTraceEntry) = true
 
-    override fun getEntries(session: TraceProcessorSession): List<TransactionsTraceEntry> {
+    override fun getEntries(input: TraceProcessorSession): List<TransactionsTraceEntry> {
         val traceEntries = ArrayList<TransactionsTraceEntry>()
 
         val realToMonotonicTimeOffsetNs =
-            queryRealToMonotonicTimeOffsetNs(session, "surfaceflinger_transactions")
-        val entriesCount = queryTraceEntriesCount(session)
+            queryRealToMonotonicTimeOffsetNs(input, "surfaceflinger_transactions")
+        val entriesCount = queryTraceEntriesCount(input)
 
-        for (startEntryId in 0L..(entriesCount - 1) step BATCH_SIZE) {
+        for (startEntryId in 0L until entriesCount step BATCH_SIZE) {
             val endEntryId = min(startEntryId + BATCH_SIZE, entriesCount)
 
-            val batchRows = session.query(getSqlQueryTransactions(startEntryId, endEntryId)) { it }
+            val batchRows = input.query(getSqlQueryTransactions(startEntryId, endEntryId)) { it }
             val entryGroups = batchRows.groupBy { it.get("trace_entry_id") }
 
-            for (entryId in startEntryId..(endEntryId - 1)) {
+            for (entryId in startEntryId until endEntryId) {
                 val rows = entryGroups[entryId]!!
                 val entry = buildTraceEntry(rows, realToMonotonicTimeOffsetNs)
                 traceEntries.add(entry)
@@ -101,25 +101,19 @@ class TransactionsTraceParser :
             realToMonotonicTimeOffsetNs: Long
         ): TransactionsTraceEntry {
             val args = Args.build(rows)
-            val transactions: Array<Transaction> =
-                args
-                    .getChildren("transactions")
-                    ?.map { transaction ->
-                        Transaction(
-                            transaction.getChild("pid")?.getInt() ?: -1,
-                            transaction.getChild("uid")?.getInt() ?: -1,
-                            transaction.getChild("vsync_id")?.getLong() ?: -1,
-                            transaction.getChild("post_time")?.getLong() ?: -1,
-                            transaction.getChild("transaction_id")?.getLong() ?: -1,
-                            transaction
-                                .getChildren("merged_transaction_ids")
-                                ?.map { it.getLong() }
-                                ?.toTypedArray()
-                                ?: arrayOf()
-                        )
-                    }
-                    ?.toTypedArray()
-                    ?: arrayOf()
+            val transactions: Collection<Transaction> =
+                args.getChildren("transactions")?.map { transaction ->
+                    Transaction(
+                        transaction.getChild("pid")?.getInt() ?: -1,
+                        transaction.getChild("uid")?.getInt() ?: -1,
+                        transaction.getChild("vsync_id")?.getLong() ?: -1,
+                        transaction.getChild("post_time")?.getLong() ?: -1,
+                        transaction.getChild("transaction_id")?.getLong() ?: -1,
+                        transaction.getChildren("merged_transaction_ids")?.map { it.getLong() }
+                            ?: emptyList()
+                    )
+                }
+                    ?: emptyList()
 
             val traceEntry =
                 TransactionsTraceEntry(

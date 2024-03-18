@@ -470,8 +470,7 @@
     },
     "HOME_MAP_CARD": {
       "TYPE": "RESOURCE_ID",
-      "VALUE": "scene_card",
-      "PACKAGE": "com.android.car.carlauncher"
+      "VALUE": "scene_card"
     },
     "STATUS_BAR_BRIGHTNESS_BUTTON": {
       "TYPE": "RESOURCE_ID",
@@ -721,9 +720,17 @@
       "VALUE": "View all"
     },
     "APP_INFO_SETTINGS_SCROLL_ELEMENT": {
-      "TYPE": "RESOURCE_ID",
-      "VALUE": "fragment_container",
-      "PACKAGE": "com.android.car.settings"
+      "TYPE": "MULTIPLE",
+      "SPECIFIERS": [
+        {
+          "TYPE": "RESOURCE_ID",
+          "VALUE": "car_ui_internal_recycler_view"
+        },
+        {
+          "TYPE": "DESCRIPTION",
+          "VALUE": "com.android.car.ui.utils.ROTARY_CONTAINER"
+        }
+      ]
     },
     "APP_INFO_SETTINGS_SCROLL_FORWARD_BUTTON": {
       "TYPE": "DESCRIPTION",
@@ -769,7 +776,7 @@
     },
     "APP_INFO_SETTINGS_PERMISSIONS_MENU": {
       "TYPE": "TEXT",
-      "VALUE": "Permissions?"
+      "VALUE": "Permissions"
     },
     "APP_INFO_SETTINGS_ALLOW_BUTTON": {
       "TYPE": "TEXT",
@@ -1324,8 +1331,7 @@
     },
     "ACCOUNT_SETTINGS_REMOVE_BUTTON": {
       "TYPE": "RESOURCE_ID",
-      "VALUE": "car_ui_secondary_action",
-      "PACKAGE": "com.android.car.settings"
+      "VALUE": "car_ui_secondary_action"
     },
     "ACCOUNT_SETTINGS_REMOVE_ACCOUNT_BUTTON": {
       "TYPE": "TEXT",
@@ -1848,7 +1854,7 @@
     },
     "LOCATION_WIDGET": {
       "TYPE": "RESOURCE_ID",
-      "VALUE": "qc_location_status_icon",
+      "VALUE": "read_only_location_icon",
       "PACKAGE": "com.android.systemui"
     },
     "RECENTLY_CLOSED_TEXT": {

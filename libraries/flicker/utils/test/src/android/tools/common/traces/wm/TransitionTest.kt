@@ -82,10 +82,10 @@ class TransitionTest {
                         sendTime = Timestamps.from(20),
                         abortTime = Timestamps.from(30),
                         finishTime = Timestamps.from(40),
-                        startTransactionId = "1",
-                        finishTransactionId = "2",
+                        startTransactionId = 1,
+                        finishTransactionId = 2,
                         type = TransitionType.CLOSE,
-                        changes = arrayOf(),
+                        changes = listOf(),
                     ),
                 shellData =
                     ShellTransitionData(
@@ -107,10 +107,10 @@ class TransitionTest {
                         sendTime = Timestamps.from(200),
                         abortTime = Timestamps.from(300),
                         finishTime = Timestamps.from(400),
-                        startTransactionId = "10",
-                        finishTransactionId = "20",
+                        startTransactionId = 10,
+                        finishTransactionId = 20,
                         type = TransitionType.OPEN,
-                        changes = arrayOf(),
+                        changes = listOf(),
                     ),
                 shellData =
                     ShellTransitionData(
@@ -137,7 +137,7 @@ class TransitionTest {
         Truth.assertThat(mergedTransition.mergeTime?.elapsedNanos).isEqualTo(230)
         Truth.assertThat(mergedTransition.shellAbortTime?.elapsedNanos).isEqualTo(240)
         Truth.assertThat(mergedTransition.handler).isEqualTo("Handler2")
-        Truth.assertThat(mergedTransition.mergedInto).isEqualTo(10)
+        Truth.assertThat(mergedTransition.mergeTarget).isEqualTo(10)
     }
 
     @Test
@@ -149,23 +149,23 @@ class TransitionTest {
                 wmData =
                     WmTransitionData(
                         sendTime = Timestamps.from(1),
-                        startTransactionId = transactionId.toString()
+                        startTransactionId = transactionId
                     )
             )
 
         val transactions =
-            arrayOf(
+            listOf(
                 Transaction(
                     id = transactionId,
                     pid = 0,
                     uid = 0,
                     requestedVSyncId = 0,
                     postTime = 0,
-                    mergedTransactionIds = emptyArray()
+                    mergedTransactionIds = emptyList()
                 )
             )
         val transactionsTraceEntry =
-            arrayOf(
+            listOf(
                 TransactionsTraceEntry(
                     timestamp = Timestamps.from(1),
                     vSyncId = 1,
@@ -188,23 +188,23 @@ class TransitionTest {
                 wmData =
                     WmTransitionData(
                         sendTime = Timestamps.from(1),
-                        startTransactionId = transactionId.toString()
+                        startTransactionId = transactionId
                     )
             )
 
         val transactions =
-            arrayOf(
+            listOf(
                 Transaction(
                     id = transactionId + 10,
                     pid = 0,
                     uid = 0,
                     requestedVSyncId = 0,
                     postTime = 0,
-                    mergedTransactionIds = emptyArray()
+                    mergedTransactionIds = emptyList()
                 )
             )
         val transactionsTraceEntry =
-            arrayOf(
+            listOf(
                 TransactionsTraceEntry(
                     timestamp = Timestamps.from(1),
                     vSyncId = 1,
@@ -227,23 +227,23 @@ class TransitionTest {
                 wmData =
                     WmTransitionData(
                         sendTime = Timestamps.from(1),
-                        startTransactionId = transactionId.toString()
+                        startTransactionId = transactionId
                     )
             )
 
         val transactions =
-            arrayOf(
+            listOf(
                 Transaction(
                     id = indirectTransactionId,
                     pid = 0,
                     uid = 0,
                     requestedVSyncId = 0,
                     postTime = 0,
-                    mergedTransactionIds = arrayOf(transactionId)
+                    mergedTransactionIds = listOf(transactionId)
                 )
             )
         val transactionsTraceEntry =
-            arrayOf(
+            listOf(
                 TransactionsTraceEntry(
                     timestamp = Timestamps.from(1),
                     vSyncId = 1,
@@ -266,23 +266,23 @@ class TransitionTest {
                 wmData =
                     WmTransitionData(
                         sendTime = Timestamps.from(1),
-                        finishTransactionId = transactionId.toString()
+                        finishTransactionId = transactionId
                     )
             )
 
         val transactions =
-            arrayOf(
+            listOf(
                 Transaction(
                     id = transactionId,
                     pid = 0,
                     uid = 0,
                     requestedVSyncId = 0,
                     postTime = 0,
-                    mergedTransactionIds = emptyArray()
+                    mergedTransactionIds = emptyList()
                 )
             )
         val transactionsTraceEntry =
-            arrayOf(
+            listOf(
                 TransactionsTraceEntry(
                     timestamp = Timestamps.from(1),
                     vSyncId = 1,
@@ -305,23 +305,23 @@ class TransitionTest {
                 wmData =
                     WmTransitionData(
                         sendTime = Timestamps.from(1),
-                        finishTransactionId = transactionId.toString()
+                        finishTransactionId = transactionId
                     )
             )
 
         val transactions =
-            arrayOf(
+            listOf(
                 Transaction(
                     id = transactionId + 10,
                     pid = 0,
                     uid = 0,
                     requestedVSyncId = 0,
                     postTime = 0,
-                    mergedTransactionIds = emptyArray()
+                    mergedTransactionIds = emptyList()
                 )
             )
         val transactionsTraceEntry =
-            arrayOf(
+            listOf(
                 TransactionsTraceEntry(
                     timestamp = Timestamps.from(1),
                     vSyncId = 1,
@@ -344,23 +344,23 @@ class TransitionTest {
                 wmData =
                     WmTransitionData(
                         sendTime = Timestamps.from(1),
-                        finishTransactionId = transactionId.toString()
+                        finishTransactionId = transactionId
                     )
             )
 
         val transactions =
-            arrayOf(
+            listOf(
                 Transaction(
                     id = indirectTransactionId,
                     pid = 0,
                     uid = 0,
                     requestedVSyncId = 0,
                     postTime = 0,
-                    mergedTransactionIds = arrayOf(transactionId)
+                    mergedTransactionIds = listOf(transactionId)
                 )
             )
         val transactionsTraceEntry =
-            arrayOf(
+            listOf(
                 TransactionsTraceEntry(
                     timestamp = Timestamps.from(1),
                     vSyncId = 1,

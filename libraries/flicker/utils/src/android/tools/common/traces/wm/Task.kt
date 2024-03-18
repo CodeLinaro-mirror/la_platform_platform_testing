@@ -18,7 +18,6 @@ package android.tools.common.traces.wm
 
 import android.tools.common.datatypes.Rect
 import android.tools.common.traces.component.IComponentMatcher
-import kotlin.js.JsExport
 
 /**
  * Represents a task in the window manager hierarchy
@@ -26,7 +25,6 @@ import kotlin.js.JsExport
  * This is a generic object that is reused by both Flicker and Winscope and cannot access internal
  * Java/Android functionality
  */
-@JsExport
 class Task(
     override val activityType: Int,
     override val isFullscreen: Boolean,
@@ -45,8 +43,8 @@ class Task(
     val createdByOrganizer: Boolean,
     val minWidth: Int,
     val minHeight: Int,
-    private val windowContainer: IWindowContainer
-) : IWindowContainer by windowContainer {
+    private val windowContainer: WindowContainer
+) : WindowContainer by windowContainer {
     override val isVisible: Boolean = false
     override val name: String = taskId.toString()
     override val isEmpty: Boolean
@@ -56,28 +54,28 @@ class Task(
 
     val isRootTask: Boolean
         get() = taskId == rootTaskId
-    val tasks: Array<Task>
-        get() = this.children.reversed().filterIsInstance<Task>().toTypedArray()
-    val taskFragments: Array<TaskFragment>
-        get() = this.children.reversed().filterIsInstance<TaskFragment>().toTypedArray()
-    val activities: Array<Activity>
-        get() = this.children.reversed().filterIsInstance<Activity>().toTypedArray()
+    val tasks: Collection<Task>
+        get() = this.children.reversed().filterIsInstance<Task>()
+    val taskFragments: Collection<TaskFragment>
+        get() = this.children.reversed().filterIsInstance<TaskFragment>()
+    val activities: Collection<Activity>
+        get() = this.children.reversed().filterIsInstance<Activity>()
 
     /** The top task in the stack. */
     // NOTE: Unlike the WindowManager internals, we dump the state from top to bottom,
     //       so the indices are inverted
     val topTask: Task?
         get() = tasks.firstOrNull()
-    val resumedActivities: Array<String>
+    val resumedActivities: Collection<String>
         get() {
-            val result = mutableSetOf<String>()
+            val result = mutableListOf<String>()
             if (this._resumedActivity.isNotEmpty()) {
                 result.add(this._resumedActivity)
             }
             val activitiesInChildren =
-                this.tasks.flatMap { it.resumedActivities.toList() }.filter { it.isNotEmpty() }
+                this.tasks.flatMap { it.resumedActivities }.filter { it.isNotEmpty() }
             result.addAll(activitiesInChildren)
-            return result.toTypedArray()
+            return result
         }
 
     /** @return The first [Task] matching [predicate], or null otherwise */

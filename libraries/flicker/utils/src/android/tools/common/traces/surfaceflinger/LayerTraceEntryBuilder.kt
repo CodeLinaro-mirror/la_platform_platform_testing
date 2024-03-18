@@ -17,11 +17,8 @@
 package android.tools.common.traces.surfaceflinger
 
 import android.tools.common.Timestamp
-import kotlin.js.JsExport
-import kotlin.js.JsName
 
 /** Builder for LayerTraceEntries */
-@JsExport
 class LayerTraceEntryBuilder {
     private var elapsedTimestamp: Long = 0L
     private var realTimestamp: Long? = null
@@ -31,7 +28,7 @@ class LayerTraceEntryBuilder {
     private var ignoreVirtualDisplay = false
     private var ignoreLayersStackMatchNoDisplay = false
     private var timestamp: Timestamp? = null
-    private var displays: Array<Display> = emptyArray()
+    private var displays: Collection<Display> = emptyList()
     private var vSyncId: Long = 0L
     private var hwcBlob: String = ""
     private var where: String = ""
@@ -39,40 +36,31 @@ class LayerTraceEntryBuilder {
         error("Duplicate layer id found: ${it.id}")
     }
 
-    @JsName("setVSyncId")
-    fun setVSyncId(vSyncId: String): LayerTraceEntryBuilder =
-        // Necessary for compatibility with JS number type
-        apply { this.vSyncId = vSyncId.toLong() }
+    fun setVSyncId(vSyncId: Long): LayerTraceEntryBuilder = apply { this.vSyncId = vSyncId }
 
-    @JsName("setHwcBlob")
     fun setHwcBlob(hwcBlob: String): LayerTraceEntryBuilder = apply { this.hwcBlob = hwcBlob }
 
-    @JsName("setWhere")
     fun setWhere(where: String): LayerTraceEntryBuilder = apply { this.where = where }
 
-    @JsName("setDisplays")
-    fun setDisplays(displays: Array<Display>): LayerTraceEntryBuilder = apply {
+    fun setDisplays(displays: Collection<Display>): LayerTraceEntryBuilder = apply {
         this.displays = displays
     }
 
-    @JsName("setElapsedTimestamp")
-    fun setElapsedTimestamp(timestamp: String): LayerTraceEntryBuilder =
-        // Necessary for compatibility with JS number type
-        apply { this.elapsedTimestamp = timestamp.toLong() }
+    fun setElapsedTimestamp(timestamp: Long): LayerTraceEntryBuilder = apply {
+        this.elapsedTimestamp = timestamp
+    }
 
-    @JsName("setRealToElapsedTimeOffsetNs")
-    fun setRealToElapsedTimeOffsetNs(realToElapsedTimeOffsetNs: String?): LayerTraceEntryBuilder =
+    fun setRealToElapsedTimeOffsetNs(realToElapsedTimeOffsetNs: Long?): LayerTraceEntryBuilder =
         apply {
             this.realTimestamp =
-                if (realToElapsedTimeOffsetNs != null && realToElapsedTimeOffsetNs.toLong() != 0L) {
-                    realToElapsedTimeOffsetNs.toLong() + elapsedTimestamp
+                if (realToElapsedTimeOffsetNs != null && realToElapsedTimeOffsetNs != 0L) {
+                    realToElapsedTimeOffsetNs + elapsedTimestamp
                 } else {
                     null
                 }
         }
 
-    @JsName("setLayers")
-    fun setLayers(layers: Array<Layer>): LayerTraceEntryBuilder = apply {
+    fun setLayers(layers: Collection<Layer>): LayerTraceEntryBuilder = apply {
         val result = mutableMapOf<Int, Layer>()
         layers.forEach { layer ->
             val id = layer.id
@@ -85,12 +73,10 @@ class LayerTraceEntryBuilder {
         this.layers = result
     }
 
-    @JsName("setOrphanLayerCallback")
     fun setOrphanLayerCallback(value: ((Layer) -> Boolean)?): LayerTraceEntryBuilder = apply {
         this.orphanLayerCallback = value
     }
 
-    @JsName("setDuplicateLayerCallback")
     fun setDuplicateLayerCallback(value: ((Layer) -> Boolean)): LayerTraceEntryBuilder = apply {
         this.duplicateLayerCallback = value
     }
@@ -148,7 +134,7 @@ class LayerTraceEntryBuilder {
         }
     }
 
-    private fun computeRootLayers(): List<Layer> {
+    private fun computeRootLayers(): Collection<Layer> {
         updateParents()
         updateRelZParents()
 
@@ -174,17 +160,17 @@ class LayerTraceEntryBuilder {
         return rootLayers
     }
 
-    private fun filterOutLayersInVirtualDisplays(roots: List<Layer>): List<Layer> {
+    private fun filterOutLayersInVirtualDisplays(roots: Collection<Layer>): Collection<Layer> {
         val physicalDisplays = displays.filterNot { it.isVirtual }.map { it.layerStackId }
 
         return roots.filter { physicalDisplays.contains(it.stackId) }
     }
 
-    private fun filterOutVirtualDisplays(displays: List<Display>): List<Display> {
+    private fun filterOutVirtualDisplays(displays: Collection<Display>): Collection<Display> {
         return displays.filterNot { it.isVirtual }
     }
 
-    private fun filterOutLayersInOffDisplays(roots: List<Layer>): List<Layer> {
+    private fun filterOutLayersInOffDisplays(roots: Collection<Layer>): Collection<Layer> {
         val offDisplays = displays.filter { it.isOff }.map { it.layerStackId }
 
         // Negated filtering because legacy traces do not contain any displays, so we don't want to
@@ -192,7 +178,7 @@ class LayerTraceEntryBuilder {
         return roots.filterNot { offDisplays.contains(it.stackId) }
     }
 
-    private fun filterOutLayersStackMatchNoDisplay(roots: List<Layer>): List<Layer> {
+    private fun filterOutLayersStackMatchNoDisplay(roots: Collection<Layer>): Collection<Layer> {
         val displayStacks = displays.map { it.layerStackId }
         return roots.filter { displayStacks.contains(it.stackId) }
     }
@@ -203,7 +189,6 @@ class LayerTraceEntryBuilder {
      *
      * @param ignore If the layers from virtual displays should be ignored or not
      */
-    @JsName("ignoreVirtualDisplay")
     fun ignoreVirtualDisplay(ignore: Boolean): LayerTraceEntryBuilder = apply {
         this.ignoreVirtualDisplay = ignore
     }
@@ -215,17 +200,15 @@ class LayerTraceEntryBuilder {
      *
      * @param ignore If the layers not matching any stack id should be removed or not
      */
-    @JsName("ignoreLayersStackMatchNoDisplay")
     fun ignoreLayersStackMatchNoDisplay(ignore: Boolean): LayerTraceEntryBuilder = apply {
         this.ignoreLayersStackMatchNoDisplay = ignore
     }
 
     /** Constructs the layer hierarchy from a flattened list of layers. */
-    @JsName("build")
     fun build(): LayerTraceEntry {
         val allRoots = computeRootLayers()
         var filteredRoots = allRoots
-        var filteredDisplays = displays.toList()
+        var filteredDisplays = displays
 
         if (ignoreLayersStackMatchNoDisplay) {
             filteredRoots = filterOutLayersStackMatchNoDisplay(filteredRoots)
@@ -246,9 +229,9 @@ class LayerTraceEntryBuilder {
             realTimestamp,
             hwcBlob,
             where,
-            filteredDisplays.toTypedArray(),
+            filteredDisplays,
             vSyncId,
-            filteredRoots.toTypedArray(),
+            filteredRoots,
         )
     }
 }

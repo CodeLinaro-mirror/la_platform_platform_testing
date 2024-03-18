@@ -44,8 +44,8 @@ class LayersTraceParser(
 
     override val traceName = "Layers trace (SF)"
 
-    override fun createTrace(entries: List<LayerTraceEntry>): LayersTrace {
-        return LayersTrace(entries.toTypedArray())
+    override fun createTrace(entries: Collection<LayerTraceEntry>): LayersTrace {
+        return LayersTrace(entries)
     }
 
     override fun doDecodeByteArray(bytes: ByteArray): TraceProcessorSession {
@@ -54,19 +54,19 @@ class LayersTraceParser(
 
     override fun shouldParseEntry(entry: LayerTraceEntry) = true
 
-    override fun getEntries(session: TraceProcessorSession): List<LayerTraceEntry> {
+    override fun getEntries(input: TraceProcessorSession): List<LayerTraceEntry> {
         val realToMonotonicTimeOffsetNs =
-            queryRealToMonotonicTimeOffsetNs(session, "surfaceflinger_layers_snapshot")
+            queryRealToMonotonicTimeOffsetNs(input, "surfaceflinger_layers_snapshot")
 
-        return session.query(getSqlQuerySnapshots()) { snapshotsRows ->
-            val traceEntries = ArrayList<LayerTraceEntry>()
-            val snapshotGroups = snapshotsRows.groupBy { it.get("snapshot_id") }
+        return input.query(getSqlQuerySnapshots()) { snapshotsRows ->
+            val traceEntries = mutableListOf<LayerTraceEntry>()
+            val snapshotGroups = snapshotsRows.groupBy { it["snapshot_id"] }
 
-            for (snapshotId in 0L..(snapshotGroups.size - 1)) {
+            for (snapshotId in 0L until snapshotGroups.size) {
                 Logger.withTracing("query + build entry") {
                     val layerRows =
                         Logger.withTracing("query layer rows") {
-                            session.query(getSqlQueryLayers(snapshotId)) { it }
+                            input.query(getSqlQueryLayers(snapshotId)) { it }
                         }
                     Logger.withTracing("build entry") {
                         val snapshotRows = snapshotGroups[snapshotId]!!
@@ -87,33 +87,29 @@ class LayersTraceParser(
 
     override fun doParseEntry(entry: LayerTraceEntry) = entry
 
-    fun buildTraceEntry(
+    private fun buildTraceEntry(
         snapshotRows: List<Row>,
         layersRows: List<Row>,
         realToMonotonicTimeOffsetNs: Long
     ): LayerTraceEntry {
         val snapshotArgs = Args.build(snapshotRows)
-        val displays =
-            snapshotArgs.getChildren("displays")?.map { newDisplay(it) }?.toTypedArray()
-                ?: arrayOf()
+        val displays = snapshotArgs.getChildren("displays")?.map { newDisplay(it) } ?: emptyList()
 
         val idAndLayers =
             layersRows
-                .groupBy { it.get("layer_id").toString() }
+                .groupBy { it["layer_id"].toString() }
                 .map { (layerId, layerRows) -> Pair(layerId, newLayer(Args.build(layerRows))) }
                 .toMutableList()
         idAndLayers.sortBy { it.first.toLong() }
 
-        val layers = idAndLayers.map { it.second }.toTypedArray()
+        val layers = idAndLayers.map { it.second }
 
         return LayerTraceEntryBuilder()
-            .setElapsedTimestamp(
-                snapshotArgs.getChild("elapsed_realtime_nanos")?.getLong()?.toString() ?: "0"
-            )
-            .setRealToElapsedTimeOffsetNs(realToMonotonicTimeOffsetNs.toString())
+            .setElapsedTimestamp(snapshotArgs.getChild("elapsed_realtime_nanos")?.getLong() ?: 0L)
+            .setRealToElapsedTimeOffsetNs(realToMonotonicTimeOffsetNs)
             .setLayers(layers)
             .setDisplays(displays)
-            .setVSyncId(snapshotArgs.getChild("vsync_id")?.getLong()?.toString() ?: "0")
+            .setVSyncId(snapshotArgs.getChild("vsync_id")?.getLong() ?: 0L)
             .setHwcBlob(snapshotArgs.getChild("hwc_blob")?.getString() ?: "")
             .setWhere(snapshotArgs.getChild("where")?.getString() ?: "")
             .setOrphanLayerCallback(orphanLayerCallback)
@@ -189,7 +185,7 @@ class LayersTraceParser(
 
         private fun newDisplay(display: Args): android.tools.common.traces.surfaceflinger.Display {
             return android.tools.common.traces.surfaceflinger.Display.from(
-                display.getChild("id")?.getLong()?.toString() ?: "",
+                display.getChild("id")?.getLong() ?: 0L,
                 display.getChild("name")?.getString() ?: "",
                 display.getChild("layer_stack")?.getInt() ?: 0,
                 newSize(display.getChild("size")),
@@ -276,8 +272,8 @@ class LayersTraceParser(
             if (region == null) {
                 return null
             }
-            val rects = region.getChildren("rect")?.map { newRect(it) }?.toTypedArray() ?: arrayOf()
-            return Region(rects)
+            val rects = region.getChildren("rect")?.map { newRect(it) } ?: emptyList()
+            return Region(rects.toTypedArray())
         }
 
         private fun newRect(rect: Args?): Rect =
@@ -288,7 +284,7 @@ class LayersTraceParser(
                 rect?.getChild("bottom")?.getInt() ?: 0
             )
 
-        fun newTransform(transform: Args?, position: Args?) =
+        private fun newTransform(transform: Args?, position: Args?) =
             Transform.from(transform?.getChild("type")?.getInt(), getMatrix(transform, position))
 
         private fun getMatrix(transform: Args?, position: Args?): Matrix33 {

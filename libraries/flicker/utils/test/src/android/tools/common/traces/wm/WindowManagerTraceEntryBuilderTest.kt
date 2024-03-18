@@ -18,6 +18,7 @@ package android.tools.common.traces.wm
 
 import android.tools.common.Timestamps
 import android.tools.utils.CleanFlickerEnvironmentRule
+import android.tools.utils.newEmptyRootContainer
 import com.google.common.truth.Truth
 import org.junit.ClassRule
 import org.junit.FixMethodOrder
@@ -31,25 +32,13 @@ import org.junit.runners.MethodSorters
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class WindowManagerTraceEntryBuilderTest {
 
-    private val emptyRootContainer =
-        RootWindowContainer(
-            WindowContainer(
-                title = "root",
-                token = "",
-                orientation = 0,
-                layerId = 0,
-                _isVisible = true,
-                _children = emptyArray(),
-                configurationContainer = ConfigurationContainer.EMPTY,
-                computedZ = 0
-            )
-        )
+    private val emptyRootContainer = newEmptyRootContainer()
 
     @Test
     fun createsEntryWithCorrectClockTime() {
         val entry =
             WindowManagerTraceEntryBuilder()
-                .setElapsedTimestamp("100")
+                .setElapsedTimestamp(100)
                 .setRoot(emptyRootContainer)
                 .setKeyguardControllerState(
                     KeyguardControllerState.from(
@@ -58,7 +47,7 @@ class WindowManagerTraceEntryBuilderTest {
                         keyguardOccludedStates = mapOf()
                     )
                 )
-                .setRealToElapsedTimeOffsetNs("500")
+                .setRealToElapsedTimeOffsetNs(500)
                 .build()
         Truth.assertThat(entry.elapsedTimestamp).isEqualTo(100)
         Truth.assertThat(entry.clockTimestamp).isEqualTo(600)
@@ -73,7 +62,7 @@ class WindowManagerTraceEntryBuilderTest {
     fun supportsMissingRealToElapsedTimeOffsetNs() {
         val entry =
             WindowManagerTraceEntryBuilder()
-                .setElapsedTimestamp("100")
+                .setElapsedTimestamp(100)
                 .setRoot(emptyRootContainer)
                 .setKeyguardControllerState(
                     KeyguardControllerState.from(

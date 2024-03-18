@@ -18,7 +18,7 @@ package android.tools.common.traces.component
 
 import android.tools.common.traces.surfaceflinger.Layer
 import android.tools.common.traces.wm.Activity
-import android.tools.common.traces.wm.IWindowContainer
+import android.tools.common.traces.wm.WindowContainer
 
 /** ComponentMatcher based on name */
 class ComponentNameMatcher(var component: ComponentName) : IComponentNameMatcher {
@@ -37,7 +37,7 @@ class ComponentNameMatcher(var component: ComponentName) : IComponentNameMatcher
 
     constructor(className: String) : this("", className)
 
-    override fun activityRecordMatchesAnyOf(layers: Array<Layer>): Boolean =
+    override fun activityRecordMatchesAnyOf(layers: Collection<Layer>): Boolean =
         layers.any { activityRecordFilter.invoke(it.name) }
 
     override fun componentNameMatcherToString(): String {
@@ -45,15 +45,15 @@ class ComponentNameMatcher(var component: ComponentName) : IComponentNameMatcher
     }
 
     /** {@inheritDoc} */
-    override fun windowMatchesAnyOf(windows: Array<IWindowContainer>): Boolean =
+    override fun windowMatchesAnyOf(windows: Collection<WindowContainer>): Boolean =
         windows.any { windowNameFilter.invoke(it.title) }
 
     /** {@inheritDoc} */
-    override fun activityMatchesAnyOf(activities: Array<Activity>): Boolean =
+    override fun activityMatchesAnyOf(activities: Collection<Activity>): Boolean =
         activities.any { activityNameFilter.invoke(it.name) }
 
     /** {@inheritDoc} */
-    override fun layerMatchesAnyOf(layers: Array<Layer>): Boolean =
+    override fun layerMatchesAnyOf(layers: Collection<Layer>): Boolean =
         layers.any { layerNameFilter.invoke(it.name) }
 
     /** {@inheritDoc} */
@@ -111,6 +111,8 @@ class ComponentNameMatcher(var component: ComponentName) : IComponentNameMatcher
         val WALLPAPER_BBQ_WRAPPER = ComponentNameMatcher("", "Wallpaper BBQ wrapper")
 
         val PIP_CONTENT_OVERLAY = ComponentNameMatcher("", "PipContentOverlay")
+
+        val PIP_MENU_OVERLAY = ComponentNameMatcher("", "PipMenuView")
 
         val EDGE_BACK_GESTURE_HANDLER = ComponentNameMatcher("", "EdgeBackGestureHandler")
 

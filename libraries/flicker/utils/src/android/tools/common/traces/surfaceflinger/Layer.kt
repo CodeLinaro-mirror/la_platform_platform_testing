@@ -22,8 +22,6 @@ import android.tools.common.datatypes.Rect
 import android.tools.common.datatypes.RectF
 import android.tools.common.datatypes.Region
 import android.tools.common.traces.component.ComponentName
-import kotlin.js.JsExport
-import kotlin.js.JsName
 
 /**
  * Represents a single layer with links to its parent and child layers.
@@ -31,14 +29,13 @@ import kotlin.js.JsName
  * This is a generic object that is reused by both Flicker and Winscope and cannot access internal
  * Java/Android functionality
  */
-@JsExport
 class Layer
 private constructor(
     val name: String,
     val id: Int,
     val parentId: Int,
     val z: Int,
-    currFrameString: String,
+    val currFrame: Long,
     properties: ILayerProperties,
 ) : ILayerProperties by properties {
     val stableId: String = "$id $name"
@@ -46,7 +43,6 @@ private constructor(
     var zOrderRelativeOf: Layer? = null
     var zOrderRelativeParentOf: Int = 0
     val packageName = ComponentName.fromLayerName(name).packageName
-    val currFrame: Long = currFrameString.toLong() // Handles compatibility with JS number type
 
     /**
      * Checks if the [Layer] is a root layer in the hierarchy
@@ -60,14 +56,14 @@ private constructor(
     private val _occludedBy = mutableListOf<Layer>()
     private val _partiallyOccludedBy = mutableListOf<Layer>()
     private val _coveredBy = mutableListOf<Layer>()
-    val children: Array<Layer>
-        get() = _children.toTypedArray()
-    val occludedBy: Array<Layer>
-        get() = _occludedBy.toTypedArray()
-    val partiallyOccludedBy: Array<Layer>
-        get() = _partiallyOccludedBy.toTypedArray()
-    val coveredBy: Array<Layer>
-        get() = _coveredBy.toTypedArray()
+    val children: Collection<Layer>
+        get() = _children
+    val occludedBy: Collection<Layer>
+        get() = _occludedBy
+    val partiallyOccludedBy: Collection<Layer>
+        get() = _partiallyOccludedBy
+    val coveredBy: Collection<Layer>
+        get() = _coveredBy
     var isMissing: Boolean = false
         internal set
 
@@ -127,10 +123,10 @@ private constructor(
      *
      * @return
      */
-    val visibilityReason: Array<String>
+    val visibilityReason: Collection<String>
         get() {
             if (isVisible) {
-                return emptyArray()
+                return emptyList()
             }
             val reasons = mutableListOf<String>()
             if (isHiddenByPolicy) reasons.add("Flag is hidden")
@@ -154,10 +150,10 @@ private constructor(
                 reasons.add("Visible region calculated by Composition Engine is empty")
             }
             if (reasons.isEmpty()) reasons.add("Unknown")
-            return reasons.toTypedArray()
+            return reasons
         }
 
-    val zOrderPath: Array<Int>
+    val zOrderPath: Collection<Int>
         get() {
             val zOrderRelativeOf = zOrderRelativeOf
             val zOrderPath =
@@ -167,7 +163,7 @@ private constructor(
                     else -> mutableListOf()
                 }
             zOrderPath.add(z)
-            return zOrderPath.toTypedArray()
+            return zOrderPath
         }
 
     val isTask: Boolean
@@ -198,15 +194,15 @@ private constructor(
         _children.add(childLayer)
     }
 
-    fun addOccludedBy(layers: Array<Layer>) {
+    fun addOccludedBy(layers: Collection<Layer>) {
         _occludedBy.addAll(layers)
     }
 
-    fun addPartiallyOccludedBy(layers: Array<Layer>) {
+    fun addPartiallyOccludedBy(layers: Collection<Layer>) {
         _partiallyOccludedBy.addAll(layers)
     }
 
-    fun addCoveredBy(layers: Array<Layer>) {
+    fun addCoveredBy(layers: Collection<Layer>) {
         _coveredBy.addAll(layers)
     }
 
@@ -314,7 +310,6 @@ private constructor(
     }
 
     companion object {
-        @JsName("from")
         fun from(
             name: String,
             id: Int,
@@ -363,7 +358,7 @@ private constructor(
                     stackId,
                     excludesCompositionState
                 )
-            return Layer(name, id, parentId, z, currFrame.toString(), properties)
+            return Layer(name, id, parentId, z, currFrame, properties)
         }
     }
 }

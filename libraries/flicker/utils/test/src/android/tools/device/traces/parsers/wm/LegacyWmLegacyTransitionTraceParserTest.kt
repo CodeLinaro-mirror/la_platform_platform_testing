@@ -18,33 +18,36 @@ package android.tools.device.traces.parsers.wm
 
 import android.app.Instrumentation
 import android.tools.common.Cache
-import android.tools.device.apphelpers.MessagingAppHelper
-import android.tools.device.traces.monitors.wm.ShellTransitionTraceMonitor
+import android.tools.device.apphelpers.BrowserAppHelper
+import android.tools.device.traces.monitors.wm.LegacyWmTransitionTraceMonitor
 import android.tools.utils.CleanFlickerEnvironmentRule
 import android.tools.utils.readAsset
+import android.tracing.Flags
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.launcher3.tapl.LauncherInstrumentation
 import com.google.common.truth.Truth
+import org.junit.Assume.assumeFalse
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Test
 
 /** Tests for [WindowManagerTraceParser] */
-class ShellTransitionTraceParserTest {
+class LegacyWmLegacyTransitionTraceParserTest {
     @Before
     fun before() {
+        assumeFalse(Flags.perfettoTransitionTracing())
         Cache.clear()
     }
 
     @Test
     fun canParseAllEntriesFromStoredTrace() {
         val trace =
-            ShellTransitionTraceParser()
-                .parse(readAsset("shell_transition_trace.winscope"), clearCache = false)
+            WmTransitionTraceParser()
+                .parse(readAsset("wm_transition_trace.winscope"), clearCache = false)
         val firstEntry = trace.entries.first()
         val lastEntry = trace.entries.last()
-        Truth.assertThat(firstEntry.timestamp.elapsedNanos).isEqualTo(760760231809L)
-        Truth.assertThat(lastEntry.timestamp.elapsedNanos).isEqualTo(2770678425968L)
+        Truth.assertThat(firstEntry.timestamp.elapsedNanos).isEqualTo(2750430124061L)
+        Truth.assertThat(lastEntry.timestamp.elapsedNanos).isEqualTo(2770105426934L)
     }
 
     @Test
@@ -52,15 +55,14 @@ class ShellTransitionTraceParserTest {
         val instrumentation: Instrumentation = InstrumentationRegistry.getInstrumentation()
         val tapl = LauncherInstrumentation()
         val data =
-            ShellTransitionTraceMonitor().withTracing {
-                MessagingAppHelper(instrumentation).open()
+            LegacyWmTransitionTraceMonitor().withTracing {
+                BrowserAppHelper(instrumentation).open()
                 tapl.goHome().switchToAllApps()
                 tapl.goHome()
             }
-        val trace = ShellTransitionTraceParser().parse(data, clearCache = false)
-        Truth.assertThat(trace.entries).asList().isNotEmpty()
+        val trace = WmTransitionTraceParser().parse(data, clearCache = false)
+        Truth.assertThat(trace.entries).isNotEmpty()
     }
-
     companion object {
         @ClassRule @JvmField val ENV_CLEANUP = CleanFlickerEnvironmentRule()
     }

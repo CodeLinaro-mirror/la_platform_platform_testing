@@ -16,7 +16,8 @@
 
 package android.platform.test.flag.junit;
 
-import android.platform.test.flag.util.Flag;
+import static org.junit.Assume.assumeFalse;
+
 import android.platform.test.flag.util.FlagReadException;
 import android.platform.test.flag.util.FlagSetException;
 
@@ -28,6 +29,7 @@ import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -46,6 +48,7 @@ public final class SetFlagsRule implements TestRule {
     private static final String FLAG_CONSTANT_PREFIX = "FLAG_";
     private static final String SET_FLAG_METHOD_NAME = "setFlag";
     private static final String RESET_ALL_METHOD_NAME = "resetAll";
+    private static final String IS_FLAG_READ_ONLY_OPTIMIZED_METHOD_NAME = "isFlagReadOnlyOptimized";
 
     // Store instances for entire life of a SetFlagsRule instance
     private final Map<Class<?>, Object> mFlagsClassToFakeFlagsImpl = new HashMap<>();
@@ -56,6 +59,13 @@ public final class SetFlagsRule implements TestRule {
 
     // Any flags added to this list cannot be set imperatively (i.e. with enableFlags/disableFlags)
     private final Set<String> mLockedFlagNames = new HashSet<>();
+
+    // TODO(322377082): remove repackage prefix list
+    private static final String[] REPACKAGE_PREFIX_LIST =
+            new String[] {
+                "", "com.android.internal.hidden_from_bootclasspath.",
+            };
+    private final Map<String, Set<String>> mPackageToRepackage = new HashMap<>();
 
     private boolean mIsInitWithDefault = false;
     private FlagsParameterization mFlagsParameterization;
@@ -278,7 +288,46 @@ public final class SetFlagsRule implements TestRule {
             throw new FlagSetException(
                     fullFlagName, "Flag name is not the expected format {packgeName}.{flagName}.");
         }
+        // Get all packages containing Flags referencing the same fullFlagName.
+        Set<String> packageSet = getPackagesContainsFlag(fullFlagName);
+
+        for (String packageName : packageSet) {
+            setFlagValue(Flag.createFlag(fullFlagName, packageName), value);
+        }
+    }
+
+    private Set<String> getPackagesContainsFlag(String fullFlagName) {
         Flag flag = Flag.createFlag(fullFlagName);
+        String packageName = flag.packageName();
+        Set<String> packageSet = mPackageToRepackage.getOrDefault(packageName, new HashSet<>());
+
+        if (!packageSet.isEmpty()) {
+            return packageSet;
+        }
+
+        for (String prefix : REPACKAGE_PREFIX_LIST) {
+            String repackagedName = String.format("%s%s", prefix, packageName);
+            String flagClassName = String.format("%s.%s", repackagedName, FLAGS_CLASS_NAME);
+            try {
+                Class.forName(flagClassName, false, this.getClass().getClassLoader());
+                packageSet.add(repackagedName);
+            } catch (ClassNotFoundException e) {
+                // Skip if the class is not found
+                // An error will be thrown if no package containing flags referencing
+                // the passed in flag
+            }
+        }
+        mPackageToRepackage.put(packageName, packageSet);
+        if (packageSet.isEmpty()) {
+            throw new FlagSetException(
+                    fullFlagName,
+                    "Cannot find package containing Flags class referencing to this flag.");
+        }
+        return packageSet;
+    }
+
+    private void setFlagValue(Flag flag, boolean value) {
+
         Object fakeFlagsImplInstance = null;
 
         Class<?> flagsClass = getFlagClassFromFlag(flag);
@@ -298,8 +347,22 @@ public final class SetFlagsRule implements TestRule {
                     flag, mIsInitWithDefault ? getFlagValue(fakeFlagsImplInstance, flag) : null);
         }
 
+        // If the test is trying to set the flag value on a read_only flag in an optimized build
+        // skip this test, since it is not a valid testing case
+        // The reason for skipping instead of throwning error here is all read_write flag will be
+        // change to read_only in the final release configuration. Thus the test could be executed
+        // in other release configuration cases
+        boolean isOptimized = verifyFlagReadOnlyAndOptimized(fakeFlagsImplInstance, flag);
+        assumeFalse(
+                String.format(
+                        "Flag %s is read_only, and the code is optimized. "
+                                + " The flag value should not be modified on this build"
+                                + " Skip this test.",
+                        flag.fullFlagName()),
+                isOptimized);
+
         // Set desired flag value in the FakeFeatureFlagsImpl
-        setFlagValue(fakeFlagsImplInstance, flag, value);
+        setFlagValueInFakeFeatureFlagsImpl(fakeFlagsImplInstance, flag, value);
     }
 
     private void populateFakeFlagsImplWithDefault(Class<?> flagClass) {
@@ -313,6 +376,11 @@ public final class SetFlagsRule implements TestRule {
                             fakeFlagsImpl.getClass().getName(),
                             realFlagsImpl.getClass().getName()));
         }
+
+        Set<String> methodSet = new HashSet<>();
+        for (Method method : flagClass.getMethods()) {
+            methodSet.add(method.getName());
+        }
         try {
             for (Field field : flagClass.getFields()) {
                 if (!field.getName().startsWith(FLAG_CONSTANT_PREFIX)
@@ -321,9 +389,15 @@ public final class SetFlagsRule implements TestRule {
                 }
                 String fullFlagName = (String) field.get(null);
                 Flag flag = Flag.createFlag(fullFlagName);
+                String methodName = getFlagMethodName(flag);
+                // Flag constants may be more than flag methods since the flag
+                // methods may be stripped if they are not used while all the constants
+                // are kept
+                if (!methodSet.contains(methodName)) {
+                    continue;
+                }
                 boolean value = getFlagValue(realFlagsImpl, flag);
-
-                setFlagValue(fakeFlagsImpl, flag, value);
+                setFlagValueInFakeFeatureFlagsImpl(fakeFlagsImpl, flag, value);
             }
         } catch (ReflectiveOperationException e) {
             throw new UnsupportedOperationException(
@@ -351,8 +425,7 @@ public final class SetFlagsRule implements TestRule {
 
     private boolean getFlagValue(Object featureFlagsImpl, Flag flag) {
         // Must be consistent with method name in aconfig auto generated code.
-        String methodName =
-                CaseFormat.LOWER_UNDERSCORE.to(CaseFormat.LOWER_CAMEL, flag.simpleFlagName());
+        String methodName = getFlagMethodName(flag);
         String fullFlagName = flag.fullFlagName();
 
         try {
@@ -383,19 +456,48 @@ public final class SetFlagsRule implements TestRule {
         }
     }
 
-    private void setFlagValue(Object featureFlagsImpl, Flag flag, boolean value) {
+    private String getFlagMethodName(Flag flag) {
+        return CaseFormat.LOWER_UNDERSCORE.to(CaseFormat.LOWER_CAMEL, flag.simpleFlagName());
+    }
+
+    private void setFlagValueInFakeFeatureFlagsImpl(
+            Object fakeFeatureFlagsImpl, Flag flag, boolean value) {
         String fullFlagName = flag.fullFlagName();
         try {
-            featureFlagsImpl
+            fakeFeatureFlagsImpl
                     .getClass()
                     .getMethod(SET_FLAG_METHOD_NAME, String.class, boolean.class)
-                    .invoke(featureFlagsImpl, fullFlagName, value);
+                    .invoke(fakeFeatureFlagsImpl, fullFlagName, value);
         } catch (NoSuchMethodException e) {
             throw new FlagSetException(
                     fullFlagName,
                     String.format(
                             "Flag implementation %s is not fake implementation",
-                            featureFlagsImpl.getClass().getName()),
+                            fakeFeatureFlagsImpl.getClass().getName()),
+                    e);
+        } catch (ReflectiveOperationException e) {
+            throw new FlagSetException(fullFlagName, e);
+        }
+    }
+
+    private boolean verifyFlagReadOnlyAndOptimized(Object fakeFeatureFlagsImpl, Flag flag) {
+        String fullFlagName = flag.fullFlagName();
+        try {
+            boolean result =
+                    (Boolean)
+                            fakeFeatureFlagsImpl
+                                    .getClass()
+                                    .getMethod(
+                                            IS_FLAG_READ_ONLY_OPTIMIZED_METHOD_NAME, String.class)
+                                    .invoke(fakeFeatureFlagsImpl, fullFlagName);
+            return result;
+        } catch (NoSuchMethodException e) {
+            throw new FlagSetException(
+                    fullFlagName,
+                    String.format(
+                            "Cannot check whether flag is optimized. "
+                                    + "Flag implementation %s is not fake implementation",
+                            fakeFeatureFlagsImpl.getClass().getName()),
                     e);
         } catch (ReflectiveOperationException e) {
             throw new FlagSetException(fullFlagName, e);
@@ -484,7 +586,8 @@ public final class SetFlagsRule implements TestRule {
                 replaceFlagsImpl(flagsClass, flagsImplInstance);
                 if (mIsInitWithDefault) {
                     for (Map.Entry<Flag, Boolean> entry : flagToValue.entrySet()) {
-                        setFlagValue(fakeFlagsImplInstance, entry.getKey(), entry.getValue());
+                        setFlagValueInFakeFeatureFlagsImpl(
+                                fakeFlagsImplInstance, entry.getKey(), entry.getValue());
                     }
                 } else {
                     fakeFlagsImplInstance
@@ -496,6 +599,56 @@ public final class SetFlagsRule implements TestRule {
             mFlagsClassToFlagDefaultMap.clear();
         } catch (Exception e) {
             throw new FlagSetException(flagsClassName, e);
+        }
+    }
+
+    private static class Flag {
+        private static final String PACKAGE_NAME_SIMPLE_NAME_SEPARATOR = ".";
+        private final String mFullFlagName;
+        private final String mPackageName;
+        private final String mSimpleFlagName;
+
+        public static Flag createFlag(String fullFlagName) {
+            int index = fullFlagName.lastIndexOf(PACKAGE_NAME_SIMPLE_NAME_SEPARATOR);
+            String packageName = fullFlagName.substring(0, index);
+            return createFlag(fullFlagName, packageName);
+        }
+
+        public static Flag createFlag(String fullFlagName, String packageName) {
+            if (!fullFlagName.contains(PACKAGE_NAME_SIMPLE_NAME_SEPARATOR)
+                    || !packageName.contains(PACKAGE_NAME_SIMPLE_NAME_SEPARATOR)) {
+                throw new IllegalArgumentException(
+                        String.format(
+                                "Flag %s is invalid. The format should be {packageName}"
+                                        + ".{simpleFlagName}",
+                                fullFlagName));
+            }
+            int index = fullFlagName.lastIndexOf(PACKAGE_NAME_SIMPLE_NAME_SEPARATOR);
+            String simpleFlagName = fullFlagName.substring(index + 1);
+
+            return new Flag(fullFlagName, packageName, simpleFlagName);
+        }
+
+        private Flag(String fullFlagName, String packageName, String simpleFlagName) {
+            this.mFullFlagName = fullFlagName;
+            this.mPackageName = packageName;
+            this.mSimpleFlagName = simpleFlagName;
+        }
+
+        public String fullFlagName() {
+            return mFullFlagName;
+        }
+
+        public String packageName() {
+            return mPackageName;
+        }
+
+        public String simpleFlagName() {
+            return mSimpleFlagName;
+        }
+
+        public String flagsClassName() {
+            return String.format("%s.%s", mPackageName, FLAGS_CLASS_NAME);
         }
     }
 }

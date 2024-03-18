@@ -16,17 +16,14 @@
 
 package android.tools.common.traces.events
 
-import android.tools.common.ITraceEntry
 import android.tools.common.Timestamp
-import kotlin.js.JsExport
-import kotlin.js.JsName
+import android.tools.common.TraceEntry
 
-@JsExport
 data class Cuj(
-    @JsName("cuj") val cuj: CujType,
-    @JsName("startTimestamp") val startTimestamp: Timestamp,
-    @JsName("endTimestamp") val endTimestamp: Timestamp,
-    @JsName("canceled") val canceled: Boolean
-) : ITraceEntry {
+    val cuj: CujType,
+    val startTimestamp: Timestamp,
+    val endTimestamp: Timestamp,
+    val canceled: Boolean
+) : TraceEntry {
     override val timestamp: Timestamp = startTimestamp
 }
