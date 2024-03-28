@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 The Android Open Source Project
+ * Copyright (C) 2024 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 
-package android.tools
+package platform.test.motion
 
-interface ILogger {
-    fun <T> withTracing(name: String, predicate: () -> T): T
-    fun v(tag: String, msg: String, error: Throwable? = null)
-    fun d(tag: String, msg: String, error: Throwable? = null)
-    fun i(tag: String, msg: String, error: Throwable? = null)
-    fun w(tag: String, msg: String, error: Throwable? = null)
-    fun e(tag: String, msg: String, error: Throwable? = null)
+import platform.test.motion.golden.DataPoint
+
+/**
+ * Captures a time-series feature of an observed [T].
+ *
+ * A [DataPoint] of type [V] is recorded at each frame.
+ */
+fun interface FeatureCapture<T, V : Any> {
+    fun capture(observed: T): DataPoint<V>
 }
