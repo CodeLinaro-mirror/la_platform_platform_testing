@@ -44,13 +44,18 @@ open class ViewScreenshotTestRule(
     private val screenshotRule: ScreenshotTestRule = ScreenshotTestRule(pathManager)
 ) : TestRule, BitmapDiffer by screenshotRule, ScreenshotAsserterFactory by screenshotRule {
     private val colorsRule = MaterialYouColorsRule()
+    private val fontsRule = FontsRule()
     private val timeZoneRule = TimeZoneRule()
     private val deviceEmulationRule = DeviceEmulationRule(emulationSpec)
     private val activityRule = ActivityScenarioRule(ScreenshotActivity::class.java)
     private val commonRule =
         RuleChain.outerRule(deviceEmulationRule).around(screenshotRule).around(activityRule)
+
+    // As denoted in `MaterialYouColorsRule` and `FontsRule`, these two rules need to come first,
+    // though their relative orders are not critical.
     private val deviceRule = RuleChain.outerRule(colorsRule).around(commonRule)
-    private val roboRule = RuleChain.outerRule(timeZoneRule).around(commonRule)
+    private val roboRule =
+        RuleChain.outerRule(colorsRule).around(fontsRule).around(timeZoneRule).around(commonRule)
     private val isRobolectric = if (Build.FINGERPRINT.contains("robolectric")) true else false
 
     override fun apply(base: Statement, description: Description): Statement {
@@ -61,21 +66,9 @@ open class ViewScreenshotTestRule(
     protected fun takeScreenshot(
         mode: Mode = Mode.WrapContent,
         viewProvider: (ComponentActivity) -> View,
-        /**
-         * Don't set it true unless you have to control MainLooper for the view creation.
-         *
-         * TODO(b/314985107) : remove when looper dependency is removed
-         */
-        inflateViewsInTestScope: Boolean = false,
         beforeScreenshot: (ComponentActivity) -> Unit = {}
     ): Bitmap {
         var inflatedView: View? = null
-
-        if (inflateViewsInTestScope) {
-            lateinit var componentActivity: ComponentActivity
-            activityRule.scenario.onActivity { activity -> componentActivity = activity }
-            inflatedView = viewProvider(componentActivity)
-        }
 
         activityRule.scenario.onActivity { activity ->
             // Make sure that the activity draws full screen and fits the whole display instead of
@@ -84,13 +77,7 @@ open class ViewScreenshotTestRule(
             window.setDecorFitsSystemWindows(decorFitsSystemWindows)
 
             // Set the content.
-            if (inflateViewsInTestScope) {
-                checkNotNull(inflatedView) {
-                    "The inflated view shouldn't be null when inflateViewsInTestScope is enabled"
-                }
-            } else {
-                inflatedView = viewProvider(activity)
-            }
+            inflatedView = viewProvider(activity)
             activity.setContentView(inflatedView, mode.layoutParams)
 
             // Elevation/shadows is not deterministic when doing hardware rendering, so we disable
@@ -111,19 +98,8 @@ open class ViewScreenshotTestRule(
             beforeScreenshot(activity)
         }
 
-        val originalBitmap = contentView?.captureToBitmapAsync()?.get(10, TimeUnit.SECONDS)
-        if (originalBitmap == null) {
-            error("timeout while trying to capture view to bitmap")
-        }
-        return if (isRobolectric) {
-            bitmapWithMaterialYouColorsSimulation(
-                originalBitmap,
-                emulationSpec.isDarkTheme,
-                /* doPixelAveraging= */ true
-            )
-        } else {
-            originalBitmap
-        }
+        return contentView?.captureToBitmapAsync()?.get(10, TimeUnit.SECONDS)
+            ?: error("timeout while trying to capture view to bitmap")
     }
 
     /**
@@ -133,16 +109,10 @@ open class ViewScreenshotTestRule(
     fun screenshotTest(
         goldenIdentifier: String,
         mode: Mode = Mode.WrapContent,
-        /**
-         * Don't set it true unless you have to control MainLooper for the view creation.
-         *
-         * TODO(b/314985107) : remove when looper dependency is removed
-         */
-        inflateViewInTestScope: Boolean = false,
         beforeScreenshot: (ComponentActivity) -> Unit = {},
         viewProvider: (ComponentActivity) -> View,
     ) {
-        val bitmap = takeScreenshot(mode, viewProvider, inflateViewInTestScope, beforeScreenshot)
+        val bitmap = takeScreenshot(mode, viewProvider, beforeScreenshot)
         screenshotRule.assertBitmapAgainstGolden(
             bitmap,
             goldenIdentifier,
