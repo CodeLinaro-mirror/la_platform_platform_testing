@@ -49,10 +49,11 @@ import platform.test.screenshot.report.ExportToScubaStrategy
  */
 open class MotionTestRule(
     private val goldenPathManager: GoldenPathManager,
-    goldenDataPointTypes: List<DataPointType<*>> = DataPointTypes.allTypes,
+    extraGoldenDataPointTypes: List<DataPointType<*>> = emptyList(),
     internal val bitmapDiffer: BitmapDiffer? = null,
 ) : TestWatcher() {
-    private val goldenSerializer = JsonGoldenSerializer(goldenDataPointTypes)
+    private val goldenSerializer =
+        JsonGoldenSerializer(DataPointTypes.allTypes + extraGoldenDataPointTypes)
     private val scubaExportStrategy = ExportToScubaStrategy(goldenPathManager)
 
     @Volatile protected var testClassName: String? = null
@@ -135,6 +136,9 @@ open class MotionTestRule(
         goldenIdentifier: String,
         matches: Boolean
     ) {
+        if (recordedMotion.filmstrip == null) {
+            return
+        }
         requireValidGoldenIdentifier(goldenIdentifier)
         val filmstrip = recordedMotion.filmstrip.renderFilmstrip()
         val testIdentifier = "${recordedMotion.testClassName}_${recordedMotion.testMethodName}"
