@@ -28,12 +28,14 @@ import org.junit.runner.RunWith
 import platform.test.motion.golden.DataPoint
 import platform.test.motion.golden.DataPoint.Companion.unknownType
 import platform.test.motion.golden.DataPointType
+import platform.test.motion.golden.ValueDataPoint
 import platform.test.motion.testing.JsonSubject
-import platform.test.motion.view.ViewDataPointTypes.point
-import platform.test.motion.view.ViewDataPointTypes.rect
+import platform.test.motion.view.DataPointTypes.cornerRadii
+import platform.test.motion.view.DataPointTypes.point
+import platform.test.motion.view.DataPointTypes.rect
 
 @RunWith(AndroidJUnit4::class)
-class ViewDataPointTypesTest {
+class DataPointTypesTest {
 
     @get:Rule val expect: Expect = Expect.create()
     private fun <T> assertConversions(
@@ -59,6 +61,14 @@ class ViewDataPointTypesTest {
     }
 
     @Test
+    fun point_dataPoint_isImmutable() {
+        val native = Point(/* x = */ 1, /* y = */ 2)
+        val dataPoint = DataPoint.of(native, point)
+        native.x = 3
+        assertThat((dataPoint as ValueDataPoint).value.x).isEqualTo(1)
+    }
+
+    @Test
     fun point_fromInvalidJson_returnsUnknown() {
         assertThat(point.fromJson(JSONObject())).isEqualTo(unknownType<Point>())
         assertThat(point.fromJson(1)).isEqualTo(unknownType<Point>())
@@ -77,5 +87,37 @@ class ViewDataPointTypesTest {
     fun rect_fromInvalidJson_returnsUnknown() {
         assertThat(rect.fromJson(JSONObject())).isEqualTo(unknownType<Rect>())
         assertThat(rect.fromJson(1)).isEqualTo(unknownType<Rect>())
+    }
+
+    fun rect_dataPoint_isImmutable() {
+        val native = Rect(/* left = */ 1, /* top = */ 2, /* right = */ 3, /* bottom = */ 4)
+        val dataPoint = DataPoint.of(native, rect)
+        native.top = 5
+        assertThat((dataPoint as ValueDataPoint).value.left).isEqualTo(1)
+    }
+
+    @Test
+    fun cornerRadii_fromToJson() {
+        assertConversions(
+            cornerRadii,
+            CornerRadii(FloatArray(8) { (it + 1).toFloat() }),
+            """{
+                "top_left_x": 1,
+                "top_left_y": 2,
+                "top_right_x": 3,
+                "top_right_y": 4,
+                "bottom_right_x": 5,
+                "bottom_right_y": 6,
+                "bottom_left_x": 7,
+                "bottom_left_y": 8
+                }"""
+        )
+    }
+
+    fun cornerRadii_dataPoint_isImmutable() {
+        val native = FloatArray(8) { (it + 1).toFloat() }
+        val dataPoint = DataPoint.of(CornerRadii(native), cornerRadii)
+        native[0] = 10f
+        assertThat((dataPoint as ValueDataPoint).value.rawValues[0]).isEqualTo(1)
     }
 }
