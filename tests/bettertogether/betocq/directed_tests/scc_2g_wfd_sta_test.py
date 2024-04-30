@@ -14,13 +14,11 @@
 
 """This Test is to test the Wifi SCC in a general case.
 
-In this case, both the WFD and WLAN are using the 2G channel, the WFD and WLAN
-should use the same channel.
+In this case, both the WFD and WLAN are using the smae 2G channel
+Note that The country code is set to JP so that 5G is not available for
+any D2D mediums.
 
-The device requirements:
-  support 5G: false
-The AP requirements:
-  wifi channel: 6 (2437)
+The device requirements: N/A.
 """
 
 import datetime
@@ -45,7 +43,7 @@ class Scc2gWfdStaTest(d2d_performance_test_base.D2dPerformanceTestBase):
   """Test class for Wifi SCC with 2G WFD and STA."""
 
   def _get_country_code(self) -> str:
-    return 'US'
+    return 'JP'
 
   def setup_class(self):
     super().setup_class()
@@ -91,18 +89,6 @@ class Scc2gWfdStaTest(d2d_performance_test_base.D2dPerformanceTestBase):
 
   def _is_wifi_ap_ready(self) -> bool:
     return True if self.test_parameters.wifi_2g_ssid else False
-
-  @property
-  def _devices_capabilities_definition(self) -> dict[str, dict[str, bool]]:
-    return {
-        'discoverer': {
-            'supports_5g': False,
-        },
-        'advertiser': {
-            'supports_5g': False,
-        },
-    }
-
 
 if __name__ == '__main__':
   test_runner.main()
