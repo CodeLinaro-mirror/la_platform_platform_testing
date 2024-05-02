@@ -66,7 +66,8 @@ open class ViewScreenshotTestRule(
     protected fun takeScreenshot(
         mode: Mode = Mode.WrapContent,
         viewProvider: (ComponentActivity) -> View,
-        beforeScreenshot: (ComponentActivity) -> Unit = {}
+        beforeScreenshot: (ComponentActivity) -> Unit = {},
+        subviewId: Int? = null,
     ): Bitmap {
         var inflatedView: View? = null
 
@@ -92,12 +93,15 @@ open class ViewScreenshotTestRule(
         var contentView: View? = null
         activityRule.scenario.onActivity { activity ->
             // Check that the content is what we expected.
-            val content = activity.requireViewById<ViewGroup>(android.R.id.content)
+            var content = activity.requireViewById<ViewGroup>(android.R.id.content)
             assertEquals(1, content.childCount)
-            contentView = content.getChildAt(0)
+            if (subviewId != null) {
+                contentView = content.requireViewById(subviewId)
+            } else {
+                contentView = content.getChildAt(0)
+            }
             beforeScreenshot(activity)
         }
-
         return contentView?.captureToBitmapAsync()?.get(10, TimeUnit.SECONDS)
             ?: error("timeout while trying to capture view to bitmap")
     }
@@ -110,9 +114,10 @@ open class ViewScreenshotTestRule(
         goldenIdentifier: String,
         mode: Mode = Mode.WrapContent,
         beforeScreenshot: (ComponentActivity) -> Unit = {},
+        subviewId: Int? = null,
         viewProvider: (ComponentActivity) -> View,
     ) {
-        val bitmap = takeScreenshot(mode, viewProvider, beforeScreenshot)
+        val bitmap = takeScreenshot(mode, viewProvider, beforeScreenshot, subviewId)
         screenshotRule.assertBitmapAgainstGolden(
             bitmap,
             goldenIdentifier,
@@ -126,6 +131,7 @@ open class ViewScreenshotTestRule(
      */
     fun dialogScreenshotTest(
         goldenIdentifier: String,
+        waitForIdle: () -> Unit = {},
         dialogProvider: (Activity) -> Dialog,
     ) {
         dialogScreenshotTest(
@@ -133,7 +139,8 @@ open class ViewScreenshotTestRule(
             screenshotRule,
             matcher,
             goldenIdentifier,
-            dialogProvider = dialogProvider,
+            waitForIdle,
+            dialogProvider,
         )
     }
 
