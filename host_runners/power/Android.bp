@@ -20,5 +20,5 @@ java_test_host {
     name: "PowerHostRunner",
     srcs: ["src/**/*.java"],
     static_libs: ["host_runner_utils"],
-    test_suites: ["general-tests"],
+    test_suites: ["device-tests"],
 }
