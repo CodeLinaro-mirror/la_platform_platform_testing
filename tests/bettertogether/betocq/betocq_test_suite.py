@@ -33,6 +33,7 @@ from mobly import suite_runner
 
 from betocq import base_betocq_suite
 from betocq import nc_constants
+from betocq.compound_tests import bt_2g_wifi_coex_test
 from betocq.compound_tests import mcc_5g_all_wifi_non_dbs_2g_sta_test
 from betocq.compound_tests import scc_2g_all_wifi_sta_test
 from betocq.compound_tests import scc_5g_all_wifi_dbs_2g_sta_test
@@ -77,17 +78,14 @@ class BetoCqPerformanceTestSuite(base_betocq_suite.BaseBetocqSuite):
           beto_cq_function_group_test.BetoCqFunctionGroupTest
       )
 
+    if test_parameters.run_bt_coex_test:
+      self.add_test_class(bt_2g_wifi_coex_test.Bt2gWifiCoexTest)
+
     # add bt and ble test
-    self.add_test_class(bt_performance_test.BtPerformanceTest)
+    if test_parameters.run_bt_performance_test:
+      self.add_test_class(bt_performance_test.BtPerformanceTest)
 
-    if test_parameters.target_cuj_name is nc_constants.TARGET_CUJ_QUICK_SHARE:
-      self.add_test_class(ble_performance_test.BlePerformanceTest)
-
-
-    if (
-        test_parameters.target_cuj_name
-        is not nc_constants.TARGET_CUJ_QUICK_START
-    ):  # BLE is not used by Quick Start
+    if test_parameters.run_ble_performance_test:
       self.add_test_class(ble_performance_test.BlePerformanceTest)
 
     # add directed/cuj tests which requires 2G wlan AP - channel 6
@@ -98,34 +96,36 @@ class BetoCqPerformanceTestSuite(base_betocq_suite.BaseBetocqSuite):
       config = self._config.copy()
       config.user_params['wifi_channel'] = 6
 
-      self.add_test_class(
-          clazz=mcc_5g_wfd_non_dbs_2g_sta_test.Mcc5gWfdNonDbs2gStaTest,
-          config=config,
-      )
-      self.add_test_class(
-          clazz=scc_2g_wfd_sta_test.Scc2gWfdStaTest,
-          config=config,
-      )
-      self.add_test_class(
-          clazz=scc_2g_wlan_sta_test.Scc2gWlanStaTest,
-          config=config,
-      )
-      self.add_test_class(
-          clazz=scc_5g_wfd_dbs_2g_sta_test.Scc5gWfdDbs2gStaTest,
-          config=config,
-      )
-      self.add_test_class(
-          clazz=mcc_5g_all_wifi_non_dbs_2g_sta_test.Mcc5gAllWifiNonDbs2gStaTest,
-          config=config,
-      )
-      self.add_test_class(
-          clazz=scc_2g_all_wifi_sta_test.Scc2gAllWifiStaTest,
-          config=config,
-      )
-      self.add_test_class(
-          clazz=scc_5g_all_wifi_dbs_2g_sta_test.Scc5gAllWifiDbs2gStaTest,
-          config=config,
-      )
+      if test_parameters.run_directed_test:
+        self.add_test_class(
+            clazz=mcc_5g_wfd_non_dbs_2g_sta_test.Mcc5gWfdNonDbs2gStaTest,
+            config=config,
+        )
+        self.add_test_class(
+            clazz=scc_2g_wfd_sta_test.Scc2gWfdStaTest,
+            config=config,
+        )
+        self.add_test_class(
+            clazz=scc_2g_wlan_sta_test.Scc2gWlanStaTest,
+            config=config,
+        )
+        self.add_test_class(
+            clazz=scc_5g_wfd_dbs_2g_sta_test.Scc5gWfdDbs2gStaTest,
+            config=config,
+        )
+        self.add_test_class(
+            clazz=mcc_5g_all_wifi_non_dbs_2g_sta_test.Mcc5gAllWifiNonDbs2gStaTest,
+            config=config,
+        )
+      if test_parameters.run_compound_test:
+        self.add_test_class(
+            clazz=scc_2g_all_wifi_sta_test.Scc2gAllWifiStaTest,
+            config=config,
+        )
+        self.add_test_class(
+            clazz=scc_5g_all_wifi_dbs_2g_sta_test.Scc5gAllWifiDbs2gStaTest,
+            config=config,
+        )
 
     # add directed tests which requires 5G wlan AP - channel 36
     if (
@@ -135,27 +135,32 @@ class BetoCqPerformanceTestSuite(base_betocq_suite.BaseBetocqSuite):
       config = self._config.copy()
       config.user_params['wifi_channel'] = 36
 
-      self.add_test_class(
-          clazz=mcc_2g_wfd_indoor_5g_sta_test.Mcc2gWfdIndoor5gStaTest,
-          config=config,
-      )
-      self.add_test_class(
-          clazz=scc_5g_wfd_sta_test.Scc5gWfdStaTest,
-          config=config,
-      )
-      if test_parameters.target_cuj_name is nc_constants.TARGET_CUJ_QUICK_SHARE:
+      if test_parameters.run_directed_test:
         self.add_test_class(
-            clazz=scc_5g_aware_sta_test.Scc5gAwareStaTest,
+            clazz=mcc_2g_wfd_indoor_5g_sta_test.Mcc2gWfdIndoor5gStaTest,
             config=config,
-      )
-      self.add_test_class(
-          clazz=scc_5g_wlan_sta_test.Scc5gWifiLanStaTest,
-          config=config,
-      )
-      self.add_test_class(
-          clazz=scc_indoor_5g_wfd_sta_test.SccIndoor5gWfdStaTest,
-          config=config,
-      )
+        )
+        self.add_test_class(
+            clazz=scc_5g_wfd_sta_test.Scc5gWfdStaTest,
+            config=config,
+        )
+        if (
+            test_parameters.target_cuj_name
+            is nc_constants.TARGET_CUJ_QUICK_SHARE
+        ):
+          self.add_test_class(
+              clazz=scc_5g_aware_sta_test.Scc5gAwareStaTest,
+              config=config,
+          )
+        self.add_test_class(
+            clazz=scc_5g_wlan_sta_test.Scc5gWifiLanStaTest,
+            config=config,
+        )
+        if test_parameters.run_compound_test:
+          self.add_test_class(
+              clazz=scc_indoor_5g_wfd_sta_test.SccIndoor5gWfdStaTest,
+              config=config,
+          )
 
     # add directed/cuj tests which requires DFS 5G wlan AP - channel 52
     if (
@@ -165,26 +170,28 @@ class BetoCqPerformanceTestSuite(base_betocq_suite.BaseBetocqSuite):
       config = self._config.copy()
       config.user_params['wifi_channel'] = 52
 
-      self.add_test_class(
-          clazz=mcc_5g_hotspot_dfs_5g_sta_test.Mcc5gHotspotDfs5gStaTest,
-          config=config,
-      )
-      self.add_test_class(
-          clazz=mcc_5g_wfd_dfs_5g_sta_test.Mcc5gWfdDfs5gStaTest,
-          config=config,
-      )
-      self.add_test_class(
-          clazz=scc_dfs_5g_hotspot_sta_test.SccDfs5gHotspotStaTest,
-          config=config,
-      )
-      self.add_test_class(
-          clazz=scc_dfs_5g_wfd_sta_test.SccDfs5gWfdStaTest,
-          config=config,
-      )
-      self.add_test_class(
-          clazz=scc_5g_all_wifi_sta_test.Scc5gAllWifiStaTest,
-          config=config,
-      )
+      if test_parameters.run_directed_test:
+        self.add_test_class(
+            clazz=mcc_5g_hotspot_dfs_5g_sta_test.Mcc5gHotspotDfs5gStaTest,
+            config=config,
+        )
+        self.add_test_class(
+            clazz=mcc_5g_wfd_dfs_5g_sta_test.Mcc5gWfdDfs5gStaTest,
+            config=config,
+        )
+        self.add_test_class(
+            clazz=scc_dfs_5g_hotspot_sta_test.SccDfs5gHotspotStaTest,
+            config=config,
+        )
+        self.add_test_class(
+            clazz=scc_dfs_5g_wfd_sta_test.SccDfs5gWfdStaTest,
+            config=config,
+        )
+      if test_parameters.run_compound_test:
+        self.add_test_class(
+            clazz=scc_5g_all_wifi_sta_test.Scc5gAllWifiStaTest,
+            config=config,
+        )
 
 
 if __name__ == '__main__':

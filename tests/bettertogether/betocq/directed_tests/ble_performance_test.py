@@ -60,13 +60,19 @@ class BlePerformanceTest(d2d_performance_test_base.D2dPerformanceTestBase):
     )
 
   def _get_transfer_file_size(self) -> int:
-    return nc_constants.TRANSFER_FILE_SIZE_1MB
+    return nc_constants.TRANSFER_FILE_SIZE_500KB
 
   def _get_file_transfer_timeout(self) -> datetime.timedelta:
-    return nc_constants.BLE_1M_PAYLOAD_TRANSFER_TIMEOUT
+    return nc_constants.BLE_500K_PAYLOAD_TRANSFER_TIMEOUT
 
-  def _get_throughout_benchmark(self) -> int:
-    return nc_constants.BLE_MEDIUM_THROUGHPUT_BENCHMARK
+  # @typing.override
+  def _get_throughput_benchmark(
+      self, sta_frequency: int, sta_max_link_speed_mbps: int
+  ) -> tuple[float, float]:
+    return (
+        nc_constants.BLE_MEDIUM_THROUGHPUT_BENCHMARK_MBPS,
+        nc_constants.BLE_MEDIUM_THROUGHPUT_BENCHMARK_MBPS,
+    )
 
   def _get_medium_upgrade_failure_tip(self) -> str:
     return 'Not Applied'  # No medium upgrade required for BLE.

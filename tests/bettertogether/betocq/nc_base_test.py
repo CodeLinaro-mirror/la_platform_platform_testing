@@ -178,9 +178,9 @@ class NCBaseTestClass(base_test.BaseTestClass):
     config_path = _CONFIG_EXTERNAL_PATH
     with open(config_path, 'r') as f:
       rule = yaml.safe_load(f).get(ad.model, None)
-      asserts.assert_is_not_none(
-          rule, f'{ad} Model {ad.model} is not supported in config file'
-      )
+      if rule is None:
+        ad.log.warning(f'{ad} Model {ad.model} is not supported in config file')
+        return
       for key, value in rule.items():
         ad.log.debug('Setting capability %s to %s', repr(key), repr(value))
         setattr(ad, key, value)
@@ -226,7 +226,6 @@ class NCBaseTestClass(base_test.BaseTestClass):
       setup_utils.grant_manage_external_storage_permission(
           ad, NEARBY_SNIPPET_2_PACKAGE_NAME
       )
-      setup_utils.enable_bluetooth_multiplex(ad)
       ad.load_snippet('nearby2', NEARBY_SNIPPET_2_PACKAGE_NAME)
       self.__loaded_2_nearby_snippets = True
     if not ad.nearby.wifiIsEnabled():
@@ -235,14 +234,17 @@ class NCBaseTestClass(base_test.BaseTestClass):
     setup_utils.enable_logs(ad)
     setup_utils.disable_redaction(ad)
     setup_utils.enable_wifi_aware(ad)
-    setup_utils.enable_dfs_scc(ad)
+
+    setup_utils.enable_ble_scan_throttling_during_2g_transfer(
+        ad, self.test_parameters.enable_2g_ble_scan_throttling
+    )
 
     setup_utils.set_country_code(ad, self._get_country_code())
 
   def setup_test(self):
     self.record_data({
         'Test Name': self.current_test_info.name,
-        'sponge_properties': {
+        'properties': {
             'beto_team': 'Nearby Connections',
             'beto_feature': 'Nearby Connections',
         },
@@ -309,6 +311,9 @@ class NCBaseTestClass(base_test.BaseTestClass):
   def on_fail(self, record: records.TestResultRecord) -> None:
     if self.__skipped_test_class:
       logging.info('Skipping on_fail.')
+      return
+    if self.test_parameters.skip_bug_report:
+      logging.info('Skipping bug report.')
       return
     self.num_bug_reports = self.num_bug_reports + 1
     if self.num_bug_reports <= nc_constants.MAX_NUM_BUG_REPORT:
