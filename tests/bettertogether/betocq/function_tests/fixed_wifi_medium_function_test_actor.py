@@ -57,7 +57,7 @@ class FixedWifiMediumFunctionTestActor(
           medium_upgrade_type=nc_constants.MediumUpgradeType.NON_DISRUPTIVE)
     finally:
       self._test_failure_reason = nearby_snippet.test_failure_reason
-      self._test_result.file_transfer_nc_setup_quality_info = (
+      self._test_result.quality_info = (
           nearby_snippet.connection_quality_info
       )
 
@@ -144,7 +144,7 @@ class FixedWifiMediumFunctionTestActor(
 
   def _get_medium_upgrade_failure_tip(self) -> str:
     return nc_constants.MEDIUM_UPGRADE_FAIL_TRIAGE_TIPS.get(
-        self._wifi_medium_under_test, 'unsupported test medium')
+        self._wifi_medium_under_test, ' unsupported test medium')
 
   def _get_file_transfer_failure_tip(self) -> str:
     if self._wifi_medium_under_test is not None:

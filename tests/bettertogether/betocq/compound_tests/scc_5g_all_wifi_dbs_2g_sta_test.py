@@ -54,6 +54,7 @@ class Scc5gAllWifiDbs2gStaTest(
 
   def setup_class(self):
     super().setup_class()
+    self._is_dbs_mode = True
     self.performance_test_iterations = getattr(
         self.test_scc_5g_all_wifi_dbs_2g_sta, base_test.ATTR_REPEAT_CNT
     )
@@ -74,10 +75,10 @@ class Scc5gAllWifiDbs2gStaTest(
 
   def _get_file_transfer_failure_tip(self) -> str:
     upgraded_medium_name = None
-    if (self._current_test_result.file_transfer_nc_setup_quality_info.upgrade_medium
+    if (self._current_test_result.quality_info.upgrade_medium
         is not None):
       upgraded_medium_name = (
-          self._current_test_result.file_transfer_nc_setup_quality_info.upgrade_medium.name
+          self._current_test_result.quality_info.upgrade_medium.name
       )
     return (
         f'The upgraded wifi medium {upgraded_medium_name} might be broken, '
@@ -86,10 +87,10 @@ class Scc5gAllWifiDbs2gStaTest(
 
   def _get_throughput_low_tip(self) -> str:
     upgraded_medium_name = None
-    if (self._current_test_result.file_transfer_nc_setup_quality_info.upgrade_medium
+    if (self._current_test_result.quality_info.upgrade_medium
         is not None):
       upgraded_medium_name = (
-          self._current_test_result.file_transfer_nc_setup_quality_info.upgrade_medium.name
+          self._current_test_result.quality_info.upgrade_medium.name
       )
     return (
         f'{self._throughput_low_string}. The upgraded medium is'
