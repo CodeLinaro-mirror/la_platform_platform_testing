@@ -37,6 +37,7 @@ from betocq import version
 
 NEARBY_SNIPPET_PACKAGE_NAME = 'com.google.android.nearby.mobly.snippet'
 NEARBY_SNIPPET_2_PACKAGE_NAME = 'com.google.android.nearby.mobly.snippet.second'
+NEARBY_SNIPPET_3P_PACKAGE_NAME = 'com.google.android.nearby.mobly.snippet.thirdparty'
 
 # TODO(b/330803934): Need to design external path for OEM.
 _CONFIG_EXTERNAL_PATH = 'TBD'
@@ -44,8 +45,6 @@ _CONFIG_EXTERNAL_PATH = 'TBD'
 
 class NCBaseTestClass(base_test.BaseTestClass):
   """The Base of Nearby Connection E2E tests."""
-
-  _run_identifier_is_set = False
 
   def __init__(self, configs):
     super().__init__(configs)
@@ -55,19 +54,22 @@ class NCBaseTestClass(base_test.BaseTestClass):
     self.test_parameters: nc_constants.TestParameters = (
         nc_constants.TestParameters.from_user_params(self.user_params)
     )
+    self._test_result_messages: dict[str, str] = {}
     self._nearby_snippet_apk_path: str = None
     self._nearby_snippet_2_apk_path: str = None
+    self._nearby_snippet_3p_apk_path: str = None
     self.performance_test_iterations: int = 1
     self.num_bug_reports: int = 0
     self._requires_2_snippet_apks = False
+    self._requires_3p_snippet_apks = False
     self.__loaded_2_nearby_snippets = False
+    self.__loaded_3p_nearby_snippets = False
     self.__skipped_test_class = False
 
   def _get_skipped_test_class_reason(self) -> str | None:
     return None
 
   def setup_class(self) -> None:
-    self._set_run_identifier()
     self._setup_openwrt_wifi()
     self.ads = self.register_controller(android_device, min_number=2)
     try:
@@ -91,6 +93,13 @@ class NCBaseTestClass(base_test.BaseTestClass):
     )
 
     skipped_test_class_reason = self._get_skipped_test_class_reason()
+    for ad in self.ads:
+      if (
+          not ad.wifi_chipset
+          and self.test_parameters.skip_test_if_wifi_chipset_is_empty
+      ):
+        skipped_test_class_reason = 'wifi_chipset is empty in the config file'
+        ad.log.warning(skipped_test_class_reason)
     if skipped_test_class_reason:
       self.__skipped_test_class = True
       asserts.abort_class(skipped_test_class_reason)
@@ -103,6 +112,11 @@ class NCBaseTestClass(base_test.BaseTestClass):
       self._requires_2_snippet_apks = True
       self._nearby_snippet_2_apk_path = self.user_params.get(file_tag, {}).get(
           'nearby_snippet_2', ['']
+      )[0]
+    if self.test_parameters.requires_3p_api_test:
+      self._requires_3p_snippet_apks = True
+      self._nearby_snippet_3p_apk_path = self.user_params.get(file_tag, {}).get(
+          'nearby_snippet_3p', ['']
       )[0]
 
     # disconnect from all wifi automatically
@@ -118,24 +132,6 @@ class NCBaseTestClass(base_test.BaseTestClass):
         raise_on_exception=True,
     )
 
-  def _set_run_identifier(self) -> None:
-    """Set a run_identifier property describing the test run context.
-
-    This property is only set once, even if multiple test classes are run as
-    part of a test suite.
-    """
-    if NCBaseTestClass._run_identifier_is_set:
-      return
-    run_identifier = {}
-    run_identifier['test_version'] = version.TEST_SCRIPT_VERSION
-    run_identifier['target_cuj'] = self.test_parameters.target_cuj_name
-    run_identifier_str = ', '.join(
-        [f'{key}:{value}' for key, value in run_identifier.items()]
-    )
-    run_identifier_str = f'{{{run_identifier_str}}}'
-    self.record_data({'properties': {'run_identifier': run_identifier_str}})
-    NCBaseTestClass._run_identifier_is_set = True
-
   def _setup_openwrt_wifi(self):
     """Sets up the wifi connection with OpenWRT."""
     if not self.user_params.get('use_auto_controlled_wifi_ap', False):
@@ -145,11 +141,18 @@ class NCBaseTestClass(base_test.BaseTestClass):
     if 'wifi_channel' in self.user_params:
       wifi_channel = self.user_params['wifi_channel']
       self.wifi_info = self.openwrt.start_wifi(
-          config=wifi_configs.WiFiConfig(channel=wifi_channel)
+          config=wifi_configs.WiFiConfig(
+              channel=wifi_channel,
+              country_code=self._get_country_code(),
+          )
       )
     else:
       wifi_channel = None
-      self.wifi_info = self.openwrt.start_wifi(config=wifi_configs.WiFiConfig())
+      self.wifi_info = self.openwrt.start_wifi(
+          config=wifi_configs.WiFiConfig(
+              country_code=self._get_country_code(),
+          )
+      )
 
     if wifi_channel is None:
       self.test_parameters.wifi_ssid = self.wifi_info.ssid
@@ -228,6 +231,21 @@ class NCBaseTestClass(base_test.BaseTestClass):
       )
       ad.load_snippet('nearby2', NEARBY_SNIPPET_2_PACKAGE_NAME)
       self.__loaded_2_nearby_snippets = True
+    if self._requires_3p_snippet_apks:
+      ad.log.info('try to install nearby_snippet_3p_apk')
+      if self._nearby_snippet_3p_apk_path:
+        setup_utils.install_apk(ad, self._nearby_snippet_3p_apk_path)
+      else:
+        ad.log.warning(
+            'nearby_snippet_3p apk is not specified, '
+            'make sure it is installed in the device'
+        )
+      setup_utils.grant_manage_external_storage_permission(
+          ad, NEARBY_SNIPPET_3P_PACKAGE_NAME
+      )
+      ad.load_snippet('nearby3p', NEARBY_SNIPPET_3P_PACKAGE_NAME)
+      self.__loaded_3p_nearby_snippets = True
+
     if not ad.nearby.wifiIsEnabled():
       ad.nearby.wifiEnable()
     setup_utils.disconnect_from_wifi(ad)
@@ -269,6 +287,11 @@ class NCBaseTestClass(base_test.BaseTestClass):
       self.discoverer.nearby2.stopAllEndpoints()
       self.advertiser.nearby2.stopAdvertising()
       self.advertiser.nearby2.stopAllEndpoints()
+    if self.__loaded_3p_nearby_snippets:
+      self.discoverer.nearby3p.stopDiscovery()
+      self.discoverer.nearby3p.stopAllEndpoints()
+      self.advertiser.nearby3p.stopAdvertising()
+      self.advertiser.nearby3p.stopAllEndpoints()
     time.sleep(nc_constants.NEARBY_RESET_WAIT_TIME.total_seconds())
 
   def _teardown_device(self, ad: android_device.AndroidDevice) -> None:
@@ -281,6 +304,8 @@ class NCBaseTestClass(base_test.BaseTestClass):
     ad.unload_snippet('nearby')
     if self.__loaded_2_nearby_snippets:
       ad.unload_snippet('nearby2')
+    if self.__loaded_3p_nearby_snippets:
+      ad.unload_snippet('nearby3p')
 
   def teardown_test(self) -> None:
     utils.concurrent_exec(
@@ -288,6 +313,8 @@ class NCBaseTestClass(base_test.BaseTestClass):
         param_list=[[ad] for ad in self.ads],
         raise_on_exception=True,
     )
+    if hasattr(self, 'openwrt'):
+      self.openwrt.services.create_output_excerpts_all(self.current_test_info)
 
   def teardown_class(self) -> None:
     if self.__skipped_test_class:
