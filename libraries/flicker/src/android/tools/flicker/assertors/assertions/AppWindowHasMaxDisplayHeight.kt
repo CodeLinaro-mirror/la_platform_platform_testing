@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 The Android Open Source Project
+ * Copyright (C) 2024 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,18 +19,17 @@ package android.tools.flicker.assertors.assertions
 import android.tools.flicker.ScenarioInstance
 import android.tools.flicker.assertions.FlickerTest
 import android.tools.flicker.assertors.ComponentTemplate
+import android.tools.helpers.WindowUtils
 
-/** Checks that the visible region of [component] always reduces during the animation */
-class AppLayerReduces(private val component: ComponentTemplate) :
+class AppWindowHasMaxDisplayHeight(private val component: ComponentTemplate) :
     AssertionTemplateWithComponent(component) {
     /** {@inheritDoc} */
     override fun doEvaluate(scenarioInstance: ScenarioInstance, flicker: FlickerTest) {
-        val layerMatcher = component.build(scenarioInstance)
-        flicker.assertLayers {
-            val layerList = layers { layerMatcher.layerMatchesAnyOf(it) && it.isVisible }
-            layerList.zipWithNext { previous, current ->
-                current.visibleRegion.coversAtMost(previous.visibleRegion.region)
-            }
+        flicker.assertWmEnd {
+            val expectedBounds = WindowUtils.getInsetDisplayBounds()
+            visibleRegion(component.build(scenarioInstance))
+                .hasSameTopPosition(expectedBounds)
+                .hasSameBottomPosition(expectedBounds)
         }
     }
 }
