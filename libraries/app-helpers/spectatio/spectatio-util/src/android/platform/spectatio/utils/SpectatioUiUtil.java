@@ -55,6 +55,7 @@ public class SpectatioUiUtil {
 
     private static final int SHORT_UI_RESPONSE_WAIT_MS = 1000;
     private static final int LONG_UI_RESPONSE_WAIT_MS = 5000;
+    private static final int TEN_SECONDS_WAIT = 10000;
     private static final int EXTRA_LONG_UI_RESPONSE_WAIT_MS = 15000;
     private static final int LONG_PRESS_DURATION_MS = 5000;
     private static final int MAX_SCROLL_COUNT = 100;
@@ -251,6 +252,12 @@ public class SpectatioUiUtil {
         wait1Second();
     }
 
+    public void clickAndWait(UiObject2 uiObject, int waitTime) {
+        validateUiObjectAndThrowIllegalArgumentException(uiObject, /* action= */ "Click");
+        uiObject.click();
+        waitNSeconds(waitTime);
+    }
+
     /**
      * Click at a specific location in the UI, and wait one second
      *
@@ -373,6 +380,37 @@ public class SpectatioUiUtil {
                 uiObject, /* action= */ "Find UI object in given element");
         validateSelector(selector, /* action= */ "Find UI object in given element");
         return uiObject.findObject(selector);
+    }
+
+    /**
+     * Waits for a UI element to appear within a specified timeout.
+     * Relpacement of findUiObject().
+     * Reference: https://developer.android.com/reference/androidx/test/uiautomator/UiDevice#wait
+     *
+     * @param selector The BySelector used to locate the element.
+     * @param timeout  The maximum time to wait in milliseconds.
+     * @return The UiObject2 representing the found element, or null if it's not found within the timeout.
+     */
+    public UiObject2 waitForUiObject(BySelector selector, int timeout) {
+        Log.i(LOG_TAG, "Waiting for UI element: " + selector);
+        validateSelector(selector, /* action= */ "Find UI Object");
+
+        UiObject2 uiObject = mDevice.wait(Until.findObject(selector), timeout);
+        if (uiObject == null) {
+            Log.w(LOG_TAG, "UI element not found within timeout: " + selector);
+        }
+
+        return uiObject;
+    }
+
+    /**
+     * Waits for a UI element to appear using the default timeout.
+     *
+     * @param selector The BySelector used to locate the element.
+     * @return The UiObject2 representing the found element, or null if it's not found within the default timeout.
+     */
+    public UiObject2 waitForUiObject(BySelector selector) {
+        return waitForUiObject(selector, TEN_SECONDS_WAIT);
     }
 
     /**
