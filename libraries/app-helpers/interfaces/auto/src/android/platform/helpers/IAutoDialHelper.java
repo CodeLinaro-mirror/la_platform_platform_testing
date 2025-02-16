@@ -223,6 +223,13 @@ public interface IAutoDialHelper extends IAppHelper, Scrollable {
     /**
      * Setup expectations: The app is open.
      *
+     * <p>Search the contact specified by the `-e search-contact-name` command line parameter.
+     */
+    void searchContacts();
+
+    /**
+     * Setup expectations: The app is open.
+     *
      * <p>This method is used to search a contact in the contact list.
      *
      * @param contact to search.
@@ -304,6 +311,13 @@ public interface IAutoDialHelper extends IAppHelper, Scrollable {
      * <p>This method is used to open contact list
      */
     void openContacts();
+
+    /**
+     * Setup expectations: The contacts page is open.
+     *
+     * <p>This method is used to open favorite menu. Throws an error if no contacts are visible.
+     */
+    void openFavorites();
 
     /**
      * Setup expectations: The contacts page is open.

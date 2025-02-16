@@ -375,7 +375,7 @@ public class AutomotiveConfigConstants {
     public static final String DEVICE_HEADER_SUMMARY = "DEVICE_HEADER_SUMMARY";
     public static final String DEVICE_HEADER_TITLE = "DEVICE_HEADER_TITLE";
     public static final String DEVICE_CONNECTION_TEXT = "DEVICE_CONNECTION_TOGGLE";
-
+    public static final String TOGGLE_PHONE = "TOGGLE_PHONE";
     public static final String DEVICE_CONNECTION_BUTTON = "DEVICE_CONNECTION_BUTTON";
 
     public static final String DEVICE_CONNECTION_BACK_BUTTON = "DEVICE_CONNECTION_BACK_BUTTON";
@@ -386,6 +386,8 @@ public class AutomotiveConfigConstants {
     public static final String SEARCH_RESULTS = "SEARCH_RESULTS";
     public static final String PAGE_TITLE = "PAGE_TITLE";
     public static final String PERMISSIONS_PAGE_TITLE = "PERMISSIONS_PAGE_TITLE";
+    public static final String OPEN_DIALER_WORKFLOW = "OPEN_DIALER_WORKFLOW";
+    public static final String SEARCH_CONTACTS_WORKFLOW = "SEARCH_CONTACTS_WORKFLOW";
     public static final String DIAL_CONTACT_WORKFLOW = "DIAL_CONTACT_WORKFLOW";
     public static final String SOUND_SETTINGS = "OPEN_SOUND_SETTINGS_WORKFLOW";
     public static final String NETWORK_AND_INTERNET_SETTINGS =
@@ -576,6 +578,9 @@ public class AutomotiveConfigConstants {
     public static final String FORGET_WIFI = "FORGET_WIFI";
     public static final String CLOCK_TIME = "CLOCK_TIME";
     public static final String DATE_COMMAND = "DATE_COMMAND";
+    public static final String ADAPTIVE_BRIGHTNESS_COMMAND = "ADAPTIVE_BRIGHTNESS_COMMAND";
+    public static final String ADAPTIVE_BRIGHTNESS_TOGGLE_SWITCH =
+            "ADAPTIVE_BRIGHTNESS_TOGGLE_SWITCH";
 
     // Quick Controls
     public static final String HOME_BLUETOOTH_BUTTON = "HOME_BLUETOOTH_BUTTON";
