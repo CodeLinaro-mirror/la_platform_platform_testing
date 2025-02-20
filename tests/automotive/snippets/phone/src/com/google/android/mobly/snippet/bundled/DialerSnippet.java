@@ -195,6 +195,12 @@ public class DialerSnippet implements Snippet {
         return mDialerHelper.get().getContactType();
     }
 
+    /** Search contacts using the SEARCH_CONTACTS_WORKFLOW. */
+    @Rpc(description = "Search contacts using SEARCH_CONTACTS_WORKFLOW.")
+    public void searchContacts() {
+        mDialerHelper.get().searchContacts();
+    }
+
     @Rpc(description = "Search contact by name.")
     public void searchContactsByName(String contact) {
         mDialerHelper.get().searchContactsByName(contact);
@@ -248,6 +254,12 @@ public class DialerSnippet implements Snippet {
     @Rpc(description = "Open Contacts List.")
     public void openContacts() {
         mDialerHelper.get().openContacts();
+    }
+
+    /** Open favorite menu in dialer */
+    @Rpc(description = "Open Favorites.")
+    public void openFavorites() {
+        mDialerHelper.get().openFavorites();
     }
 
     /** Press 'Device' prompt which comes up when trying to transfer files to a device. */
