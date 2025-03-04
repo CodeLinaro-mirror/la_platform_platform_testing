@@ -104,7 +104,7 @@ internal constructor(
     open fun getTestIdentifier(description: Description): String =
         "${description.className}_${description.methodName}"
 
-    open fun fetchExpectedImage(goldenIdentifier: String): Bitmap? {
+    private fun fetchExpectedImage(goldenIdentifier: String): Bitmap? {
         val instrument = InstrumentationRegistry.getInstrumentation()
         return listOf(instrument.targetContext.applicationContext, instrument.context)
             .map { context ->

@@ -24,8 +24,6 @@ import android.platform.uiautomatorhelpers.DeviceHelpers.uiDevice
 import android.platform.uiautomatorhelpers.DeviceHelpers.waitForFirstObj
 import android.platform.uiautomatorhelpers.DeviceHelpers.waitForObj
 import androidx.test.uiautomator.By
-import com.android.settingslib.flags.Flags.newStatusBarIcons
-import com.android.systemui.Flags.statusBarRootModernization
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -76,13 +74,9 @@ class QSHeader internal constructor() {
         verifySilentIconIsVisible()
     }
 
-    /** Verifies the battery view is visible. Throws otherwise. Experimental. */
+    /** Verifies the battery percentage is visible. Throws otherwise. Experimental. */
     fun verifyBatteryMeterVisible() {
-        if (statusBarRootModernization() && newStatusBarIcons()) {
-            "battery_meter_composable_view".assertVisible()
-        } else {
-            "battery_percentage_view".assertVisible()
-        }
+        "battery_percentage_view".assertVisible()
     }
 
     /** Verifies that dock defend icon is visible. */

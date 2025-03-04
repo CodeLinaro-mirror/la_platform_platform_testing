@@ -47,12 +47,7 @@ internal constructor(
                     MotionScreenshot(frameId, bitmap)
                 }
             filmstrip = Filmstrip(motionScreenshots)
-            videoRenderer =
-                if (MotionTestRule.isRobolectricRuntime()) {
-                    null
-                } else {
-                    VideoRenderer(motionScreenshots)
-                }
+            videoRenderer = VideoRenderer(motionScreenshots)
         } else {
             filmstrip = null
             videoRenderer = null

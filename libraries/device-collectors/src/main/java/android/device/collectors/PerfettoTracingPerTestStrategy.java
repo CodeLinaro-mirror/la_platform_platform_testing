@@ -39,12 +39,10 @@ import java.util.function.Supplier;
  * <root>/<test_name>/PerfettoTracingStrategy/<test_name>-<invocation_count>.perfetto-trace
  */
 public class PerfettoTracingPerTestStrategy extends PerfettoTracingStrategy {
-    private static final String STRATEGY_IDENTIFIER = "per_test";
-
     private Map<String, Integer> mTestIdInvocationCount = new HashMap<>();
 
     PerfettoTracingPerTestStrategy(Instrumentation instr) {
-        super(instr, STRATEGY_IDENTIFIER);
+        super(instr);
     }
 
     /**
@@ -53,7 +51,7 @@ public class PerfettoTracingPerTestStrategy extends PerfettoTracingStrategy {
      */
     @VisibleForTesting
     public PerfettoTracingPerTestStrategy(PerfettoHelper helper, Instrumentation instr) {
-        super(helper, instr, STRATEGY_IDENTIFIER);
+        super(helper, instr);
     }
 
     /**
@@ -69,8 +67,7 @@ public class PerfettoTracingPerTestStrategy extends PerfettoTracingStrategy {
             Supplier<PowerManager.WakeLock> wakelockSupplier,
             WakeLockAcquirer wakeLockAcquirer,
             WakeLockReleaser wakeLockReleaser) {
-        super(helper, instr, STRATEGY_IDENTIFIER, wakeLockContext, wakelockSupplier,
-                wakeLockAcquirer, wakeLockReleaser);
+        super(helper, instr, wakeLockContext, wakelockSupplier, wakeLockAcquirer, wakeLockReleaser);
         mTestIdInvocationCount = invocationMap;
     }
 
@@ -81,13 +78,13 @@ public class PerfettoTracingPerTestStrategy extends PerfettoTracingStrategy {
     @VisibleForTesting
     protected PerfettoTracingPerTestStrategy(
             PerfettoHelper helper, Instrumentation instr, Map invocationMap) {
-        super(instr, STRATEGY_IDENTIFIER);
+        super(instr);
         mTestIdInvocationCount = invocationMap;
     }
 
     @Override
-    void testStart(DataRecord testData, Description description, int iteration) {
-        super.testStart(testData, description, iteration);
+    void testStart(DataRecord testData, Description description) {
+        super.testStart(testData, description);
         Runnable task =
                 () -> {
                     mTestIdInvocationCount.compute(
@@ -101,7 +98,7 @@ public class PerfettoTracingPerTestStrategy extends PerfettoTracingStrategy {
     }
 
     @Override
-    void testEnd(DataRecord testData, Description description, int iteration) {
+    void testEnd(DataRecord testData, Description description) {
         if (!isPerfettoStartSuccess()) {
             Log.i(
                     getTag(),

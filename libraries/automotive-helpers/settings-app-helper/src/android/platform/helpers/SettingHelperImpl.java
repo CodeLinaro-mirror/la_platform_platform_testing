@@ -351,9 +351,7 @@ public class SettingHelperImpl extends AbstractStandardAppHelper implements IAut
         }
     }
 
-    /** {@inheritDoc} */
-    @Override
-    public void pressSettingsBackNavIcon() {
+    private void pressSettingsBackNavIcon() {
         UiObject2 navIcon =
                 getSpectatioUiUtil()
                         .findUiObject(
