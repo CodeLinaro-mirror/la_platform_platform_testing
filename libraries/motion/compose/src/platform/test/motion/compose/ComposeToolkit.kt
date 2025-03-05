@@ -75,8 +75,16 @@ import platform.test.screenshot.Displays
 import platform.test.screenshot.GoldenPathManager
 import platform.test.screenshot.captureToBitmapAsync
 
-/** Toolkit to support Compose-based [MotionTestRule] tests. */
-class ComposeToolkit(val composeContentTestRule: ComposeContentTestRule, val testScope: TestScope) {
+/**
+ * Toolkit to support Compose-based [MotionTestRule] tests.
+ *
+ * @param fixedConfiguration when non-null, applies the specified configuration to the content.
+ */
+class ComposeToolkit(
+    val composeContentTestRule: ComposeContentTestRule,
+    val testScope: TestScope,
+    val fixedConfiguration: FixedConfiguration? = null,
+) {
     internal companion object {
         const val TAG = "ComposeToolkit"
     }
@@ -244,7 +252,16 @@ fun MotionTestRule<ComposeToolkit>.recordMotion(
 
         mainClock.autoAdvance = false
 
-        setContent { EnableMotionTestValueCollection { content(playbackStarted) } }
+        setContent {
+            EnableMotionTestValueCollection {
+                val fixedConfiguration = toolkit.fixedConfiguration
+                if (fixedConfiguration != null) {
+                    FixedConfigurationProvider(fixedConfiguration) { content(playbackStarted) }
+                } else {
+                    content(playbackStarted)
+                }
+            }
+        }
         Log.i(TAG, "recordMotion() created compose content")
 
         waitForIdle()
