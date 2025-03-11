@@ -75,7 +75,8 @@
     "DAY_MODE_COMMAND": "dumpsys activity service com.android.car/.CarService day-night-mode  day",
     "OPEN_SYSTEM_UI": "am crash com.android.systemui",
     "OPEN_CAR_UI": "am crash com.android.car",
-    "DATE_COMMAND": "date"
+    "DATE_COMMAND": "date",
+    "ADAPTIVE_BRIGHTNESS_COMMAND": "settings get system screen_brightness_mode"
   },
   "UI_ELEMENTS": {
     "MAKE_CALL": {
@@ -1682,6 +1683,27 @@
         }
       ]
     },
+    "TOGGLE_PHONE": {
+      "TYPE": "MULTIPLE",
+      "SPECIFIERS": [
+        {
+          "TYPE": "CLASS",
+          "VALUE": "android.widget.Switch"
+        },
+        {
+          "TYPE": "HAS_ANCESTOR",
+          "MAX_DEPTH": 3,
+          "ANCESTOR": {
+            "TYPE": "HAS_DESCENDANT",
+            "MAX_DEPTH": 2,
+            "DESCENDANT": {
+              "TYPE": "TEXT",
+              "VALUE": "Phone Calls"
+            }
+          }
+        }
+      ]
+    },
     "SEARCH": {
       "TYPE": "DESCRIPTION",
       "VALUE": "Search"
@@ -2348,6 +2370,19 @@
     "USER_SETTINGS_USER_AVATAR": {
       "TYPE": "RESOURCE_ID",
       "VALUE": "user_avatar"
+    },
+    "ADAPTIVE_BRIGHTNESS_TOGGLE_SWITCH": {
+      "TYPE": "MULTIPLE",
+      "SPECIFIERS": [
+        {
+          "TYPE": "DESCRIPTION",
+          "VALUE": "Display brightness"
+        },
+        {
+          "TYPE": "CLASS",
+          "VALUE": "android.widget.Switch"
+        }
+      ]
     }
   },
   "WORKFLOWS": {
@@ -2361,6 +2396,66 @@
             "TYPE": "TEXT",
             "VALUE": "Allow"
           }
+        }
+      }
+    ],
+    "OPEN_DIALER_WORKFLOW": [
+      {
+        "NAME": "Go to Home",
+        "TYPE": "PRESS",
+        "CONFIG": {
+          "TEXT": "HOME"
+        }
+      },
+      {
+        "NAME": "Wait 1 second",
+        "TYPE": "WAIT_MS",
+        "CONFIG": {
+          "TEXT": "1000"
+        }
+      },
+      {
+        "NAME": "Open dialer by activity",
+        "TYPE": "COMMAND",
+        "CONFIG": {
+          "TEXT": "am start -n com.android.car.dialer/.ui.TelecomActivity"
+        }
+      },
+      {
+        "NAME": "Wait 1 second",
+        "TYPE": "WAIT_MS",
+        "CONFIG": {
+          "TEXT": "1000"
+        }
+      }
+    ],
+    "SEARCH_CONTACTS_WORKFLOW": [
+      {
+        "NAME": "Open search",
+        "TYPE": "CLICK",
+        "CONFIG": {
+          "UI_ELEMENT_REFERENCE": "SEARCH_CONTACT"
+        }
+      },
+      {
+        "NAME": "Type contact name",
+        "TYPE": "SET_TEXT",
+        "CONFIG": {
+          "UI_ELEMENT_REFERENCE": "CONTACT_SEARCH_BAR"
+        },
+        "SET_TEXT_CONFIG": {
+          "COMMAND_LINE_KEY": "search-contact-name"
+        }
+      },
+      {
+        "NAME": "Check for searched contact",
+        "TYPE": "VALIDATE_VALUE",
+        "CONFIG": {
+          "UI_ELEMENT_REFERENCE": "CONTACT_SEARCH_RESULT_NAME"
+        },
+        "VALIDATION_CONFIG": {
+          "PROPERTY": "TEXT",
+          "EXPECTED_COMMAND_LINE_KEY": "search-contact-name"
         }
       }
     ],
