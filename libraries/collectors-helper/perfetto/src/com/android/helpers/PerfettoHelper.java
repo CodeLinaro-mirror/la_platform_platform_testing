@@ -49,8 +49,6 @@ public class PerfettoHelper {
     private static final String PERFETTO_START_BG_WAIT_CMD =
             "perfetto --background-wait -c %s%s -o %s";
     private static final String PERFETTO_START_CMD = "perfetto --background -c %s%s -o %s";
-    private static final String PERFETTO_TMP_OUTPUT_FILE =
-            "/data/misc/perfetto-traces/trace_output.perfetto-trace";
     // Additional arg to indicate that the perfetto config file is text format.
     private static final String PERFETTO_TXT_PROTO_ARG = " --txt";
     // Command to stop (i.e kill) the perfetto tracing.
@@ -61,8 +59,10 @@ public class PerfettoHelper {
     private static final String REMOVE_CMD = "rm %s";
     // Add the trace output file /data/misc/perfetto-traces/trace_output.perfetto-trace
     private static final String CREATE_FILE_CMD = "touch %s";
-    // Command to move the perfetto output trace file to given folder.
-    private static final String MOVE_CMD = "mv %s %s";
+    // Command to copy the perfetto output trace file to given folder.
+    private static final String COPY_CMD = "cp %s %s";
+    // Command to set the read permission for all users on the given file.
+    private static final String CHMOD_READ_CMD = "chmod a+r %s";
     // Max wait count for checking if perfetto is stopped successfully
     private static final int PERFETTO_KILL_WAIT_COUNT = 12;
     // Check if perfetto is stopped every 5 secs.
@@ -85,6 +85,22 @@ public class PerfettoHelper {
     private boolean mTrackPerfettoPidFlag;
     private String mTrackPerfettoRootDir = "sdcard/";
     private File mPerfettoPidFile;
+
+    private String mTmpOutputFilePath = "";
+
+    public PerfettoHelper() {
+        this("");
+    }
+
+    /**
+     * Creates PerfettoHelper
+     * @param tmpFilePrefix prefix for the temporary perfetto trace, must be unique for all
+     *                      sessions happening at the same time
+     */
+    public PerfettoHelper(String tmpFilePrefix) {
+        mTmpOutputFilePath = "/data/misc/perfetto-traces/" + tmpFilePrefix
+                + "trace_output.perfetto-trace";
+    }
 
     /** Set content of the perfetto configuration to be used when tracing */
     public PerfettoHelper setTextProtoConfig(String value) {
@@ -154,7 +170,7 @@ public class PerfettoHelper {
                             mPerfettoStartBgWait ? PERFETTO_START_BG_WAIT_CMD : PERFETTO_START_CMD,
                             "- ",
                             "--txt",
-                            PERFETTO_TMP_OUTPUT_FILE);
+                            mTmpOutputFilePath);
 
             // Start perfetto tracing.
             Log.i(LOG_TAG, "Starting perfetto tracing.");
@@ -232,7 +248,7 @@ public class PerfettoHelper {
                             mPerfettoStartBgWait ? PERFETTO_START_BG_WAIT_CMD : PERFETTO_START_CMD,
                             mConfigRootDir,
                             configFileName,
-                            PERFETTO_TMP_OUTPUT_FILE);
+                            mTmpOutputFilePath);
 
             if (isTextProtoConfig) {
                 perfettoCmd = perfettoCmd + PERFETTO_TXT_PROTO_ARG;
@@ -271,13 +287,13 @@ public class PerfettoHelper {
     private boolean canSetupBeforeStartCollecting() throws IOException {
         // Remove already existing temporary output trace file if any.
         String output =
-                mUIDevice.executeShellCommand(String.format(REMOVE_CMD, PERFETTO_TMP_OUTPUT_FILE));
+                mUIDevice.executeShellCommand(String.format(REMOVE_CMD, mTmpOutputFilePath));
         Log.i(LOG_TAG, String.format("Perfetto output file cleanup - %s", output));
 
         // Create new temporary output trace file before tracing.
         output =
                 mUIDevice.executeShellCommand(
-                        String.format(CREATE_FILE_CMD, PERFETTO_TMP_OUTPUT_FILE));
+                        String.format(CREATE_FILE_CMD, mTmpOutputFilePath));
         if (output.isEmpty()) {
             Log.i(LOG_TAG, "Perfetto output file create success.");
         } else {
@@ -486,18 +502,41 @@ public class PerfettoHelper {
 
         // Copy the collected trace from /data/misc/perfetto-traces/trace_output.perfetto-trace to
         // destinationFile
+        // Note: Due to b/141386109, certain devices do not allow moving the files between
+        //       directories with different encryption policies, so manually copy and then
+        //       remove the original file
+        //       Moreover, the copied trace file may end up with different permissions, resulting
+        //       in b/162072200, to prevent this, ensure the files are readable after copying
         try {
-            String moveResult = mUIDevice.executeShellCommand(String.format(
-                    MOVE_CMD, PERFETTO_TMP_OUTPUT_FILE, destinationFile));
-            if (!moveResult.isEmpty()) {
+            String copyResult = mUIDevice.executeShellCommand(String.format(
+                    COPY_CMD, mTmpOutputFilePath, destinationFile));
+            if (!copyResult.isEmpty()) {
                 Log.e(LOG_TAG, String.format(
-                        "Unable to move perfetto output file from %s to %s due to %s",
-                        PERFETTO_TMP_OUTPUT_FILE, destinationFile, moveResult));
+                        "Unable to copy perfetto output file from %s to %s due to %s",
+                        mTmpOutputFilePath, destinationFile, copyResult));
+                return false;
+            }
+            String chmodResult = mUIDevice.executeShellCommand(String.format(
+                    CHMOD_READ_CMD, destinationFile));
+            if (!chmodResult.isEmpty()) {
+                Log.e(LOG_TAG, String.format(
+                        "Unable to set read permission on perfetto output file %s due to %s",
+                        destinationFile, chmodResult));
+                return false;
+            }
+            // This will silently fail on unrooted devices due to missing sepolicy for file writing,
+            // but it will be cleaned up by perfetto on the next run.
+            String removeResult = mUIDevice.executeShellCommand(String.format(
+                    REMOVE_CMD, mTmpOutputFilePath));
+            if (!removeResult.isEmpty()) {
+                Log.e(LOG_TAG, String.format(
+                        "Unable to remove temporary perfetto output file %s due to %s",
+                        mTmpOutputFilePath, removeResult));
                 return false;
             }
         } catch (IOException ioe) {
             Log.e(LOG_TAG,
-                    "Unable to move the perfetto trace file to destination file."
+                    "Unable to copy the perfetto trace file to destination file."
                             + ioe.getMessage());
             return false;
         }

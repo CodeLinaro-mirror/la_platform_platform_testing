@@ -173,6 +173,10 @@ public class AutomotiveConfigConstants {
     public static final String LOCK_TYPE_PASSWORD = "LOCK_TYPE_PASSWORD";
     public static final String LOCK_TYPE_PIN = "LOCK_TYPE_PIN";
     public static final String LOCK_SCREEN_CONTINUE_BUTTON = "LOCK_SCREEN_CONTINUE_BUTTON";
+    public static final String LOCK_SCREEN_PASSWORD = "LOCK_SCREEN_PASSWORD";
+    public static final String LOCK_SCREEN_COMMAND = "LOCK_SCREEN_COMMAND";
+    public static final String LOCK_SCREEN_EDIT_TEXT = "LOCK_SCREEN_EDIT_TEXT";
+    public static final String LOCK_SCREEN_CONFIRM_BUTTON = "LOCK_SCREEN_CONFIRM_BUTTON";
 
     // Notification App Constants
     public static final String OPEN_NOTIFICATIONS_COMMAND = "OPEN_NOTIFICATIONS_COMMAND";
@@ -530,6 +534,7 @@ public class AutomotiveConfigConstants {
     public static final String STATUS_BAR_WIFI_SETTINGS = "STATUS_BAR_WIFI_SETTINGS";
     public static final String STATUS_BAR_DISPLAY_SETTINGS = "STATUS_BAR_DISPLAY_SETTINGS";
     public static final String STATUS_BAR_SOUND_SETTINGS = "STATUS_BAR_SOUND_SETTINGS";
+    public static final String MICRO_PHONE_ON_SCREEN = "MICRO_PHONE_ON_SCREEN";
 
     // APP info Setting UI ELEMENTS
     public static final String RECENTLY_OPENED_UI_ELEMENT = "RECENTLY_OPENED_UI_ELEMENT";
@@ -619,6 +624,7 @@ public class AutomotiveConfigConstants {
     public static final String MICROPHONE = "MICROPHONE";
     public static final String LOCATION = "LOCATION";
     public static final String APP_PERMISSION = "APP_PERMISSION";
+    public static final String APP_LEVEL_PERMISSION = "APP_LEVEL_PERMISSION";
     public static final String INFOTAINMENT_SYSTEM_DATA = "INFOTAINMENT_SYSTEM_DATA";
     public static final String DATA_SHARING_WITH_GOOGLE = "DATA_SHARING_WITH_GOOGLE";
     public static final String SETTINGS_BACK_BUTTON = "SETTINGS_BACK_BUTTON";

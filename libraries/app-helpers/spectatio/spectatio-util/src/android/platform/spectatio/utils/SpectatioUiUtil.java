@@ -21,7 +21,6 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.RemoteException;
 import android.os.SystemClock;
-import android.os.UserHandle;
 import android.platform.spectatio.constants.JsonConfigConstants;
 import android.platform.spectatio.exceptions.MissingUiElementException;
 import android.util.Log;
@@ -260,6 +259,16 @@ public class SpectatioUiUtil {
     }
 
     /**
+     * Click and wait until new window opens, wait for the specified time. Usecases * Clicking a
+     * object that opens a new window * Navigating between screens * Clicking an object that can
+     * open a popup
+     */
+    public void clickAndWaitUntilNewWindowAppears(UiObject2 uiObject) {
+        validateUiObjectAndThrowIllegalArgumentException(uiObject, /* action= */ "Click");
+        uiObject.clickAndWait(Until.newWindow(), EXTRA_LONG_UI_RESPONSE_WAIT_MS);
+    }
+
+    /**
      * Click at a specific location in the UI, and wait one second
      *
      * @param location Where to click
@@ -323,7 +332,11 @@ public class SpectatioUiUtil {
 
         // Map of supported substitutions
         Map<String, String> vars = new HashMap<>();
-        vars.put("user_id", String.valueOf(UserHandle.CURRENT.myUserId()));
+        try {
+            vars.put("user_id", mDevice.executeShellCommand("am get-current-user"));
+        } catch (IOException e) {
+            Log.e(LOG_TAG, "Could not execute `am get-current-user` to retrieve user id");
+        }
 
         try (InputStreamReader reader =
                 new InputStreamReader(

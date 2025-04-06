@@ -76,7 +76,8 @@
     "OPEN_SYSTEM_UI": "am crash com.android.systemui",
     "OPEN_CAR_UI": "am crash com.android.car",
     "DATE_COMMAND": "date",
-    "ADAPTIVE_BRIGHTNESS_COMMAND": "settings get system screen_brightness_mode"
+    "ADAPTIVE_BRIGHTNESS_COMMAND": "settings get system screen_brightness_mode",
+    "LOCK_SCREEN_COMMAND": "input text %s"
   },
   "UI_ELEMENTS": {
     "MAKE_CALL": {
@@ -543,6 +544,11 @@
       "VALUE": "home",
       "PACKAGE": "com.android.systemui"
     },
+    "MICRO_PHONE_ON_SCREEN": {
+      "TYPE": "RESOURCE_ID",
+      "VALUE": "assistant",
+      "PACKAGE": "com.android.systemui"
+    },
     "HOME_TEMPERATURE_BUTTON": {
       "TYPE": "RESOURCE_ID",
       "VALUE": "hvac_temperature_text",
@@ -851,6 +857,14 @@
     "LOCK_SCREEN_CONFIRM_BUTTON": {
       "TYPE": "TEXT",
       "VALUE": "Confirm"
+    },
+    "LOCK_SCREEN_PASSWORD": {
+      "TYPE": "TEXT",
+      "VALUE": "Enter your password"
+    },
+    "LOCK_SCREEN_EDIT_TEXT": {
+      "TYPE": "RESOURCE_ID",
+      "VALUE": "passwordEntry"
     },
     "NOTIFICATION_VIEW": {
       "TYPE": "RESOURCE_ID",
@@ -2019,6 +2033,10 @@
     "APP_PERMISSION": {
       "TYPE": "TEXT",
       "VALUE": "App permissions"
+    },
+    "APP_LEVEL_PERMISSION": {
+      "TYPE": "TEXT",
+      "VALUE": "App-level permissions"
     },
     "INFOTAINMENT_SYSTEM_DATA": {
       "TYPE": "TEXT",
