@@ -27,6 +27,7 @@ java_library {
         "kotlinx_coroutines",
         "mockito-target-minus-junit4",
         "uiautomator-helpers",
+        "truth",
     ],
     srcs: [
         "src/**/*.kt",
