@@ -38,6 +38,6 @@ class BubbleBarFlyout {
     }
 
     companion object {
-        internal val BUBBLE_BAR_FLYOUT_VIEW = launcherResSelector("bubble_bar_flyout_view")
+        val BUBBLE_BAR_FLYOUT_VIEW = launcherResSelector("bubble_bar_flyout_view")
     }
 }
