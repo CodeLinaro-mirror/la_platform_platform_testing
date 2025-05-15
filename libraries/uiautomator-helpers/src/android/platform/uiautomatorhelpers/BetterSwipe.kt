@@ -188,6 +188,7 @@ object BetterSwipe {
                 point = start,
                 displayId = displayId,
             )
+            lastTime = downTime
             return this
         }
 
@@ -304,7 +305,7 @@ object BetterSwipe {
             try {
                 getInstrumentation()
                     .uiAutomation
-                    .injectInputEvent(event, sync, /* waitForAnimations= */ false)
+                    .injectInputEvent(event, sync)
             } catch (t: Throwable) {
                 throw RuntimeException(t)
             }
