@@ -79,7 +79,7 @@ class Root private constructor(val displayId: Int = DEFAULT_DISPLAY) {
         traceSection("Opening notification shade via global action") {
             uiDevice.openNotification()
             waitForShadeToOpen()
-            return NotificationShade()
+            return NotificationShade(displayId)
         }
     }
 
@@ -249,7 +249,7 @@ class Root private constructor(val displayId: Int = DEFAULT_DISPLAY) {
 
     /** Gets lock screen. Fails if lock screen is not visible. */
     val lockScreen: LockScreen
-        get() = LockScreen()
+        get() = LockScreen(displayId)
 
     /** Gets primary bouncer. Fails if the primary bouncer is not visible. */
     val primaryBouncer: Bouncer
@@ -257,7 +257,7 @@ class Root private constructor(val displayId: Int = DEFAULT_DISPLAY) {
 
     /** Gets Aod. Fails if Aod is not visible. */
     val aod: Aod
-        get() = Aod()
+        get() = Aod(displayId)
 
     /** Gets Aod RON Skeleton. Fails if Aod is not visible. */
     val aodRON: AodRON
@@ -418,7 +418,12 @@ class Root private constructor(val displayId: Int = DEFAULT_DISPLAY) {
 
     /** Asserts that lock screen is invisible. */
     fun assertLockScreenNotVisible() {
-        LockScreen.LOCKSCREEN_SELECTOR.assertInvisible()
+        LockScreen.lockScreenSelector(displayId).assertInvisible()
+    }
+
+    /** Asserts that brightness slider is not visible (i.e. when shade is on a external display.) */
+    fun assertBrightnessSliderNotVisible() {
+        BrightnessSlider.sliderSelector(displayId).assertInvisible()
     }
 
     // TODO (b/277105514): Determine whether this is an idiomatic method of determining visibility.
@@ -469,6 +474,10 @@ class Root private constructor(val displayId: Int = DEFAULT_DISPLAY) {
         if (displayId == DEFAULT_DISPLAY) {
             uiDevice.pressHome()
         } else {
+            // Check the display is available before attempting to send key events
+            By.displayId(displayId).assertVisible {
+                "Can't press home on display $displayId: display not found"
+            }
             // replicate UiDevice#pressHome() for a display other than DEFAULT_DISPLAY
             sendKey(KeyEvent.KEYCODE_HOME, 0, SystemClock.uptimeMillis())
             uiDevice.waitForWindowUpdate(LAUNCHER_PACKAGE, LONG_TIMEOUT)
