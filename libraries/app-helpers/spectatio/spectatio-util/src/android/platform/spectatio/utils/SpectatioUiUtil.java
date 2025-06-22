@@ -34,19 +34,14 @@ import androidx.test.uiautomator.UiObject2;
 import androidx.test.uiautomator.Until;
 
 import com.google.common.base.Strings;
-import com.google.escapevelocity.Template;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 public class SpectatioUiUtil {
     private static final String LOG_TAG = SpectatioUiUtil.class.getSimpleName();
@@ -246,6 +241,54 @@ public class SpectatioUiUtil {
         }
     }
 
+    // all the javadoc comments on these hardkey methods are copy-pasted from ui automator docs
+    // that's all they do
+
+    /** Simulates a short press on the MENU button. */
+    public void pressMenu() {
+        mDevice.pressMenu();
+    }
+
+    /** Simulates a short press on the SEARCH button. */
+    public void pressSearch() {
+        mDevice.pressSearch();
+    }
+
+    /** Simulates a short press on the CENTER button. */
+    public void pressDPadCenter() {
+        mDevice.pressDPadCenter();
+    }
+
+    /** Simulates a short press on the DOWN button. */
+    public void pressDPadDown() {
+        mDevice.pressDPadDown();
+    }
+
+    /** Simulates a short press on the UP button. */
+    public void pressDPadUp() {
+        mDevice.pressDPadUp();
+    }
+
+    /** Simulates a short press on the LEFT button. */
+    public void pressDPadLeft() {
+        mDevice.pressDPadLeft();
+    }
+
+    /** Simulates a short press on the RIGHT button. */
+    public void pressDPadRight() {
+        mDevice.pressDPadRight();
+    }
+
+    /** Simulates a short press on the DELETE key. */
+    public void pressDelete() {
+        mDevice.pressDelete();
+    }
+
+    /** Simulates a short press on the ENTER key. */
+    public void pressEnter() {
+        mDevice.pressEnter();
+    }
+
     public void clickAndWait(UiObject2 uiObject) {
         validateUiObjectAndThrowIllegalArgumentException(uiObject, /* action= */ "Click");
         uiObject.click();
@@ -327,35 +370,17 @@ public class SpectatioUiUtil {
         }
     }
 
+    @SuppressWarnings("DiscouragedApi")
     private String populateShellCommand(String command) {
-        String populatedCommand = command;
-
         // Map of supported substitutions
-        Map<String, String> vars = new HashMap<>();
+        String userId;
         try {
-            vars.put("user_id", mDevice.executeShellCommand("am get-current-user"));
+            userId = mDevice.executeShellCommand("am get-current-user");
+            return command.replaceAll("\\$user_id", userId);
         } catch (IOException e) {
             Log.e(LOG_TAG, "Could not execute `am get-current-user` to retrieve user id");
         }
-
-        try (InputStreamReader reader =
-                new InputStreamReader(
-                        new ByteArrayInputStream(command.getBytes(StandardCharsets.UTF_8)))) {
-            Template template = Template.parseFrom(reader);
-            populatedCommand = template.evaluate(vars);
-            Log.d(
-                    LOG_TAG,
-                    String.format(
-                            "Initial command: %s. Populated command: %s",
-                            command, populatedCommand));
-        } catch (IOException e) {
-            Log.e(
-                    LOG_TAG,
-                    String.format(
-                            "Error populating the shell command template %s, Error: %s",
-                            command, e.getMessage()));
-        }
-        return populatedCommand;
+        return command;
     }
 
     /** Find and return the UI Object that matches the given selector */
@@ -415,6 +440,19 @@ public class SpectatioUiUtil {
         }
 
         return uiObject;
+    }
+
+    /**
+     * Waits for a UI element to be gone within a specified timeout.
+     *
+     * @param selector The BySelector used to locate the element.
+     * @param timeout The maximum time to wait in milliseconds.
+     * @return The UiObject2 representing the found element, or null if it's not found within the
+     *     timeout.
+     */
+    public boolean waitForUiObjectToBeGone(BySelector selector, int timeout) {
+        Log.i(LOG_TAG, "Waiting for UI Object to Disappear: " + selector);
+        return mDevice.wait(Until.gone(selector), timeout);
     }
 
     /**
@@ -1221,6 +1259,7 @@ public class SpectatioUiUtil {
                     JsonConfigConstants.SCROLLABLE,
                     JsonConfigConstants.TEXT,
                     JsonConfigConstants.TEXT_CONTAINS,
+                    JsonConfigConstants.TEXT_MATCHES,
                     JsonConfigConstants.DESCRIPTION,
                     JsonConfigConstants.DESCRIPTION_CONTAINS,
                     JsonConfigConstants.CLASS,
@@ -1253,6 +1292,8 @@ public class SpectatioUiUtil {
                 return uiObject.getText().equalsIgnoreCase(expected);
             case JsonConfigConstants.TEXT_CONTAINS:
                 return uiObject.getText().contains(expected);
+            case JsonConfigConstants.TEXT_MATCHES:
+                return Pattern.matches(expected, uiObject.getText());
             case JsonConfigConstants.DESCRIPTION:
                 return uiObject.getContentDescription().equalsIgnoreCase(expected);
             case JsonConfigConstants.DESCRIPTION_CONTAINS:
