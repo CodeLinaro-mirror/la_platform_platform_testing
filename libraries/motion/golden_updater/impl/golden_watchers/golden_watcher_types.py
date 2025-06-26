@@ -17,7 +17,7 @@ import enum
 
 class GoldenWatcherTypes(enum.Enum):
     ATEST = "atest"
-    FILE = "file"
+    ADB = "adb"
     ROBOLECTRIC = "robolectric"
     PRESUBMIT = 'presubmit'
     NONE = "none"
