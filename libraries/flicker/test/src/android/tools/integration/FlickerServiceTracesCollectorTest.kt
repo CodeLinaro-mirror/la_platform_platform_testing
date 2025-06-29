@@ -17,6 +17,7 @@
 package android.tools.integration
 
 import android.app.Instrumentation
+import android.platform.test.annotations.RequiresDevice
 import android.tools.device.apphelpers.ClockAppHelper
 import android.tools.flicker.FlickerServiceTracesCollector
 import android.tools.flicker.isShellTransitionsEnabled
@@ -41,6 +42,7 @@ import org.junit.runners.MethodSorters
  * Contains [FlickerServiceTracesCollector] tests. To run this test: `atest
  * FlickerLibTestE2e:FlickerServiceTracesCollectorTest`
  */
+@RequiresDevice
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class FlickerServiceTracesCollectorTest {
     val instrumentation: Instrumentation = InstrumentationRegistry.getInstrumentation()
@@ -74,11 +76,14 @@ class FlickerServiceTracesCollectorTest {
         testApp.launchViaIntent(wmHelper)
         testApp.exit(wmHelper)
         val reader = collector.stop()
-        val tracePath = reader.artifactPath
 
-        require(tracePath.isNotEmpty()) { "Artifact path missing in result" }
-        val traceFile = File(tracePath)
-        Truth.assertThat(traceFile.exists()).isTrue()
+        for (artifact in reader.artifacts) {
+            val tracePath = artifact.absolutePath
+
+            require(tracePath.isNotEmpty()) { "Artifact path missing in result" }
+            val traceFile = File(tracePath)
+            Truth.assertThat(traceFile.exists()).isTrue()
+        }
     }
 
     @Test
@@ -95,11 +100,14 @@ class FlickerServiceTracesCollectorTest {
         testApp.launchViaIntent(wmHelper)
         testApp.exit(wmHelper)
         val reader = collector.stop()
-        val tracePath = reader.artifactPath
 
-        require(tracePath.isNotEmpty()) { "Artifact path missing in result" }
-        val traceFile = File(tracePath)
-        assertArchiveContainsFiles(traceFile, possibleExpectedTraces)
+        for (artifact in reader.artifacts) {
+            val tracePath = artifact.absolutePath
+
+            require(tracePath.isNotEmpty()) { "Artifact path missing in result" }
+            val traceFile = File(tracePath)
+            assertArchiveContainsFiles(traceFile, possibleExpectedTraces)
+        }
     }
 
     @Test

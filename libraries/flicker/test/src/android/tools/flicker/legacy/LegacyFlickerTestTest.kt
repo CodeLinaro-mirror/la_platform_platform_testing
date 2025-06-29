@@ -20,6 +20,8 @@ import android.annotation.SuppressLint
 import android.tools.CleanFlickerEnvironmentRuleWithDataStore
 import android.tools.ScenarioBuilder
 import android.tools.flicker.assertions.FlickerTest
+import android.tools.flicker.datastore.CachedResultReader
+import android.tools.flicker.datastore.DataStore
 import android.tools.io.TraceType
 import android.tools.newTestCachedResultWriter
 import android.tools.testutils.TEST_SCENARIO
@@ -59,7 +61,7 @@ class LegacyFlickerTestTest {
     fun executesLayers() {
         val predicate: (FlickerTest) -> Unit = { it.assertLayers { executionCount++ } }
         doWriteTraceExecuteAssertionAndVerify(
-            TraceType.SF,
+            TraceType.PERFETTO,
             predicate,
             TestTraces.LayerTrace.FILE,
             expectedExecutionCount = 2,
@@ -70,7 +72,7 @@ class LegacyFlickerTestTest {
     fun executesLayerStart() {
         val predicate: (FlickerTest) -> Unit = { it.assertLayersStart { executionCount++ } }
         doWriteTraceExecuteAssertionAndVerify(
-            TraceType.SF,
+            TraceType.PERFETTO,
             predicate,
             TestTraces.LayerTrace.FILE,
             expectedExecutionCount = 2,
@@ -81,7 +83,7 @@ class LegacyFlickerTestTest {
     fun executesLayerEnd() {
         val predicate: (FlickerTest) -> Unit = { it.assertLayersEnd { executionCount++ } }
         doWriteTraceExecuteAssertionAndVerify(
-            TraceType.SF,
+            TraceType.PERFETTO,
             predicate,
             TestTraces.LayerTrace.FILE,
             expectedExecutionCount = 2,
@@ -91,25 +93,25 @@ class LegacyFlickerTestTest {
     @Test
     fun doesNotExecuteLayersWithoutTrace() {
         val predicate: (FlickerTest) -> Unit = { it.assertLayers { executionCount++ } }
-        doExecuteAssertionWithoutTraceAndVerifyNotExecuted(TraceType.SF, predicate)
+        doExecuteAssertionWithoutTraceAndVerifyNotExecuted(TraceType.PERFETTO, predicate)
     }
 
     @Test
     fun doesNotExecuteLayersStartWithoutTrace() {
         val predicate: (FlickerTest) -> Unit = { it.assertLayersStart { executionCount++ } }
-        doExecuteAssertionWithoutTraceAndVerifyNotExecuted(TraceType.SF, predicate)
+        doExecuteAssertionWithoutTraceAndVerifyNotExecuted(TraceType.PERFETTO, predicate)
     }
 
     @Test
     fun doesNotExecuteLayersEndWithoutTrace() {
         val predicate: (FlickerTest) -> Unit = { it.assertLayersEnd { executionCount++ } }
-        doExecuteAssertionWithoutTraceAndVerifyNotExecuted(TraceType.SF, predicate)
+        doExecuteAssertionWithoutTraceAndVerifyNotExecuted(TraceType.PERFETTO, predicate)
     }
 
     @Test
     fun doesNotExecuteLayerTagWithoutTag() {
         val predicate: (FlickerTest) -> Unit = { it.assertLayersTag("tag") { executionCount++ } }
-        doExecuteAssertionWithoutTraceAndVerifyNotExecuted(TraceType.SF, predicate)
+        doExecuteAssertionWithoutTraceAndVerifyNotExecuted(TraceType.PERFETTO, predicate)
     }
 
     @Test
@@ -239,14 +241,10 @@ class LegacyFlickerTestTest {
         val flickerWrapper =
             LegacyFlickerTest(
                 resultReaderProvider = {
-                    android.tools.flicker.datastore.CachedResultReader(
+                    CachedResultReader(
                         it,
                         TRACE_CONFIG_REQUIRE_CHANGES,
-                        reader =
-                            ResultReader(
-                                android.tools.flicker.datastore.DataStore.getResult(it),
-                                TRACE_CONFIG_REQUIRE_CHANGES,
-                            ),
+                        reader = ResultReader(DataStore.getResult(it), TRACE_CONFIG_REQUIRE_CHANGES),
                     )
                 }
             )

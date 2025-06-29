@@ -17,6 +17,7 @@
 package android.tools.monitors
 
 import android.tools.io.Reader
+import android.tools.traces.monitors.withTracing
 import android.tools.traces.surfaceflinger.LayerTraceEntry
 import android.tools.traces.wm.WindowManagerState
 import androidx.test.platform.app.InstrumentationRegistry
@@ -32,17 +33,10 @@ class MonitorUtilsTest {
 
     @Test
     fun withTracing() {
-        val debugFile =
-            InstrumentationRegistry.getInstrumentation()
-                .targetContext
-                .filesDir
-                .resolve("uiTrace-MonitorUtilsTest-withTracing.winscope")
-
-        val trace =
-            android.tools.traces.monitors.withTracing(debugFile = debugFile) {
-                device.pressHome()
-                device.pressRecentApps()
-            }
+        val trace = withTracing {
+            device.pressHome()
+            device.pressRecentApps()
+        }
 
         validateTrace(trace)
     }
