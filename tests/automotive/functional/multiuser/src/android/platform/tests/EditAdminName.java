@@ -68,10 +68,16 @@ public class EditAdminName {
     public void testEditAdminName() {
         Log.i(LOG_TAG, "Act: Open Profile & Accounts setting");
         mSettingHelper.get().openSetting(SettingsConstants.PROFILE_ACCOUNT_SETTINGS);
+
+        Log.i(LOG_TAG, "Assert: Current user is admin");
+        assertTrue("User is not admin", mSettingHelper.get().checkMenuExists("Signed in as admin"));
+
         Log.i(LOG_TAG, "Act: Edit initial user's name");
         mUsersHelper.get().editUserName(EDIT_USERNAME);
+
         Log.i(LOG_TAG, "Act: Get current userinfo");
         UserInfo newUser = mMultiUserHelper.getCurrentForegroundUserInfo();
+
         Log.i(LOG_TAG, "Assert: Current username is changed ");
         assertTrue("Username is not changed", EDIT_USERNAME.equals(newUser.name));
     }
