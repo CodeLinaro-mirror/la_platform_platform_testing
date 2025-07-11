@@ -344,11 +344,10 @@ public class CommonUtils {
     }
 
     /**
-     * Returns the main user ID. Main user is the main human user on the device.
-     * Returns 0 by default, if there is no main user. Android Auto is example of HSUM without
-     * main user.
-     * 
-     * NOTE: For headless system main user it is NOT 0. Therefore Main user should be used in 
+     * Returns the main user ID. Main user is the main human user on the device. Returns 0 by
+     * default, if there is no main user. Android Auto is example of HSUM without main user.
+     *
+     * <p>NOTE: For headless system main user it is NOT 0. Therefore Main user should be used in
      * test cases rather than owner or deprecated primary user.
      */
     public static int getMainUserId() {
@@ -360,6 +359,7 @@ public class CommonUtils {
         }
     }
 
+    /** Returns true if split shade is enabled. */
     public static boolean isSplitShade() {
         try {
             Resources sysUiResources =
@@ -376,6 +376,7 @@ public class CommonUtils {
         return isLargeScreen() && (orientation == Configuration.ORIENTATION_LANDSCAPE);
     }
 
+    /** Returns true if the device is a large screen. */
     public static boolean isLargeScreen() {
         Point sizeDp = getUiDevice().getDisplaySizeDp();
         return sizeDp.x >= LARGE_SCREEN_DP_THRESHOLD && sizeDp.y >= LARGE_SCREEN_DP_THRESHOLD;
