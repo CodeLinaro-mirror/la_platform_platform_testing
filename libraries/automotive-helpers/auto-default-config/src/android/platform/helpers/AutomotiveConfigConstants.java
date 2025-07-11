@@ -392,6 +392,9 @@ public class AutomotiveConfigConstants {
     public static final String PERMISSIONS_PAGE_TITLE = "PERMISSIONS_PAGE_TITLE";
     public static final String OPEN_DIALER_WORKFLOW = "OPEN_DIALER_WORKFLOW";
     public static final String SEARCH_CONTACTS_WORKFLOW = "SEARCH_CONTACTS_WORKFLOW";
+
+    public static final String SETTING_SEARCH_EMPTY_DEFAULT_WORKFLOW =
+            "SETTING_SEARCH_EMPTY_DEFAULT_WORKFLOW";
     public static final String DIAL_CONTACT_WORKFLOW = "DIAL_CONTACT_WORKFLOW";
     public static final String SOUND_SETTINGS = "OPEN_SOUND_SETTINGS_WORKFLOW";
     public static final String NETWORK_AND_INTERNET_SETTINGS =
@@ -483,6 +486,8 @@ public class AutomotiveConfigConstants {
     public static final String USER_SETTINGS_OK = "USER_SETTINGS_OK";
     public static final String USER_SETTINGS_DELETE_SELF = "USER_SETTINGS_DELETE_SELF";
     public static final String USER_SETTINGS_MAKE_ADMIN = "USER_SETTINGS_MAKE_ADMIN";
+    public static final String CHOOSE_ADMIN_BUTTON = "CHOOSE_ADMIN_BUTTON";
+    public static final String MAKE_ADMIN_BUTTON = "MAKE_ADMIN_BUTTON";
     public static final String USER_SETTINGS_MAKE_ADMIN_CONFIRM =
             "USER_SETTINGS_MAKE_ADMIN_CONFIRM";
     public static final String CREATE_NEW_PROFILE_SWITCH = "CREATE_NEW_PROFILE_SWITCH";
@@ -499,6 +504,7 @@ public class AutomotiveConfigConstants {
             "USER_SETTINGS_MANAGE_OTHER_PROFILES";
     public static final String USER_SETTINGS_SCROLL_MARGIN = "USER_SETTINGS_SCROLL_MARGIN";
     public static final String USER_SETTINGS_SCROLL_WAIT_TIME = "USER_SETTINGS_SCROLL_WAIT_TIME";
+    public static final String SKIP_SETUP_WIZARD = "SKIP_SETUP_WIZARD";
 
     // Account Settings Constants
     public static final String ACCOUNT_SETTINGS_SCROLL_ACTION = "ACCOUNT_SETTINGS_SCROLL_ACTION";

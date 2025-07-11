@@ -1284,6 +1284,14 @@
       "TYPE": "TEXT",
       "VALUE": "Delete this profile"
     },
+    "CHOOSE_ADMIN_BUTTON": {
+      "TYPE": "TEXT",
+      "VALUE": "Choose admin"
+    },
+    "MAKE_ADMIN_BUTTON": {
+      "TYPE": "TEXT",
+      "VALUE": "Yes, make admin"
+    },
     "USER_SETTINGS_MAKE_ADMIN": {
       "TYPE": "TEXT",
       "VALUE": "Make Admin"
@@ -2542,6 +2550,36 @@
         }
       }
     ],
+    "SETTING_SEARCH_EMPTY_DEFAULT_WORKFLOW": [
+      {
+        "NAME": "Open search",
+        "TYPE": "CLICK",
+        "CONFIG": {
+          "UI_ELEMENT_REFERENCE": "SEARCH"
+        }
+      },
+      {
+        "NAME": "Enter no text",
+        "TYPE": "SET_TEXT",
+        "CONFIG": {
+          "UI_ELEMENT_REFERENCE": "SEARCH_BOX"
+        },
+        "SET_TEXT_CONFIG": {
+          "TEXT": ""
+        }
+      },
+      {
+        "NAME": "Check for searched is empty",
+        "TYPE": "VALIDATE_VALUE",
+        "CONFIG": {
+          "UI_ELEMENT_REFERENCE": "SEARCH_BOX"
+        },
+        "VALIDATION_CONFIG": {
+          "PROPERTY": "TEXT",
+          "EXPECTED": "Search…"
+        }
+      }
+    ],
     "OPEN_LOCATION_SETTINGS_WORKFLOW": [
       {
         "NAME": "Open Settings",
@@ -3045,6 +3083,29 @@
             "TYPE": "DESCRIPTION",
             "VALUE": "Calendar"
           }
+        }
+      }
+    ],
+    "SKIP_SETUP_WIZARD": [
+      {
+        "NAME": "Skip SUW setup",
+        "TYPE": "COMMAND",
+        "CONFIG": {
+          "TEXT": "am broadcast -a com.google.android.setupservices.GOOGLE_SERVICES_ACCEPTED com.google.android.gms"
+        }
+      },
+      {
+        "NAME": "Skip Initial Setup",
+        "TYPE": "COMMAND",
+        "CONFIG": {
+          "TEXT": "settings put secure android.car.ENABLE_INITIAL_NOTICE_SCREEN_TO_USER 0"
+        }
+      },
+      {
+        "NAME": "Go to Home",
+        "TYPE": "PRESS",
+        "CONFIG": {
+          "TEXT": "HOME"
         }
       }
     ]

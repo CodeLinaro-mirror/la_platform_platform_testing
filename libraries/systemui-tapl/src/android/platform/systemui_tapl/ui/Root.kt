@@ -87,7 +87,7 @@ class Root private constructor(val displayId: Int = DEFAULT_DISPLAY) {
     /** Opens the notification shade via two fingers wipe. */
     fun openNotificationShadeViaTwoFingersSwipe(): NotificationShade {
         assertWithMessage(
-                "two finger swipe is only supported on the default display, because it relies on " +
+            "two finger swipe is only supported on the default display, because it relies on " +
                     "UiObject#performTwoPointerGesture, and UiObject has no concept of displayId " +
                     "(unlike UiObject2)"
             )
@@ -231,7 +231,7 @@ class Root private constructor(val displayId: Int = DEFAULT_DISPLAY) {
     ) {
         if (assertIsHunState) {
             assertWithMessage(
-                    "HUN state Assertion usage error: Notification: ${identity.title} " +
+                "HUN state Assertion usage error: Notification: ${identity.title} " +
                         "| You can only assert the HUN State of a notification that has an action " +
                         "button."
                 )

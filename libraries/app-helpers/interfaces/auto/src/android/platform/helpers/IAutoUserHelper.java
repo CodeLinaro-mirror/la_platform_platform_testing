@@ -55,6 +55,13 @@ public interface IAutoUserHelper extends IAppHelper {
     /**
      * Setup expectation: Profiles and Accounts setting is open.
      *
+     * <p>This method is choose other user as admin while delete user's own profile
+     */
+    void deleteAdminAndChooseOtherAsAdmin(String user);
+
+    /**
+     * Setup expectation: Profiles and Accounts setting is open.
+     *
      * <p>This method is to check if user already exists.
      */
     boolean isUserPresent(String userName);
@@ -119,5 +126,12 @@ public interface IAutoUserHelper extends IAppHelper {
      * <p>This method is used to toggle the switch .
      */
     boolean toggle(String buttonText);
+
+    /**
+     * Setup expectation: New User is created
+     *
+     * <p>This method is used to skip the set up and initial diaglogs.
+     */
+    void skipSetupWizard();
 }
 
