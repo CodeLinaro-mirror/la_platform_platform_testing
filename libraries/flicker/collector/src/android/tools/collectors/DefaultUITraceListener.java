@@ -21,6 +21,7 @@ import android.device.collectors.PerfettoListener;
 import android.device.collectors.PerfettoTracingStrategy;
 import android.os.Bundle;
 
+import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
 import org.junit.runner.notification.RunListener;
@@ -51,21 +52,27 @@ public class DefaultUITraceListener extends UiTraceListener {
 
     @Override
     protected boolean traceFtrace(Bundle args) {
-        return true;
+        return Boolean.parseBoolean(args.getString(TRACE_FTRACE_KEY, "true"));
     }
 
     @Override
     protected boolean traceLayers(Bundle args) {
-        return true;
+        return Boolean.parseBoolean(args.getString(TRACE_LAYERS_KEY, "true"));
     }
 
     @Override
     protected boolean traceShellTransitions(Bundle args) {
-        return true;
+        return Boolean.parseBoolean(args.getString(TRACE_SHELL_TRANSITIONS_KEY, "true"));
     }
 
     @Override
     protected boolean traceInput(Bundle args) {
-        return true;
+        return Boolean.parseBoolean(args.getString(TRACE_INPUT_KEY, "true"));
+    }
+
+    @Nullable
+    @Override
+    protected String getDefaultProtoLogFromLevel(Bundle args) {
+        return args.getString(PROTOLOG_DEFAULT_LOG_FROM_LEVEL_KEY, "DEBUG");
     }
 }
