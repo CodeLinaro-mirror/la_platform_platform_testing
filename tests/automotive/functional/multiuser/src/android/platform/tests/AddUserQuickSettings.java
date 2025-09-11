@@ -49,7 +49,7 @@ public class AddUserQuickSettings {
     @Rule public ConditionalIgnoreRule rule = new ConditionalIgnoreRule();
 
     private final MultiUserHelper mMultiUserHelper = MultiUserHelper.getInstance();
-    // private static final String userName = MultiUserConstants.SECONDARY_USER_NAME;
+    private UserInfo mNewUser;
     private HelperAccessor<IAutoUserHelper> mUsersHelper;
     private HelperAccessor<IAutoSettingHelper> mSettingHelper;
     private HelperAccessor<IAutoHomeHelper> mHomeHelper;
@@ -64,6 +64,9 @@ public class AddUserQuickSettings {
 
     @After
     public void goBackToHomeScreen() {
+        Log.i(LOG_TAG, "Act: Remove created new user");
+        mMultiUserHelper.removeUser(mNewUser);
+
         Log.i(LOG_TAG, "Act: Go back to Home Screen");
         mSettingHelper.get().exit();
     }
@@ -71,27 +74,24 @@ public class AddUserQuickSettings {
     @Test
     @ConditionalIgnore(condition = IgnoreOnPortrait.class)
     public void testAddNonAdminUser() throws Exception {
-        // create new user quick settings
         Log.i(LOG_TAG, "Act: Create new user");
         UserInfo initialUser = mMultiUserHelper.getCurrentForegroundUserInfo();
         mUsersHelper.get().addUserQuickSettings(initialUser.name);
-        // switched to new user
+
         Log.i(LOG_TAG, "Act: Switch to new user");
-        UserInfo newUser = mMultiUserHelper.getCurrentForegroundUserInfo();
-        // switch from new user to initial user
+        mNewUser = mMultiUserHelper.getCurrentForegroundUserInfo();
 
         Log.i(LOG_TAG, "Act: Switch back to initial user");
         mMultiUserHelper.switchToUserId(initialUser.id);
 
-        // verify new user is seen in list of users
         Log.i(LOG_TAG, "Assert: New user is listed in users list");
-        assertTrue(mMultiUserHelper.getUserByName(newUser.name) != null);
-        // Verify new user is non-admin Profile
+        assertTrue(mMultiUserHelper.getUserByName(mNewUser.name) != null);
+
         Log.i(LOG_TAG, "Act: Open Profile & Accounts setting");
         mSettingHelper.get().openSetting(SettingsConstants.PROFILE_ACCOUNT_SETTINGS);
 
         Log.i(LOG_TAG, "Assert: New user does not have Admin Access");
-        assertFalse("New user has Admin Access", mUsersHelper.get().isNewUserAnAdmin(newUser.name));
+        assertFalse("New user has Admin Access", mUsersHelper.get().isNewUserAnAdmin(mNewUser.name));
 
         Log.i(LOG_TAG, "Act: Open status bar profiles");
         mHomeHelper.get().openStatusBarProfiles();
@@ -102,13 +102,9 @@ public class AddUserQuickSettings {
         Log.i(LOG_TAG, "Assert: Newly added user name is displaying in quick controls");
         assertTrue(
                 "Newly added user is not displaying in quick controls",
-                profileNames.contains(newUser.name));
+                profileNames.contains(mNewUser.name));
 
         Log.i(LOG_TAG, "Act: Close status bar profiles");
         mHomeHelper.get().openStatusBarProfiles();
-
-        // remove new user
-        Log.i(LOG_TAG, "Act: Remove created new user");
-        mMultiUserHelper.removeUser(newUser);
     }
 }

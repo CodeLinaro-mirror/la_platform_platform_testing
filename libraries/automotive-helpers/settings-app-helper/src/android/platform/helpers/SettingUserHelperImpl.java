@@ -97,6 +97,11 @@ public class SettingUserHelperImpl extends AbstractStandardAppHelper implements 
         UiObject2 userObject = getSpectatioUiUtil().findUiObject(userSelector);
         getSpectatioUiUtil().validateUiObject(userObject, String.format("User %s", user));
         getSpectatioUiUtil().clickAndWait(userObject);
+        getSpectatioUiUtil()
+                .waitForUiObject(
+                        getUiElementFromConfig(
+                                AutomotiveConfigConstants.USER_SETTINGS_TOGGLE_BUTTON),
+                        WAIT_MS);
     }
     // delete an existing user
     @Override
@@ -323,6 +328,11 @@ public class SettingUserHelperImpl extends AbstractStandardAppHelper implements 
         BySelector homeButtonSelector =
                 getUiElementFromConfig(AutomotiveConfigConstants.HOME_PROFILE_ICON_BUTTON);
         getSpectatioUiUtil().waitForUiObject(homeButtonSelector, WAIT_MS);
+    }
+
+    @Override
+    public boolean checkUserProfileName(String initialUser, String newUser) {
+        return initialUser.equals(newUser);
     }
 
     @Override
