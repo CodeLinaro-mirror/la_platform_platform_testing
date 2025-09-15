@@ -162,6 +162,9 @@ class ComponentNameMatcher(var component: ComponentName) : IComponentNameMatcher
 
         @JvmField val DEFAULT_TASK_DISPLAY_AREA = ComponentNameMatcher("", "DefaultTaskDisplayArea")
 
+        // Component for the desktop mode window handle layer.
+        @JvmField val DESKTOP_HANDLE = ComponentNameMatcher("", "desktop-handle")
+
         @JvmField
         val DESKTOP_WALLPAPER_ACTIVITY =
             ComponentNameMatcher(
@@ -188,6 +191,24 @@ class ComponentNameMatcher(var component: ComponentName) : IComponentNameMatcher
             ComponentNameMatcher(
                 "com.android.settings",
                 "com.android.settings.Settings\$NetworkDashboardActivity")
+
+        @JvmField
+        val SHARE_CHOOSER_ACTIVITY =
+            ComponentNameMatcher(
+                "com.android.intentresolver",
+                "com.android.intentresolver.ChooserActivityLauncher")
+
+        @JvmField
+        val PERMISSION_DIALOG_ACTIVITY =
+            ComponentNameMatcher(
+                "com.google.android.permissioncontroller",
+                "com.android.permissioncontroller.permission.ui.GrantPermissionsActivity")
+
+        @JvmField
+        val QUICK_SHARE_DIALOG_ACTIVITY = ComponentNameMatcher(
+            "com.google.android.gms",
+            "com.google.android.gms.nearby.sharing.receive.ReceiveActivity"
+        )
 
         /**
          * Creates a component matcher from a window or layer name.
