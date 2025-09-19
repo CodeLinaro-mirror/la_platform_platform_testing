@@ -19,17 +19,19 @@ package android.platform.systemui_tapl.ui.quicksettings
 /**
  * Enum class representing different Quick Settings (QS) tiles to use for edit mode tests.
  *
+ * Note: e2e tests run on a range of devices, so avoid adding tiles that are not available on all
+ *
  * @property desc The label of the QS tile.
  * @property spec The tile's tilespec.
  */
 enum class QSEditTileSpec(val desc: String, val spec: String) {
     INTERNET("Internet", "internet"),
+    WIFI("Internet", "wifi"),
     BLUETOOTH("Bluetooth", "bt"),
     MODES("Modes", "dnd"),
     AUTO_ROTATE("Auto-rotate", "rotation"),
     DARK_THEME("Dark theme", "dark"),
     ALARM("Alarm", "alarm"),
-    FLASHLIGHT("Flashlight", "flashlight"),
     CAMERA("Camera access", "cameratoggle"),
     MIC("Mic access", "mictoggle"),
     NIGHT_LIGHT("Night Light", "night"),

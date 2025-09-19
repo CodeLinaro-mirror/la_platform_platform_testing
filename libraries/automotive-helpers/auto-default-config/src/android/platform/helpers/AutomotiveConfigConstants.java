@@ -245,6 +245,8 @@ public class AutomotiveConfigConstants {
     public static final String SYSTEM_SETTINGS_SCROLL_MARGIN = "SYSTEM_SETTINGS_SCROLL_MARGIN";
     public static final String SYSTEM_SETTINGS_SCROLL_WAIT_TIME =
             "SYSTEM_SETTINGS_SCROLL_WAIT_TIME";
+
+    public static final String MEDIA_SOUND_SEEKBAR = "MEDIA_SOUND_SEEKBAR";
     public static final String RECENT_NOTIFICATIONS = "RECENT_NOTIFICATIONS";
     public static final String OLDER_NOTIFICATIONS = "OLDER_NOTIFICATIONS";
     public static final String TEST_NOTIFICATION = "TEST_NOTIFICATION";
@@ -358,7 +360,13 @@ public class AutomotiveConfigConstants {
     // Media App UI View
     public static final String MEDIA_APP_TITLE = "MEDIA_APP_TITLE";
     public static final String MEDIA_APP_DROP_DOWN_MENU = "MEDIA_APP_DROP_DOWN_MENU";
+    public static final String MEDIA_APP_QUEUE_MENU = "MEDIA_APP_QUEUE_MENU";
+    public static final String MEDIA_APP_QUEUE_SCROLL = "MEDIA_APP_QUEUE_SCROLL";
+    public static final String MEDIA_APP_QUEUE_SCROLL_UP = "MEDIA_APP_QUEUE_SCROLL_UP";
+    public static final String MEDIA_APP_QUEUE_SCROLL_DOWN = "MEDIA_APP_QUEUE_SCROLL_DOWN";
     public static final String MEDIA_APP_SETTINGS = "MEDIA_APP_SETTINGS";
+    public static final String MEDIA_APP_SEARCH = "MEDIA_APP_SEARCH";
+    public static final String MEDIA_SEARCH_RESTRICTED_MESSAGE = "MEDIA_SEARCH_RESTRICTED_MESSAGE";
     public static final String MEDIA_APP_NAVIGATION_ICON = "MEDIA_APP_NAVIGATION_ICON";
     public static final String MEDIA_APP_NO_LOGIN_MSG = "MEDIA_APP_NO_LOGIN_MSG";
     public static final String MOW_PLAYING_LABEL = "MOW_PLAYING_LABEL";

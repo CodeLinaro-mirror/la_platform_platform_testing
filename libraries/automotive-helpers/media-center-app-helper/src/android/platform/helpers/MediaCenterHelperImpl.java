@@ -548,6 +548,37 @@ public class MediaCenterHelperImpl extends AbstractStandardAppHelper implements 
         getSpectatioUiUtil().clickAndWait(testMediaAppSettings);
     }
 
+    /** {@inheritDoc} */
+    @Override
+    public void openTestMediaAppSearch() {
+        BySelector testMediaAppSearchSelector =
+                getUiElementFromConfig(AutomotiveConfigConstants.MEDIA_APP_SEARCH);
+        UiObject2 testMediaAppSearch =
+                getSpectatioUiUtil().findUiObject(testMediaAppSearchSelector);
+        getSpectatioUiUtil().clickAndWait(testMediaAppSearch);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean isMediaSearchRestrictedMessagedDisplayed() {
+        BySelector testMediaAppSearchRestrictedMessageSelector =
+                getUiElementFromConfig(AutomotiveConfigConstants.MEDIA_SEARCH_RESTRICTED_MESSAGE);
+        UiObject2 testMediaAppSearchRestrictedMessage =
+                getSpectatioUiUtil().findUiObject(testMediaAppSearchRestrictedMessageSelector);
+        return testMediaAppSearchRestrictedMessage != null;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean isSearchBarTakingInput() {
+        BySelector searchBarSelector = getUiElementFromConfig(AutomotiveConfigConstants.SEARCH_BOX);
+        UiObject2 searchBar = getSpectatioUiUtil().findUiObject(searchBarSelector);
+        String initialText = searchBar.getText();
+        searchBar.setText("input");
+        String inputText = searchBar.getText();
+        return (!initialText.equals(inputText));
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -780,18 +811,30 @@ public class MediaCenterHelperImpl extends AbstractStandardAppHelper implements 
     public void clickOnPlaylistIcon() {
         BySelector playlistIcon =
                 getUiElementFromConfig(AutomotiveConfigConstants.MEDIA_PLAYLIST_ICON);
-        UiObject2 playlistIconObject =
-                getSpectatioUiUtil().findUiObject(playlistIcon);
+        UiObject2 playlistIconObject = getSpectatioUiUtil().findUiObject(playlistIcon);
         getSpectatioUiUtil()
                 .validateUiObject(
-                        playlistIconObject,
-                        AutomotiveConfigConstants.MEDIA_PLAYLIST_ICON);
+                        playlistIconObject, AutomotiveConfigConstants.MEDIA_PLAYLIST_ICON);
         getSpectatioUiUtil().clickAndWait(playlistIconObject);
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    /** {@inheritDoc} */
+    @Override
+    public boolean isPlaylistScrollUpVisible() {
+        BySelector playlistScrollUp =
+                getUiElementFromConfig(AutomotiveConfigConstants.MEDIA_APP_QUEUE_SCROLL_UP);
+        return getSpectatioUiUtil().hasUiElement(playlistScrollUp);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean isPlaylistScrollDownVisible() {
+        BySelector playlistScrollDown =
+                getUiElementFromConfig(AutomotiveConfigConstants.MEDIA_APP_QUEUE_SCROLL_DOWN);
+        return getSpectatioUiUtil().hasUiElement(playlistScrollDown);
+    }
+
+    /** {@inheritDoc} */
     @Override
     public void grantRestrictedPermissionsForBTMedia(String permission) {
         if (permission == null || permission.length() < 1) {
