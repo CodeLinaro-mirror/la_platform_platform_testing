@@ -174,6 +174,27 @@ public interface IAutoMediaHelper extends IAppHelper, Scrollable {
     void openTestMediaAppSettings();
 
     /**
+     * Setup expectations: Media app is open.
+     *
+     * <p>Opens Test Meida Search
+     */
+    void openTestMediaAppSearch();
+
+    /**
+     * Setup expectations: Media app search is open.
+     *
+     * <p>Validates Media apps search restricted message is displayed
+     */
+    boolean isMediaSearchRestrictedMessagedDisplayed();
+
+    /**
+     * Setup expectations: Media app search is open.
+     *
+     * <p>Validates Test Media App search is taking input
+     */
+    boolean isSearchBarTakingInput();
+
+    /**
      * Setup expectations: Media app is open. Account not logged in.
      *
      * @return Error message for no user login
@@ -293,6 +314,13 @@ public interface IAutoMediaHelper extends IAppHelper, Scrollable {
     /**
      * Setup expectations: Media app is open and maximized now playing.
      *
+     * <p>validates album thumbnail is displaying or not
+     */
+    boolean isAlbumThumbnailDisplaying();
+
+    /**
+     * Setup expectations: Media app is open and maximized now playing.
+     *
      * @return get current song playing time
      */
     String getSongCurrentPlayingTime();
@@ -352,4 +380,18 @@ public interface IAutoMediaHelper extends IAppHelper, Scrollable {
      * <p>This method is used to navigate through different media categories and play song
      */
     boolean checkPlayingTrackFromMediaAppCategories(String automotiveconfig, String track);
+
+    /**
+     * Setup expectations: Media app is open
+     *
+     * <p>This method verifies if the Scroll up option is visible
+     */
+    boolean isPlaylistScrollUpVisible();
+
+    /**
+     * Setup expectations: Media app is open
+     *
+     * <p>This method verifies if the Scroll Down option is visible
+     */
+    boolean isPlaylistScrollDownVisible();
 }
