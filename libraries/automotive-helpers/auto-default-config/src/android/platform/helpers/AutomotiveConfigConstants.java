@@ -333,6 +333,8 @@ public class AutomotiveConfigConstants {
     public static final String ARTIST_TITLE = "ARTIST_TITLE";
     public static final String ALBUM_TITLE = "ALBUM_TITLE";
     public static final String ALBUM_THUMBNAIL = "ALBUM_THUMBNAIL";
+    public static final String RADIO_STATION_NAME = "RADIO_STATION_NAME";
+    public static final String BROWSE_RADIO_CATEGORY = "BROWSE_RADIO_CATEGORY";
     public static final String BASIC_SONGS_CATEGORY = "BASIC_SONGS_CATEGORY";
     public static final String ADVANCED_CATEGORY = "ADVANCED_CATEGORY";
     public static final String RABBIT_HOLE_CATEGORY = "RABBIT_HOLE_CATEGORY";
@@ -340,7 +342,9 @@ public class AutomotiveConfigConstants {
     public static final String CURRENT_SONG_TIME = "CURRENT_SONG_TIME";
     public static final String MAX_SONG_TIME = "MAX_SONG_TIME";
     public static final String RADIO_APP_TITLE = "RADIO_APP_TITLE";
-
+    public static final String MEDIA_CARD_PLAY_LIST_BUTTON = "MEDIA_CARD_PLAY_LIST_BUTTON";
+    public static final String MEDIA_CARD_QUEUE_LIST = "MEDIA_CARD_QUEUE_LIST";
+    public static final String MEDIA_CARD_SONG = "MEDIA_CARD_SONG";
     // NEXT_BUTTON from Account Settings
     public static final String PREVIOUS_BUTTON = "PREVIOUS_BUTTON";
     public static final String SHUFFLE_BUTTON = "SHUFFLE_BUTTON";
@@ -358,6 +362,7 @@ public class AutomotiveConfigConstants {
     public static final String TRACK_NAME_HOME_SCREEN = "TRACK_NAME_HOME_SCREEN";
     // Media Apps Grid
     public static final String MEDIA_APPS_GRID_TITLE = "MEDIA_APPS_GRID_TITLE";
+    public static final String MEDIA_TEST_APP_THUMBNAIL = "MEDIA_TEST_APP_THUMBNAIL";
     // Media App UI View
     public static final String MEDIA_APP_TITLE = "MEDIA_APP_TITLE";
     public static final String MEDIA_APP_DROP_DOWN_MENU = "MEDIA_APP_DROP_DOWN_MENU";
@@ -390,6 +395,11 @@ public class AutomotiveConfigConstants {
     public static final String MEDIA_APP_SCROLL_ELEMENT = "MEDIA_APP_SCROLL_ELEMENT";
     public static final String BLUETOOTH_DISCONNECTED_LABEL = "BLUETOOTH_DISCONNECTED_LABEL";
     public static final String MEDIA_PLAYLIST_ICON = "MEDIA_PLAYLIST_ICON";
+    public static final String MEDIA_CARD_SONG_AUTHOR_NAME = "MEDIA_CARD_SONG_AUTHOR_NAME";
+    public static final String MEDIA_CARD_PREVIOUS_BUTTON = "MEDIA_CARD_PREVIOUS_BUTTON";
+    public static final String MEDIA_CARD_PAUSE_BUTTON = "MEDIA_CARD_PAUSE_BUTTON";
+    public static final String MEDIA_CARD_NEXT_BUTTON = "MEDIA_CARD_NEXT_BUTTON";
+    public static final String PLAYS_LIST_SLIDER = "PLAYS_LIST_SLIDER";
 
     // SETTINGS CONSTANTS
     public static final String OPEN_SETTINGS_COMMAND = "OPEN_SETTINGS_COMMAND";

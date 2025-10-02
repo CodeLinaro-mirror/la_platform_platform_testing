@@ -298,6 +298,41 @@ public interface IAutoMediaHelper extends IAppHelper, Scrollable {
     void clickOnSongFromPlaylist();
 
     /**
+     * Setup expectations: Media card is open and playing any song.
+     *
+     * @return get current playing song author name
+     */
+    String getMediaCardSongAuthorName();
+
+    /**
+     * Setup expectations: Media card is open and playing any song.
+     *
+     * <p>This method validates media card previous button is displaying
+     */
+    boolean isMediaCardPreviousButtonDisplaying();
+
+    /**
+     * Setup expectations: Media card is open and playing any song.
+     *
+     * <p>This method validates media card pause button is displaying
+     */
+    boolean isMediaCardPauseButtonDisplaying();
+
+    /**
+     * Setup expectations: Media card is open and playing any song.
+     *
+     * <p>This method validates media card next button is displaying
+     */
+    boolean isMediaCardNextButtonDisplaying();
+
+    /**
+     * Setup expectations: Media card is open and playing any song.
+     *
+     * <p>This method closes media card play list
+     */
+    void closeMediaCardPlayList();
+
+    /**
      * Setup expectations: Media app is open and maximized now playing.
      *
      * @return get current artist tile
@@ -368,6 +403,13 @@ public interface IAutoMediaHelper extends IAppHelper, Scrollable {
     boolean isRadioAppLaunched();
 
     /**
+     * Setup expectations: Radio is open
+     *
+     * <p>This method returns the Radio station name
+     */
+    String getRadioStationName();
+
+    /**
      * Setup expectations: Media app is open
      *
      * <p>This method is used to navigate through different media categories
@@ -382,6 +424,27 @@ public interface IAutoMediaHelper extends IAppHelper, Scrollable {
     boolean checkPlayingTrackFromMediaAppCategories(String automotiveconfig, String track);
 
     /**
+     * Setup expectations: Media card is open
+     *
+     * <p>This method is used to click Media card thumbnail
+     */
+    void clickMediaCardThumbnail();
+
+    /**
+     * Setup expectations: Media card is present
+     *
+     * <p>This method checks Media App opens after Media card thumbnail is clicked
+     */
+    boolean isMediaAppOpenAndTrackPlaying(String track);
+
+    /**
+     * Setup expectations: on home screen.
+     *
+     * <p>This method opens Radio app and play a Radio station
+     */
+    void openRadioAppAndPlayGivenStation(String media);
+
+    /**
      * Setup expectations: Media app is open
      *
      * <p>This method verifies if the Scroll up option is visible
@@ -394,4 +457,25 @@ public interface IAutoMediaHelper extends IAppHelper, Scrollable {
      * <p>This method verifies if the Scroll Down option is visible
      */
     boolean isPlaylistScrollDownVisible();
+
+    /**
+     * Setup expectations: Media card is playing any media
+     *
+     * <p>This method click on play list button from media button
+     */
+    void openMediaCardPlayList();
+
+    /**
+     * Setup expectations: Media card queue list is opened
+     *
+     * <p>This method validates queue list on media is opened
+     */
+    boolean isQueueListDisplayed();
+
+    /**
+     * Setup expectations: Media card queue list is opened
+     *
+     * <p>This method plays a song from playlist in media card and returns selected song
+     */
+    String getPlayingSongInMediaCard();
 }
