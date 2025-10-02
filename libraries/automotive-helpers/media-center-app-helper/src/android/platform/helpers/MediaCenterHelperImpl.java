@@ -43,8 +43,12 @@ public class MediaCenterHelperImpl extends AbstractStandardAppHelper implements 
     private static final String LOG_TAG = MediaCenterHelperImpl.class.getSimpleName();
 
     private static final int WAIT_MS = 10000;
+    private static final String RADIO_APP = "Radio";
     private MediaSessionManager mMediaSessionManager;
     private UiAutomation mUiAutomation;
+
+    private static HelperAccessor<IAutoAppGridHelper> sAppGridHelper =
+            new HelperAccessor<>(IAutoAppGridHelper.class);
 
     private ScrollUtility mScrollUtility;
     private ScrollActions mScrollAction;
@@ -872,5 +876,153 @@ public class MediaCenterHelperImpl extends AbstractStandardAppHelper implements 
         navigateMediaAppCategories(automotiveconfig);
         selectMediaTrack(track);
         return getMediaTrackName().equals(track);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void clickMediaCardThumbnail() {
+        BySelector mediaThumbnailIcon =
+                getUiElementFromConfig(AutomotiveConfigConstants.MEDIA_TEST_APP_THUMBNAIL);
+        UiObject2 mediaThumbnailIconObject = getSpectatioUiUtil().findUiObject(mediaThumbnailIcon);
+        getSpectatioUiUtil()
+                .validateUiObject(
+                        mediaThumbnailIconObject,
+                        AutomotiveConfigConstants.MEDIA_TEST_APP_THUMBNAIL);
+        getSpectatioUiUtil().clickAndWait(mediaThumbnailIconObject);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean isMediaAppOpenAndTrackPlaying(String track) {
+        boolean mediAppOpenStatus = false;
+        if (sAppGridHelper
+                .get()
+                .checkPackageInForeground(AutomotiveConfigConstants.RADIO_PACKAGE)) {
+            if (getRadioStationName().contains(track.substring(0, 4)) && isPlaying()) {
+                mediAppOpenStatus = true;
+            }
+        } else {
+            if (getMediaTrackName().equals(track) && isPlaying()) {
+                mediAppOpenStatus = true;
+            }
+        }
+        minimizeNowPlaying();
+        return mediAppOpenStatus;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public String getRadioStationName() {
+        String stationName;
+        BySelector stationNameSelector =
+                getUiElementFromConfig(AutomotiveConfigConstants.RADIO_STATION_NAME);
+        UiObject2 stationNameTextPlayback = getSpectatioUiUtil().findUiObject(stationNameSelector);
+        getSpectatioUiUtil()
+                .validateUiObject(
+                        stationNameTextPlayback, AutomotiveConfigConstants.RADIO_STATION_NAME);
+        stationName = stationNameTextPlayback.getText();
+        return stationName;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void openRadioAppAndPlayGivenStation(String media) {
+        sAppGridHelper.get().open();
+        sAppGridHelper.get().openApp(RADIO_APP);
+        navigateMediaAppCategories(AutomotiveConfigConstants.BROWSE_RADIO_CATEGORY);
+        selectMediaTrack(media);
+        exit();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public String getMediaCardSongAuthorName() {
+        BySelector mediaCardSongAuthorNameSelector =
+                getUiElementFromConfig(AutomotiveConfigConstants.MEDIA_CARD_SONG_AUTHOR_NAME);
+        UiObject2 mediaCardSongAuthorName =
+                getSpectatioUiUtil().findUiObject(mediaCardSongAuthorNameSelector);
+        getSpectatioUiUtil()
+                .validateUiObject(
+                        mediaCardSongAuthorName,
+                        AutomotiveConfigConstants.MEDIA_CARD_SONG_AUTHOR_NAME);
+        return mediaCardSongAuthorName.getText().trim();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean isMediaCardPreviousButtonDisplaying() {
+        BySelector mediaCardPreviousButtonSelector =
+                getUiElementFromConfig(AutomotiveConfigConstants.MEDIA_CARD_PREVIOUS_BUTTON);
+        UiObject2 mediaCardPreviousButton =
+                getSpectatioUiUtil().findUiObject(mediaCardPreviousButtonSelector);
+        getSpectatioUiUtil()
+                .validateUiObject(
+                        mediaCardPreviousButton,
+                        AutomotiveConfigConstants.MEDIA_CARD_PREVIOUS_BUTTON);
+        return mediaCardPreviousButton != null;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean isMediaCardPauseButtonDisplaying() {
+        BySelector mediaCardPauseButtonSelector =
+                getUiElementFromConfig(AutomotiveConfigConstants.MEDIA_CARD_PAUSE_BUTTON);
+        UiObject2 mediaCardPauseButton =
+                getSpectatioUiUtil().findUiObject(mediaCardPauseButtonSelector);
+        getSpectatioUiUtil()
+                .validateUiObject(
+                        mediaCardPauseButton, AutomotiveConfigConstants.MEDIA_CARD_PAUSE_BUTTON);
+        return mediaCardPauseButton != null;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean isMediaCardNextButtonDisplaying() {
+        BySelector mediaCardNextButtonSelector =
+                getUiElementFromConfig(AutomotiveConfigConstants.MEDIA_CARD_NEXT_BUTTON);
+        UiObject2 mediaCardNextButton =
+                getSpectatioUiUtil().findUiObject(mediaCardNextButtonSelector);
+        getSpectatioUiUtil()
+                .validateUiObject(
+                        mediaCardNextButton, AutomotiveConfigConstants.MEDIA_CARD_NEXT_BUTTON);
+        return mediaCardNextButton != null;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void closeMediaCardPlayList() {
+        BySelector playListSliderSelector =
+                getUiElementFromConfig(AutomotiveConfigConstants.PLAYS_LIST_SLIDER);
+        UiObject2 playListSlider = getSpectatioUiUtil().findUiObject(playListSliderSelector);
+        getSpectatioUiUtil()
+                .validateUiObject(playListSlider, AutomotiveConfigConstants.PLAYS_LIST_SLIDER);
+        getSpectatioUiUtil().clickAndWait(playListSlider);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void openMediaCardPlayList() {
+        BySelector playlistIcon =
+                getUiElementFromConfig(AutomotiveConfigConstants.MEDIA_CARD_PLAY_LIST_BUTTON);
+        UiObject2 playlistIconObject = getSpectatioUiUtil().findUiObject(playlistIcon);
+        getSpectatioUiUtil().clickAndWait(playlistIconObject);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean isQueueListDisplayed() {
+        BySelector queueListSelector =
+                getUiElementFromConfig(AutomotiveConfigConstants.MEDIA_CARD_QUEUE_LIST);
+        UiObject2 queueList = getSpectatioUiUtil().findUiObject(queueListSelector);
+        return queueList != null;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public String getPlayingSongInMediaCard() {
+        BySelector mediaCardSongSelector =
+                getUiElementFromConfig(AutomotiveConfigConstants.TRACK_NAME_HOME_SCREEN);
+        UiObject2 mediaCardSong = getSpectatioUiUtil().findUiObject(mediaCardSongSelector);
+        return mediaCardSong.getText();
     }
 }
