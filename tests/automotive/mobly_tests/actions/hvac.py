@@ -36,8 +36,10 @@ class VhalHvac(base_test.BaseTestClass):
 
     def test_set_driver_temp(self):
         """Set the driver temperature and check the UI for the resulting expected temp."""
-        self.main_device.mbs.setDriverHvacTemperature("70")
-        asserts.assert_true(self.main_device.mbs.hasUIElementWithText("70"), 'Temperature set')
+        self.main_device.mbs.setDriverHvacTemperature("67")
+        asserts.assert_true(self.main_device.mbs.hasUIElementWithText("67"), 'Temperature set')
+        self.main_device.mbs.setDriverHvacTemperature("65")
+        asserts.assert_true(self.main_device.mbs.hasUIElementWithText("65"), 'Temperature set')
 
 
 if __name__ == '__main__':
