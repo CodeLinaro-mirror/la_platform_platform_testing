@@ -19,7 +19,6 @@ package platform.test.desktop
 import android.Manifest
 import android.companion.virtual.VirtualDeviceManager
 import android.companion.virtual.VirtualDeviceParams
-import android.graphics.Point
 import android.graphics.PointF
 import android.graphics.RectF
 import android.hardware.display.DisplayManager
@@ -62,17 +61,21 @@ import org.junit.rules.RuleChain
 import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
+import platform.test.desktop.LogicalPhysicalDisplayTransformHelper.Companion.getPointPhysicalPx
 import platform.test.desktop.LogicalPhysicalDisplayTransformHelper.Companion.minus
-import platform.test.desktop.LogicalPhysicalDisplayTransformHelper.Companion.toLogicalPx
 import platform.test.desktop.LogicalPhysicalDisplayTransformHelper.DeltaLogicalPxF
 import platform.test.desktop.LogicalPhysicalDisplayTransformHelper.DeltaPhysicalPxF
-import platform.test.desktop.LogicalPhysicalDisplayTransformHelper.PointLogicalPxF
 
 /**
  * A [TestRule] to support [VirtualMouse] move and drag within a single display / crossing across
  * displays.
+ *
+ * If [deferSetup] is set to true, please call [setupMouse] before calling any move method
  */
-class DesktopMouseTestRule() : TestRule {
+class DesktopMouseTestRule(private val deferSetup: Boolean = false) : TestRule {
+    // TODO(b/445827444): Adopt required permissions as needed for each setup(), move(), etc.
+    //  instead of a one-time adoptPermission from setup-teardown. This needs to be done without
+    //  dropping existing permissions
     private val adoptShellPermissionsTestRule = AdoptShellPermissionsRule(*PERMISSIONS)
     private val fakeAssociationRule = FakeAssociationRule()
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
@@ -123,6 +126,16 @@ class DesktopMouseTestRule() : TestRule {
          */
         override fun before() = runBlocking {
             assumeNotNull(virtualDeviceManager)
+            if (!deferSetup) {
+                setup()
+            }
+        }
+
+        fun setup() = runBlocking {
+            if (virtualDevice != null) {
+                Log.w(TAG, "setup() called more than once, ignoring")
+                return@runBlocking
+            }
             val createdVirtualDevice =
                 virtualDeviceManager.createVirtualDevice(
                     fakeAssociationRule.associationInfo.id,
@@ -216,6 +229,8 @@ class DesktopMouseTestRule() : TestRule {
         }
     }
 
+    fun setupMouse() = runBlocking { resourceTracker.setup() }
+
     fun startDrag() {
         resourceTracker.requireVirtualMouse.sendButtonEvent(
             VirtualMouseButtonEvent.Builder()
@@ -263,7 +278,7 @@ class DesktopMouseTestRule() : TestRule {
      *
      * NOTE: While InputManager APIs are using PointF for both get/set, the underlying
      * implementation is actually using Int. For example, evdev injection only supports Int.
-     * Therefore, it's currently not possible to move to a floating point coordinates.
+     * Therefore, expect delta < 1f difference between the target and actual cursor position.
      *
      * NOTE: This method blocks the thread to wait for the cursor position to be expected. Do not
      * call this in the main thread.
@@ -273,11 +288,18 @@ class DesktopMouseTestRule() : TestRule {
      * @param targetYPx The target Y (PX) coordinate relative to the target display.
      */
     fun move(targetDisplayId: Int, targetXPx: Int, targetYPx: Int) {
-        Log.i(TAG, "Try moving to display#$targetDisplayId ($targetXPx, $targetYPx)")
+        // TODO(b/448243090): Update all callers to directly use LogicalDisplayPointPx and remove
+        //  this function
+        move(LogicalDisplayPointPx(targetDisplayId, targetXPx, targetYPx))
+    }
+
+    fun move(target: LogicalDisplayPointPx) {
+        Log.i(TAG, "Try moving to $target")
         check(Looper.myLooper() != Looper.getMainLooper()) {
             "This method should not be called on the main thread"
         }
 
+        val targetDisplayId = target.displayId
         val displayTransform = LogicalPhysicalDisplayTransformHelper(displayManager)
         val currentCursorDisplayId = getCursorDisplayId()
 
@@ -293,29 +315,29 @@ class DesktopMouseTestRule() : TestRule {
 
         val currentPosition = getCursorPosition(targetDisplayId)
         performSteppedMove(
-            PointLogicalPxF(targetXPx, targetYPx).toPhysicalPx(targetDisplayId, displayTransform) -
-                currentPosition.toPhysicalPx(targetDisplayId, displayTransform)
+            target.getPointPhysicalPx(displayTransform) -
+                currentPosition.getPointPhysicalPx(displayTransform)
         )
 
         val displayScale = displayTransform.getScale(targetDisplayId)
         WaitUtils.ensureThat(
             errorProvider = {
                 val displayId = getCursorDisplayId()
-                "Failed to move cursor from: display#$targetDisplayId $currentPosition to: " +
-                    "display#$targetDisplayId ${Point(targetXPx, targetYPx)}.\n" +
-                    "Current pos: display#$displayId ${getCursorPosition(displayId)}.\n" +
+                "Failed to move cursor from: $currentPosition to: $target.\n" +
+                    "Current pos: ${getCursorPosition(displayId)}.\n" +
                     "Display scale: $displayScale"
             }
         ) {
             val finalPosition = getCursorPosition(targetDisplayId)
-            val delta = finalPosition - PointLogicalPxF(targetXPx, targetYPx)
+            val dx = abs(finalPosition.getPointF().x - target.getPointF().x)
+            val dy = abs(finalPosition.getPointF().y - target.getPointF().y)
             // As mentioned in the javadoc above, InputManager API doesn't support floating-point
             // movements. Hence, with all the floating-point calculation above, there might be
             // slight difference (within `FLOATING_ROUND_CORRECTION`) in the final cursor position.
             // On top of that, there's also display scale difference that might cause the move to be
             // inaccurate within the range of `displayScale`
-            abs(delta.dx) < max(FLOATING_ROUNDING_CORRECTION, displayScale.scaleX) &&
-                abs(delta.dy) < max(FLOATING_ROUNDING_CORRECTION, displayScale.scaleY)
+            dx < max(FLOATING_ROUNDING_CORRECTION, displayScale.scaleX) &&
+                dy < max(FLOATING_ROUNDING_CORRECTION, displayScale.scaleY)
         }
         Log.i(
             TAG,
@@ -328,13 +350,13 @@ class DesktopMouseTestRule() : TestRule {
      * this does not consider where the current mouse cursor is, and does not ensure that the cursor
      * will move to any target position.
      *
-     * @param xPx The delta X (PX) coordinate.
-     * @param yPx The delta Y (PX) coordinate.
+     * @param dxPx The delta X (PX) coordinate.
+     * @param dyPx The delta Y (PX) coordinate.
      */
-    fun moveDelta(xPx: Int, yPx: Int) {
+    fun moveDelta(dxPx: Int, dyPx: Int) {
         val displayTransform = LogicalPhysicalDisplayTransformHelper(displayManager)
         performSteppedMove(
-            DeltaLogicalPxF(xPx.toFloat(), yPx.toFloat())
+            DeltaLogicalPxF(dxPx.toFloat(), dyPx.toFloat())
                 .toPhysicalPx(getCursorDisplayId(), displayTransform)
         )
     }
@@ -384,7 +406,8 @@ class DesktopMouseTestRule() : TestRule {
             // Therefore, to solve the calculation, first convert globalDP -> localDP, then
             // apply DP->PX conversion.
             val edgeIntersectionPx =
-                PointLogicalPxF(
+                LogicalDisplayPointPx(
+                    currentCursorDisplayId,
                     dpToPx(crossingDetail.targetPointDp.x - currentBounds.left, dpi),
                     dpToPx(crossingDetail.targetPointDp.y - currentBounds.top, dpi),
                 )
@@ -397,8 +420,8 @@ class DesktopMouseTestRule() : TestRule {
             val currentPosition = getCursorPosition(currentCursorDisplayId)
             // Move to the center of the edge intersection (border between displays).
             performSteppedMove(
-                edgeIntersectionPx.toPhysicalPx(currentCursorDisplayId, displayTransform) -
-                    currentPosition.toPhysicalPx(currentCursorDisplayId, displayTransform)
+                edgeIntersectionPx.getPointPhysicalPx(displayTransform) -
+                    currentPosition.getPointPhysicalPx(displayTransform)
             )
 
             // Perform a small move to cross the boundary
@@ -464,10 +487,13 @@ class DesktopMouseTestRule() : TestRule {
         Thread.sleep(MOUSE_INPUT_DELAY.inWholeMilliseconds)
     }
 
-    private fun getCursorPosition(displayId: Int): PointLogicalPxF =
-        checkNotNull(inputManager.getCursorPosition(displayId)?.toLogicalPx()) {
-            "Cursor is not on display#$displayId"
-        }
+    private fun getCursorPosition(displayId: Int): LogicalDisplayPointPx {
+        val position =
+            checkNotNull(inputManager.getCursorPosition(displayId)) {
+                "Cursor is not on display#$displayId"
+            }
+        return LogicalDisplayPointPx(displayId, position.x, position.y)
+    }
 
     private fun getCursorDisplayId(): Int {
         // Query cursor position on all displays and find the one with non-null values
@@ -554,6 +580,7 @@ class DesktopMouseTestRule() : TestRule {
         }
     }
 
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     data class DeltaDpF(val dx: Float, val dy: Float)
 
     class NoCursorFoundException(message: String) : Exception(message)
