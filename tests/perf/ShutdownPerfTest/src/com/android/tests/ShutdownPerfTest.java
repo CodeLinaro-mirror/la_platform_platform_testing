@@ -16,6 +16,9 @@
 
 package com.android.tests;
 
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
+
 import com.android.tradefed.config.Option;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
@@ -59,6 +62,8 @@ public class ShutdownPerfTest extends BaseHostJUnit4Test {
     public void setUp() throws Exception {
         mDevice = getDevice();
         mMilliSecondsShutdownTime = new Long[mIterations];
+        // Reboot to ensure the pstore file exists after image flash
+        mDevice.reboot();
     }
 
     // possible kernel console output paths to check
@@ -69,10 +74,7 @@ public class ShutdownPerfTest extends BaseHostJUnit4Test {
     public void shutdownPerf() throws Exception {
         LogUtil.CLog.i("Number of iterations: " + mIterations);
 
-        if (!sysfsPstoreConsoleExists()) {
-            LogUtil.CLog.w("Skip test: pstore console log is not available");
-            return;
-        }
+        assumeTrue("Skip test: pstore console log is not available", sysfsPstoreConsoleExists());
 
         // Reboot mIteration times to get the shutdown time in pstore files.
         for (int i = 0; i < mIterations; i++) {
@@ -81,14 +83,27 @@ public class ShutdownPerfTest extends BaseHostJUnit4Test {
             mMilliSecondsShutdownTime[i] = tryGetShutdownTime();
         }
 
+        long accumulatedShutdownTime = 0;
+        int validShutdownTimeCount = 0;
+        long maxShutdownTime = 0;
+
         // Report the shutdown time that has value.
         for (int i = 0; i < mIterations; i++) {
             if (mMilliSecondsShutdownTime[i] != null) {
                 long iShutdownTime = mMilliSecondsShutdownTime[i].longValue();
                 metrics.addTestMetric(
                         "reboot_shutdown_time" + "_" + i, createMetric(iShutdownTime));
+                validShutdownTimeCount += 1;
+                accumulatedShutdownTime += iShutdownTime;
+                maxShutdownTime = Math.max(maxShutdownTime, iShutdownTime);
             }
         }
+        assertTrue("No valid shutdown time recorded", validShutdownTimeCount != 0);
+        metrics.addTestMetric("valid_shutdown_time_count", createMetric(validShutdownTimeCount));
+        metrics.addTestMetric(
+                "avg_shutdown_time",
+                createMetric(accumulatedShutdownTime / validShutdownTimeCount));
+        metrics.addTestMetric("max_shutdown_time", createMetric(maxShutdownTime));
     }
 
     private boolean sysfsPstoreConsoleExists() throws DeviceNotAvailableException {

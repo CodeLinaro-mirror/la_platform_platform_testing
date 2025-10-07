@@ -35,7 +35,9 @@ import org.junit.runner.notification.Failure;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.Base64;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -46,7 +48,7 @@ import java.util.function.Supplier;
  */
 public abstract class PerfettoTracingStrategy {
     // Option to pass the folder name which contains the perfetto trace config file.
-    private static final String PERFETTO_CONFIG_ROOT_DIR_ARG = "perfetto_config_root_dir";
+    public static final String PERFETTO_CONFIG_ROOT_DIR_ARG = "perfetto_config_root_dir";
     // Default folder name to look for the perfetto config file.
     // Argument to indicate the perfetto output file prefix
     public static final String PERFETTO_CONFIG_OUTPUT_FILE_PREFIX =
@@ -63,7 +65,7 @@ public abstract class PerfettoTracingStrategy {
     // Default perfetto config file name when text proto config is used.
     private static final String DEFAULT_TEXT_CONFIG_FILE = "trace_config.textproto";
     // Argument to get custom config file name for collecting the trace.
-    private static final String PERFETTO_CONFIG_FILE_ARG = "perfetto_config_file";
+    public static final String PERFETTO_CONFIG_FILE_ARG = "perfetto_config_file";
     // Skip failure metrics collection if this flag is set to true.
     public static final String SKIP_TEST_FAILURE_METRICS = "skip_test_failure_metrics";
     // Skip success metrics collection if this flag is set to true (i.e. collect only failures).
@@ -80,11 +82,11 @@ public abstract class PerfettoTracingStrategy {
     // Argument to get custom time in millisecs to wait before dumping the trace.
     // This has to be at least the dump interval time set in the trace config file
     // or greater than that. Otherwise, we will miss trace information from the test.
-    private static final String PERFETTO_WAIT_TIME_ARG = "perfetto_wait_time_ms";
+    public static final String PERFETTO_WAIT_TIME_ARG = "perfetto_wait_time_ms";
     // Argument to indicate the perfetto config file is text proto file.
     public static final String PERFETTO_CONFIG_TEXT_PROTO = "perfetto_config_text_proto";
-    // Argument to indicate the perfetto config content in a textual format
-    public static final String PERFETTO_CONFIG_TEXT_CONTENT = "perfetto_config_text_content";
+    // Argument to provide the perfetto config content directly instead of using a file.
+    public static final String PERFETTO_CONFIG_CONTENT = "perfetto_config_content";
     // Destination directory to save the trace results.
     private static final String TEST_OUTPUT_ROOT = "test_output_root";
     // Default output folder to store the perfetto output traces.
@@ -131,10 +133,10 @@ public abstract class PerfettoTracingStrategy {
     // Perfetto traces collected during the test will be saved under this root folder.
     private String mTestOutputRoot;
     private boolean mIsConfigTextProto = false;
+    // Perfetto TraceConfiguration proto message as a ByteArray encoded to string in base64.
     private String mConfigContent;
     protected boolean mSkipTestFailureMetrics;
     private boolean mSkipTestSuccessMetrics;
-    private boolean mSkipEmptyMetrics;
     protected boolean mIsTestFailed = false;
     // Store the method name and invocation count to create unique file name for each trace.
     private boolean mPerfettoStartSuccess = false;
@@ -142,7 +144,6 @@ public abstract class PerfettoTracingStrategy {
     private String mOutputFilePrefix;
     private String mTrackPerfettoProcIdRootDir;
     private final Set<Integer> mAllowedIterations = new HashSet<>();
-
     /**
      * @param instr Android instrumentation object
      * @param identifier Unique strategy identifier, used for strategy specific configuration
@@ -233,9 +234,22 @@ public abstract class PerfettoTracingStrategy {
 
     private void cleanupPerfettoSessionsFromPreviousRuns() {
         File rootFolder = new File(mPerfettoHelper.getTrackPerfettoRootDir());
+
+        if (!rootFolder.exists()) {
+            Log.i(getTag(), "Perfetto pid files folder does not exist. Skipping cleanup...");
+            return;
+        }
+
         File[] perfettoPidFiles =
                 rootFolder.listFiles(
                         (d, name) -> name.startsWith(mPerfettoHelper.getPerfettoFilePrefix()));
+
+        if (perfettoPidFiles == null) {
+            // An I/O error occurred.
+            Log.e(getTag(), "Failed to list the perfetto pid files.");
+            return;
+        }
+
         Set<Integer> pids = new HashSet<>();
         for (File perfettoPidFile : perfettoPidFiles) {
             try {
@@ -250,9 +264,7 @@ public abstract class PerfettoTracingStrategy {
             if (perfettoPidFile.exists()) {
                 Log.i(
                         getTag(),
-                        String.format(
-                                "Deleting perfetto process id file %s .",
-                                perfettoPidFile.toString()));
+                        String.format("Deleting perfetto process id file %s .", perfettoPidFile));
                 perfettoPidFile.delete();
             }
         }
@@ -283,15 +295,21 @@ public abstract class PerfettoTracingStrategy {
 
     /** Start perfetto tracing using the given config file. */
     protected void startPerfettoTracing() {
-        boolean perfettoStartSuccess;
         SystemClock.sleep(mWaitStartTimeInMs);
 
-        perfettoStartSuccess =
-                mPerfettoHelper
-                        .setTextProtoConfig(mConfigContent)
-                        .setConfigFileName(mConfigFileName)
-                        .setIsTextProtoConfig(mIsConfigTextProto)
-                        .startCollecting();
+        if (mConfigContent != null) {
+            if (mIsConfigTextProto) {
+                mPerfettoHelper.setTraceConfig(mConfigContent.getBytes(StandardCharsets.UTF_8));
+            } else {
+                mPerfettoHelper.setTraceConfig(Base64.getDecoder().decode(mConfigContent));
+            }
+        } else {
+            mPerfettoHelper.setConfigFileName(mConfigFileName);
+        }
+
+        boolean perfettoStartSuccess =
+                mPerfettoHelper.setIsTextProtoConfig(mIsConfigTextProto).startCollecting();
+
         if (!perfettoStartSuccess) {
             Log.e(getTag(), "Perfetto did not start successfully.");
         }
@@ -333,14 +351,10 @@ public abstract class PerfettoTracingStrategy {
 
     protected void stopPerfettoTracingWithoutMetric() {
         // Stop the existing perfetto trace collection.
-        try {
-            if (!mPerfettoHelper.stopPerfetto(mPerfettoHelper.getPerfettoPid())) {
-                Log.e(getTag(), "Failed to stop the perfetto process.");
-            }
-            setPerfettoStartSuccess(false);
-        } catch (IOException e) {
-            Log.e(getTag(), "Failed to stop the perfetto.", e);
+        if (!mPerfettoHelper.stopPerfetto(mPerfettoHelper.getPerfettoPid())) {
+            Log.e(getTag(), "Failed to stop the perfetto process.");
         }
+        setPerfettoStartSuccess(false);
     }
 
     protected void setPerfettoStartSuccess(boolean success) {
@@ -370,8 +384,8 @@ public abstract class PerfettoTracingStrategy {
     protected boolean skipMetric(Integer iteration) {
         if (iteration != null && !mAllowedIterations.isEmpty()) {
             if (iteration.equals(0)) {
-                throw new IllegalStateException("Skip metric check was executed before "
-                        + "the test has started");
+                throw new IllegalStateException(
+                        "Skip metric check was executed before " + "the test has started");
             }
 
             if (!mAllowedIterations.contains(iteration)) {
@@ -468,13 +482,16 @@ public abstract class PerfettoTracingStrategy {
         mIsConfigTextProto = Boolean.parseBoolean(getArgumentValue(args, PERFETTO_CONFIG_TEXT_PROTO,
                 String.valueOf(false)));
 
-        // Perfetto config file has to be under /data/misc/perfetto-traces/
-        // defaulted to DEFAULT_TEXT_CONFIG_FILE or DEFAULT_CONFIG_FILE if perfetto_config_file is
-        // not passed.
-        mConfigFileName = getArgumentValue(args, PERFETTO_CONFIG_FILE_ARG,
-                mIsConfigTextProto ? DEFAULT_TEXT_CONFIG_FILE : DEFAULT_CONFIG_FILE);
+        // Perfetto config file has to be under /data/misc/perfetto-traces/ or
+        // /data/misc/perfetto-configs/ defaulted to DEFAULT_TEXT_CONFIG_FILE or DEFAULT_CONFIG_FILE
+        // if perfetto_config_file is not passed.
+        mConfigFileName =
+                getArgumentValue(
+                        args,
+                        PERFETTO_CONFIG_FILE_ARG,
+                        mIsConfigTextProto ? DEFAULT_TEXT_CONFIG_FILE : DEFAULT_CONFIG_FILE);
 
-        mConfigContent = getArgumentValue(args, PERFETTO_CONFIG_TEXT_CONTENT, "");
+        mConfigContent = getArgumentValue(args, PERFETTO_CONFIG_CONTENT, null);
 
         mOutputFilePrefix = getArgumentValue(args, PERFETTO_CONFIG_OUTPUT_FILE_PREFIX,
                 DEFAULT_PERFETTO_PREFIX);
@@ -511,20 +528,39 @@ public abstract class PerfettoTracingStrategy {
                         getArgumentValue(args, SKIP_TEST_FAILURE_METRICS, String.valueOf(false)));
         mSkipTestSuccessMetrics = Boolean.parseBoolean(getArgumentValue(args,
                 SKIP_TEST_SUCCESS_METRICS, String.valueOf(false)));
-        mSkipEmptyMetrics =
-                Boolean.parseBoolean(
-                        getArgumentValue(args, SKIP_EMPTY_METRICS, String.valueOf(false)));
-        mPerfettoHelper.setCheckEmptyMetrics(mSkipEmptyMetrics);
+        mPerfettoHelper.setCheckEmptyMetrics(Boolean.parseBoolean(
+                getArgumentValue(args, SKIP_EMPTY_METRICS, String.valueOf(false))));
 
         mFilePathKeyPrefix = getArgumentValue(args, ARGUMENT_FILE_PATH_KEY_PREFIX,
                 DEFAULT_FILE_PATH_KEY_PREFIX);
 
         final String iterations = getArgumentValue(args, ARGUMENT_ALLOW_ITERATIONS, "");
-        for (String iteration : iterations.split(",")) {
-            if (!iteration.isEmpty()) {
-                mAllowedIterations.add(Integer.parseInt(iteration));
+        if (!iterations.isEmpty() && !iterations.equals("all")) {
+            for (String iteration : iterations.split(",")) {
+                if (iteration.matches("\\d+")) {
+                    mAllowedIterations.add(Integer.parseInt(iteration));
+                } else {
+                    throw new IllegalArgumentException(
+                            "Invalid value for allow_iterations. Expected all or comma-separated"
+                                    + " list of integers.");
+                }
             }
         }
+    }
+
+    @VisibleForTesting
+    String getConfigFileName() {
+        return mConfigFileName;
+    }
+
+    @VisibleForTesting
+    boolean isConfigTextProto() {
+        return mIsConfigTextProto;
+    }
+
+    @VisibleForTesting
+    String getConfigContent() {
+        return mConfigContent;
     }
 
     /**

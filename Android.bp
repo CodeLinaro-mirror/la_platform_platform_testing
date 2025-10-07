@@ -34,7 +34,6 @@ test_package {
         "AppCompatibilityTest",
         "AppLaunch",
         "AppTransitionTests",
-        "BackgroundDexOptServiceIntegrationTests",
         "BandwidthEnforcementTest",
         "BandwidthTests",
         "benchmarks",
@@ -245,6 +244,11 @@ test_package {
             dest: "platform_tests-symbols-mapping-FILE_NAME_TAG_PLACEHOLDER.textproto",
             tag: ".elf_mapping",
         },
+        {
+            targets: ["platform_tests"],
+            tag: ".jacoco",
+            only_on_java_coverage_builds: true,
+        },
     ],
 }
 
@@ -315,7 +319,6 @@ test_package {
         "installd_cache_test",
         "installd_dexopt_test",
         "installd_file_test",
-        "installd_otapreopt_test",
         "installd_service_test",
         "installd_utils_test",
         "jni_test_src_lib",
@@ -492,18 +495,27 @@ test_package {
     }),
     dists: [
         {
-            targets: ["continuous_native_tests"],
+            targets: [
+                "continuous_native_tests",
+                "tests",
+            ],
             prepend_artifact_with_product: true,
             dest: "continuous_native_tests-FILE_NAME_TAG_PLACEHOLDER.zip",
         },
         {
-            targets: ["continuous_native_tests"],
+            targets: [
+                "continuous_native_tests",
+                "tests",
+            ],
             prepend_artifact_with_product: true,
             dest: "continuous_native_tests-symbols-FILE_NAME_TAG_PLACEHOLDER.zip",
             tag: ".symbols",
         },
         {
-            targets: ["continuous_native_tests"],
+            targets: [
+                "continuous_native_tests",
+                "tests",
+            ],
             prepend_artifact_with_product: true,
             dest: "continuous_native_tests-symbols-mapping-FILE_NAME_TAG_PLACEHOLDER.textproto",
             tag: ".elf_mapping",
@@ -546,18 +558,27 @@ test_package {
 
     dists: [
         {
-            targets: ["continuous_native_metric_tests"],
+            targets: [
+                "continuous_native_metric_tests",
+                "tests",
+            ],
             prepend_artifact_with_product: true,
             dest: "continuous_native_metric_tests-FILE_NAME_TAG_PLACEHOLDER.zip",
         },
         {
-            targets: ["continuous_native_metric_tests"],
+            targets: [
+                "continuous_native_metric_tests",
+                "tests",
+            ],
             prepend_artifact_with_product: true,
             dest: "continuous_native_metric_tests-symbols-FILE_NAME_TAG_PLACEHOLDER.zip",
             tag: ".symbols",
         },
         {
-            targets: ["continuous_native_metric_tests"],
+            targets: [
+                "continuous_native_metric_tests",
+                "tests",
+            ],
             prepend_artifact_with_product: true,
             dest: "continuous_native_metric_tests-symbols-mapping-FILE_NAME_TAG_PLACEHOLDER.textproto",
             tag: ".elf_mapping",
@@ -684,11 +705,21 @@ test_package {
         "MultiuserHostsideIntegrationTests",
     ],
 
-    dist: {
-        targets: ["continuous_instrumentation_tests"],
-        prepend_artifact_with_product: true,
-        dest: "continuous_instrumentation_tests-FILE_NAME_TAG_PLACEHOLDER.zip",
-    },
+    dists: [
+        {
+            targets: [
+                "continuous_instrumentation_tests",
+                "tests",
+            ],
+            prepend_artifact_with_product: true,
+            dest: "continuous_instrumentation_tests-FILE_NAME_TAG_PLACEHOLDER.zip",
+        },
+        {
+            targets: ["continuous_instrumentation_tests"],
+            tag: ".jacoco",
+            only_on_java_coverage_builds: true,
+        },
+    ],
 }
 
 test_package {
@@ -824,7 +855,10 @@ test_package {
     ],
 
     dist: {
-        targets: ["continuous_instrumentation_metric_tests"],
+        targets: [
+            "continuous_instrumentation_metric_tests",
+            "tests",
+        ],
         prepend_artifact_with_product: true,
         dest: "continuous_instrumentation_metric_tests-FILE_NAME_TAG_PLACEHOLDER.zip",
     },

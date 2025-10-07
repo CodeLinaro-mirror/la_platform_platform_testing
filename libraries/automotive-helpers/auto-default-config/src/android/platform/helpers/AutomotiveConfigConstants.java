@@ -136,6 +136,13 @@ public class AutomotiveConfigConstants {
     public static final String RADIO_PACKAGE = "RADIO_PACKAGE";
     public static final String APPS_INITIAL_DIALOGS = "DISMISS_APPS_INITIAL_DIALOGS";
     public static final String CONTACTS_DIALOG_BOX = "CONTACTS_DIALOG_BOX";
+    public static final String UNPIN_APP_BUTTON = "UNPIN_APP_BUTTON";
+    public static final String PIN_APP_BUTTON = "PIN_APP_BUTTON";
+    public static final String SETTINGS_APP_ON_DOCK = "SETTINGS_APP_ON_DOCK";
+    public static final String PLAY_STORE_APP_ON_DOCK = "PLAY_STORE_APP_ON_DOCK";
+    public static final String GOOGLE_PLAY_STORE_APP_ON_DOCK = "GOOGLE_PLAY_STORE_APP_ON_DOCK";
+    public static final String MAPS_APP_ON_DOCK = "MAPS_APP_ON_DOCK";
+    public static final String BLUETOOTH_APP_ON_DOCK = "BLUETOOTH_APP_ON_DOCK";
 
     // Security Settings  Constants
     public static final String SECURITY_SETTINGS_SCROLL_ELEMENT =
@@ -347,6 +354,7 @@ public class AutomotiveConfigConstants {
     // Media App UI View
     public static final String MEDIA_APP_TITLE = "MEDIA_APP_TITLE";
     public static final String MEDIA_APP_DROP_DOWN_MENU = "MEDIA_APP_DROP_DOWN_MENU";
+    public static final String MEDIA_APP_SETTINGS = "MEDIA_APP_SETTINGS";
     public static final String MEDIA_APP_NAVIGATION_ICON = "MEDIA_APP_NAVIGATION_ICON";
     public static final String MEDIA_APP_NO_LOGIN_MSG = "MEDIA_APP_NO_LOGIN_MSG";
     public static final String MOW_PLAYING_LABEL = "MOW_PLAYING_LABEL";
@@ -357,6 +365,7 @@ public class AutomotiveConfigConstants {
     public static final String TEST_MEDIA_ROOT_NODE_TYPE_BROWSABLE =
             "TEST_MEDIA_ROOT_NODE_TYPE_BROWSABLE";
     public static final String TEST_MEDIA_APP_CLOSE_SETTING = "TEST_MEDIA_APP_CLOSE_SETTING";
+    public static final String TEST_MEDIA_APP_SETTING = "TEST_MEDIA_APP_SETTING";
     // Same NEXT_BUTTON is applicable for Media Center
     public static final String NEXT_BUTTON = "NEXT_BUTTON";
     public static final String DONE_BUTTON = "DONE_BUTTON";
@@ -420,6 +429,8 @@ public class AutomotiveConfigConstants {
             "SETTINGS_SUB_SETTING_SCROLL_FORWARD_BUTTON";
     public static final String SETTINGS_SUB_SETTING_SCROLL_ELEMENT =
             "SETTINGS_SUB_SETTING_SCROLL_ELEMENT";
+    public static final String SETTINGS_SUB_PRIVACY_SETTING_SCROLL_ELEMENT =
+            "SETTINGS_SUB_PRIVACY_SETTING_SCROLL_ELEMENT";
     public static final String SETTINGS_TITLE_TEXT = "SETTINGS_TITLE_TEXT";
     public static final String SETTINGS_BACK_NAV_ICON = "SETTINGS_BACK_NAV_ICON";
     public static final String LOCATION_SETTINGS_RECENTLY_ACCESSED_MAPS =
@@ -488,6 +499,7 @@ public class AutomotiveConfigConstants {
     public static final String USER_SETTINGS_MAKE_ADMIN = "USER_SETTINGS_MAKE_ADMIN";
     public static final String CHOOSE_ADMIN_BUTTON = "CHOOSE_ADMIN_BUTTON";
     public static final String MAKE_ADMIN_BUTTON = "MAKE_ADMIN_BUTTON";
+    public static final String USER_SETTINGS_CHOOSE_ADMIN = "USER_SETTINGS_CHOOSE_ADMIN";
     public static final String USER_SETTINGS_MAKE_ADMIN_CONFIRM =
             "USER_SETTINGS_MAKE_ADMIN_CONFIRM";
     public static final String CREATE_NEW_PROFILE_SWITCH = "CREATE_NEW_PROFILE_SWITCH";
@@ -639,6 +651,8 @@ public class AutomotiveConfigConstants {
     public static final String SETTINGS_BACK_BUTTON = "SETTINGS_BACK_BUTTON";
     public static final String SETTINGS_UI_SUB_SETTING_SCROLL_ELEMENT =
             "SETTINGS_UI_SUB_SETTING_SCROLL_ELEMENT";
+    public static final String SETTINGS_UI_SUB_SETTING_STORAGE_SCROLL_ELEMENT =
+            "SETTINGS_UI_SUB_SETTING_STORAGE_SCROLL_ELEMENT";
     public static final String SETTINGS_UI_SCROLL_ELEMENT = "SETTINGS_UI_SCROLL_ELEMENT";
     public static final String SETTINGS_PERMISSIONS_BACK_BUTTON =
             "SETTINGS_PERMISSIONS_BACK_BUTTON";

@@ -20,9 +20,7 @@ import static junit.framework.Assert.assertTrue;
 import android.platform.helpers.HelperAccessor;
 import android.platform.helpers.IAutoStatusBarHelper;
 import android.util.Log;
-
 import androidx.test.runner.AndroidJUnit4;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

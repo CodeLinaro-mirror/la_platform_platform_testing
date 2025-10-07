@@ -15,7 +15,6 @@
  */
 package android.platform.systemui_tapl.ui
 
-import android.os.SystemClock
 import android.platform.systemui_tapl.utils.DeviceUtils.sysuiResSelector
 import android.platform.systemui_tapl.utils.SYSUI_PACKAGE
 import android.platform.uiautomatorhelpers.DeviceHelpers.assertInvisible
@@ -51,9 +50,6 @@ class MediaProjectionPermissionDialog internal constructor() {
         waitForObj(POP_UP).waitForObj(SINGLE_APP_SELECTOR) { "Single app option not found" }.click()
         waitForObj(DIALOG).scrollUntilFound(SINGLE_APP_START_SELECTOR)
             ?: error("Start button not found")
-
-        // TODO(b/333510487): Sleep is temporarily needed after scroll, and should be remove later
-        SystemClock.sleep(SHORT_TIMEOUT.toMillis())
         SINGLE_APP_START_SELECTOR.click()
         ensureThat("App selector is launched") { isAppSelectorRunning() }
     }
@@ -98,6 +94,10 @@ class MediaProjectionPermissionDialog internal constructor() {
     fun assertSecondaryDisplayVisible() {
         waitForObj(SPINNER_SELECTOR).click()
         ENTIRE_SCREEN_RECORD_SECONDARY_SELECTOR.assertVisible()
+
+        // Dismiss the Spinner again.
+        LauncherInstrumentation().pressBack()
+        ENTIRE_SCREEN_RECORD_SECONDARY_SELECTOR.assertInvisible()
     }
 
     companion object {

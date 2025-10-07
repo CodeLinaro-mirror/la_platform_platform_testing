@@ -205,6 +205,22 @@ public class WorkflowTask {
             case LONG_PRESS:
                 validateAndPressKey(workflowName, spectatioUiUtil, /* isLongPress= */ true);
                 break;
+            case SCROLL_TO_BEGINNING:
+                scrollToBoundary(
+                        workflowName,
+                        spectatioUiUtil,
+                        validateAndGetTaskScrollConfig(workflowName),
+                        true
+                );
+                break;
+            case SCROLL_TO_END:
+                scrollToBoundary(
+                        workflowName,
+                        spectatioUiUtil,
+                        validateAndGetTaskScrollConfig(workflowName),
+                        false
+                );
+                break;
             case SCROLL_TO_FIND_AND_CLICK:
                 validateAndClickUiElement(
                         workflowName,
@@ -222,6 +238,9 @@ public class WorkflowTask {
                         FindType.SCROLL,
                         /* isLongClick= */ false,
                         /* isOptional= */ true);
+                break;
+            case SCROLL_TO_FIND:
+                validateUiElement(workflowName, spectatioUiUtil, fullConfig, FindType.SCROLL);
                 break;
             case SET_TEXT:
                 validateAndSetTextOfUiElement(workflowName, spectatioUiUtil, fullConfig);
@@ -246,6 +265,9 @@ public class WorkflowTask {
                         FindType.SWIPE,
                         /* isLongClick= */ false,
                         /* isOptional= */ true);
+                break;
+            case SWIPE_TO_FIND:
+                validateUiElement(workflowName, spectatioUiUtil, fullConfig, FindType.SWIPE);
                 break;
             case VALIDATE_VALUE:
                 validateElementHasProperty(workflowName, spectatioUiUtil, fullConfig);
@@ -343,13 +365,48 @@ public class WorkflowTask {
         spectatioUiUtil.swipe(direction, swipeConfig.getNumberOfSteps(), fraction);
     }
 
-    private void validateAndClickUiElement(
+    private void scrollToBoundary(
+            String workflowName,
+            SpectatioUiUtil spectatioUiUtil,
+            ScrollConfig config,
+            boolean backward) {
+        ScrollActions action =
+                validateAndGetEnumValue(
+                        workflowName,
+                        "Scroll Action",
+                        ScrollActions.class,
+                        config.getScrollAction()
+                );
+        switch (action) {
+            case USE_BUTTON:
+                UiElement scrollButton =
+                        backward
+                                ? config.getScrollBackwardButton()
+                                : config.getScrollForwardButton();
+                spectatioUiUtil.scrollToBoundary(scrollButton.getBySelectorForUiElement());
+                break;
+            case USE_GESTURE:
+                ScrollDirection direction =
+                        validateAndGetEnumValue(
+                                workflowName,
+                                "Scroll Direction",
+                                ScrollDirection.class,
+                                config.getScrollDirection()
+                        );
+                spectatioUiUtil.scrollToBoundary(
+                        config.getScrollElement().getBySelectorForUiElement(),
+                        direction == ScrollDirection.VERTICAL,
+                        backward
+                );
+                break;
+        }
+    }
+
+    private UiObject2 findUiElement(
             String workflowName,
             SpectatioUiUtil spectatioUiUtil,
             SpectatioConfig fullConfig,
-            FindType howToFind,
-            boolean isLongClick,
-            boolean isOptional) {
+            FindType howToFind) {
         UiElement uiElement = validateAndGetTaskConfigUiElement(workflowName, fullConfig);
         BySelector selector = uiElement.getBySelectorForUiElement();
         UiObject2 uiObject = spectatioUiUtil.findUiObject(selector);
@@ -427,6 +484,26 @@ public class WorkflowTask {
                             swipeFraction,
                             selector);
         }
+        return uiObject;
+    }
+
+    private void validateUiElement(
+            String workflowName,
+            SpectatioUiUtil spectatioUiUtil,
+            SpectatioConfig fullConfig,
+            FindType howToFind) {
+        UiObject2 uiObject = findUiElement(workflowName, spectatioUiUtil, fullConfig, howToFind);
+        validateUiObject(uiObject, workflowName);
+    }
+
+    private void validateAndClickUiElement(
+            String workflowName,
+            SpectatioUiUtil spectatioUiUtil,
+            SpectatioConfig fullConfig,
+            FindType howToFind,
+            boolean isLongClick,
+            boolean isOptional) {
+        UiObject2 uiObject = findUiElement(workflowName, spectatioUiUtil, fullConfig, howToFind);
         if (isOptional && !isValidUiObject(uiObject)) {
             return;
         }

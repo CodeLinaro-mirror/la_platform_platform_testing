@@ -18,7 +18,7 @@ package android.platform.systemui_tapl.ui
 
 import android.hardware.display.DisplayManager
 import android.os.SystemClock
-import android.platform.helpers.CommonUtils
+import android.platform.helpers.ShadeUtils
 import android.platform.systemui_tapl.utils.DeviceUtils.LONG_WAIT
 import android.platform.systemui_tapl.utils.DeviceUtils.settingsResSelector
 import android.platform.systemui_tapl.utils.DeviceUtils.sysuiResSelector
@@ -53,8 +53,7 @@ import kotlin.math.floor
 /** System UI test automation object representing the notification shade. */
 class NotificationShade internal constructor(val displayId: Int = DEFAULT_DISPLAY) {
     init {
-        // SplitShade is deprecated with SceneContainer, this assertion is not relevant there.
-        if (!Flags.sceneContainer() && CommonUtils.isSplitShade()) {
+        if (ShadeUtils.isSplitShadeConfig()) {
             val qsBounds = quickSettingsContainer.visibleBounds
             val notificationBounds = notificationShadeScrollContainer.visibleBounds
             assertWithMessage(
@@ -210,7 +209,11 @@ class NotificationShade internal constructor(val displayId: Int = DEFAULT_DISPLA
 
     /** Closes the shade using "adb shell cmd statusbar collapse". */
     fun closeWithShellCommand() {
-        uiDevice.executeShellCommand("cmd statusbar collapse")
+        if (Flags.sceneContainer()) {
+            uiDevice.executeShellCommand("cmd statusbar collapse-instant")
+        } else {
+            uiDevice.executeShellCommand("cmd statusbar collapse")
+        }
         waitForShadeToClose(displayId)
     }
 
@@ -309,8 +312,8 @@ class NotificationShade internal constructor(val displayId: Int = DEFAULT_DISPLA
     /** Opens quick settings via swipe. */
     fun openQuickSettingsWithSwipe(): QuickSettings {
         val device = uiDevice
-        // Swipe in first quarter to avoid desktop windowing app handle interactions.
-        val swipeXCoordinate = device.getDisplayWidth(displayId) / 4
+        // Swipe in the third quarter to avoid desktop windowing app handle interactions.
+        val swipeXCoordinate = device.getDisplayWidth(displayId) * 3 / 4
         betterSwipe(
             startX = swipeXCoordinate,
             startY = 0,

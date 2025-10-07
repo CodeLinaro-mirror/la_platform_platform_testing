@@ -21,9 +21,12 @@ import android.graphics.PointF
 import android.graphics.Rect
 import android.os.RemoteException
 import android.os.SystemClock
+import android.os.SystemClock.sleep
+import android.platform.helpers.ShadeUtils
 import android.platform.systemui_tapl.controller.LockscreenController
 import android.platform.systemui_tapl.controller.NotificationIdentity
 import android.platform.systemui_tapl.ui.ExpandedBubbleStack.Companion.BUBBLE_EXPANDED_VIEW
+import android.platform.systemui_tapl.ui.NotificationShade.Companion.waitForShadeToClose
 import android.platform.systemui_tapl.utils.DeviceUtils.LONG_WAIT
 import android.platform.systemui_tapl.utils.DeviceUtils.sysuiResSelector
 import android.platform.systemui_tapl.utils.LAUNCHER_PACKAGE
@@ -51,10 +54,11 @@ import androidx.test.uiautomator.Until
 import com.android.app.tracing.traceSection
 import com.android.launcher3.tapl.LauncherInstrumentation
 import com.android.launcher3.tapl.Workspace
+import com.android.systemui.Flags
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
-import java.time.Duration
 import org.junit.Assert.assertThrows
+import java.time.Duration
 
 /**
  * The root class for System UI test automation objects. All System UI test automation objects are
@@ -72,12 +76,64 @@ class Root private constructor(val displayId: Int = DEFAULT_DISPLAY) {
      * notifications shade if the lockscreen screen is shown.
      */
     fun openNotificationShade(): NotificationShade {
-        return openNotificationShadeViaGlobalAction()
+        if (Flags.sceneContainer()) {
+            uiDevice.executeShellCommand("cmd statusbar expand-notifications-instant")
+            waitForShadeToOpen()
+            return NotificationShade(displayId)
+        } else {
+            return openNotificationShadeViaGlobalAction()
+        }
+    }
+
+    /**
+     * Opens the notification shade with retrying on failure. Use this if there is no need to assert
+     * the way of opening it.
+     *
+     * This function can be used on the desktop environment.
+     *
+     * @return A [NotificationShade] instance representing the opened shade.
+     * @throws IllegalStateException if the shade fails to open after all retry attempts.
+     */
+    fun openNotificationShadeWithRetry(): NotificationShade {
+        for (attempt in 1..MAX_RETRY_ATTEMPTS) {
+            try {
+                val shade = if (Flags.sceneContainer()) {
+                    uiDevice.executeShellCommand("cmd statusbar expand-notifications-instant")
+                    waitForNotificationContainerToShow()
+                    NotificationShade(displayId)
+                } else {
+                    openNotificationShadeViaGlobalAction()
+                }
+                return shade
+            } catch (e: FailedEnsureException) {
+                if (attempt < MAX_RETRY_ATTEMPTS) {
+                    sleep(RETRY_TIME_INTERVAL.toMillis())
+                }
+            }
+        }
+
+        throw IllegalStateException(
+            "Failed to open notification shade on display $displayId after $MAX_RETRY_ATTEMPTS "+
+                    "attempts."
+        )
+    }
+
+    private val notificationContainerSelector =
+        sysuiResSelector("shared_notification_container", displayId)
+
+    private fun waitForNotificationContainerToShow() {
+        assert(Flags.sceneContainer())
+        traceSection("waitForNotificationContainerToShow") {
+            notificationContainerSelector.assertVisible(
+                timeout = NOTIFICATION_CONTAINER_OPEN_TIMEOUT,
+                errorProvider = { "Notification container didn't show on display $displayId" },
+            )
+        }
     }
 
     /** Opens the notification shade via AccessibilityService.GLOBAL_ACTION_NOTIFICATIONS. */
     fun openNotificationShadeViaGlobalAction(): NotificationShade {
-        traceSection("Opening notification shade via global action") {
+        traceSection("Opening shade via global action") {
             uiDevice.openNotification()
             waitForShadeToOpen()
             return NotificationShade(displayId)
@@ -87,7 +143,7 @@ class Root private constructor(val displayId: Int = DEFAULT_DISPLAY) {
     /** Opens the notification shade via two fingers wipe. */
     fun openNotificationShadeViaTwoFingersSwipe(): NotificationShade {
         assertWithMessage(
-            "two finger swipe is only supported on the default display, because it relies on " +
+                "two finger swipe is only supported on the default display, because it relies on " +
                     "UiObject#performTwoPointerGesture, and UiObject has no concept of displayId " +
                     "(unlike UiObject2)"
             )
@@ -114,7 +170,7 @@ class Root private constructor(val displayId: Int = DEFAULT_DISPLAY) {
         swipeDuration: Duration = Duration.ofMillis(500),
         heightFraction: Float = 0.1F,
     ): NotificationShade {
-        traceSection("Opening notification shade via swipe") {
+        traceSection("Opening shade via swipe") {
             val device = uiDevice
             val height = device.getDisplayHeight(displayId).toFloat()
             BetterSwipe.swipe(
@@ -188,10 +244,13 @@ class Root private constructor(val displayId: Int = DEFAULT_DISPLAY) {
         return NotificationShade(displayId)
     }
 
-    private val footerSelector = sysuiResSelector("qs_footer_actions", displayId)
+    private val qsSelector = sysuiResSelector("quick_settings_panel", displayId)
 
     private val notificationSwipeX: Float
         get() = uiDevice.getDisplayWidth(displayId) / 4f
+
+    private val qsSwipeX: Float
+        get() = 3 * uiDevice.getDisplayWidth(displayId) / 4f
 
     /**
      * Finds a HUN by its identity. Fails if the notification can't be found.
@@ -231,7 +290,7 @@ class Root private constructor(val displayId: Int = DEFAULT_DISPLAY) {
     ) {
         if (assertIsHunState) {
             assertWithMessage(
-                "HUN state Assertion usage error: Notification: ${identity.title} " +
+                    "HUN state Assertion usage error: Notification: ${identity.title} " +
                         "| You can only assert the HUN State of a notification that has an action " +
                         "button."
                 )
@@ -245,8 +304,27 @@ class Root private constructor(val displayId: Int = DEFAULT_DISPLAY) {
 
     /** Opens quick settings. */
     fun openQuickSettings(): QuickSettings {
-        uiDevice.executeShellCommand("cmd statusbar expand-settings")
-        waitForObj(sysuiResSelector("quick_settings_panel", displayId))
+        if (Flags.sceneContainer()) {
+            uiDevice.executeShellCommand("cmd statusbar expand-settings-instant")
+        } else {
+            uiDevice.executeShellCommand("cmd statusbar expand-settings")
+        }
+        waitForQuickSettingsToOpen()
+        return QuickSettings(displayId)
+    }
+
+    /** Opens quick settings with a swipe gesture that depends on form factor. */
+    fun openQuickSettingsWithSwipe(): QuickSettings {
+        if (ShadeUtils.isDualShadeConfig()) {
+            BetterSwipe.swipe(
+                PointF(qsSwipeX, 1f),
+                PointF(qsSwipeX, uiDevice.getDisplayHeight(displayId).toFloat() - 2f),
+                displayId = displayId,
+            )
+        } else {
+            openNotificationShadeViaSwipeFromTop().openQuickSettingsWithSwipe()
+        }
+        waitForQuickSettingsToOpen()
         return QuickSettings(displayId)
     }
 
@@ -255,13 +333,23 @@ class Root private constructor(val displayId: Int = DEFAULT_DISPLAY) {
         val device = uiDevice
         device.openQuickSettings()
         // Quick Settings isn't always open when this is complete. Explicitly wait for the Quick
-        // Settings footer to make sure that the buttons are accessible when the bar is open and
+        // Settings panel to make sure that the buttons are accessible when the bar is open and
         // this call is complete.
-        footerSelector.assertVisible()
+        qsSelector.assertVisible()
         // Wait an extra bit for the animation to complete. If we return to early, future callers
         // that are trying to find the location of the footer will get incorrect coordinates
         device.waitForIdle(LONG_TIMEOUT)
         return QuickSettings(displayId)
+    }
+
+    /** Collapses any open shade, i.e. either Notifications or QS. */
+    fun collapseAnyShade() {
+        if (Flags.sceneContainer()) {
+            uiDevice.executeShellCommand("cmd statusbar collapse-instant")
+        } else {
+            uiDevice.executeShellCommand("cmd statusbar collapse")
+        }
+        waitForShadeToClose(displayId)
     }
 
     /** Gets status bar. */
@@ -478,7 +566,7 @@ class Root private constructor(val displayId: Int = DEFAULT_DISPLAY) {
     }
 
     fun assertShadeNotVisible() {
-        qsHeaderSelector.assertInvisible { "Notification shade should not be visible" }
+        qsHeaderSelector.assertInvisible { "Shade should not be visible" }
     }
 
     private val qsHeaderSelector =
@@ -488,14 +576,27 @@ class Root private constructor(val displayId: Int = DEFAULT_DISPLAY) {
             sysuiResSelector("split_shade_status_bar", displayId)
         }
 
+    /**
+     * Verifies that shade is open. The success condition is the visibility of the Quick Settings
+     * (QS) header.
+     *
+     * NOTE: This function should not be used for desktop, as the QS header does not exist.
+     *
+     * @throws FailedEnsureException if the QS header does not become visible within the specified
+     * timeout.
+     */
     fun waitForShadeToOpen() {
         // Note that this duplicates the tracing done by assertVisible, but with a better name.
         traceSection("waitForShadeToOpen") {
             qsHeaderSelector.assertVisible(
                 timeout = NOTIFICATION_SHADE_OPEN_TIMEOUT,
-                errorProvider = { "Notification shade didn't open on display $displayId" },
+                errorProvider = { "Shade didn't open on display $displayId" },
             )
         }
+    }
+
+    private fun waitForQuickSettingsToOpen() {
+        waitForObj(sysuiResSelector("quick_settings_panel", displayId))
     }
 
     fun pressBackOnDisplay() {
@@ -612,6 +713,9 @@ class Root private constructor(val displayId: Int = DEFAULT_DISPLAY) {
 
     companion object {
         private val NOTIFICATION_SHADE_OPEN_TIMEOUT = Duration.ofSeconds(20)
+        private val NOTIFICATION_CONTAINER_OPEN_TIMEOUT = Duration.ofSeconds(5)
+        private const val MAX_RETRY_ATTEMPTS = 3
+        private val RETRY_TIME_INTERVAL = Duration.ofSeconds(1)
         private const val LONG_TIMEOUT: Long = 2000
         private const val SHORT_TIMEOUT: Long = 500
         private const val SCREENSHOT_POST_TIMEOUT_MSEC: Long = 20000

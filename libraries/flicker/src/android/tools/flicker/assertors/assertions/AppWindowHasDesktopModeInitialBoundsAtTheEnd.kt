@@ -20,7 +20,7 @@ import android.graphics.Rect
 import android.os.SystemProperties
 import android.tools.PlatformConsts.DESKTOP_MODE_INITIAL_WINDOW_HEIGHT_PROPORTION
 import android.tools.flicker.ScenarioInstance
-import android.tools.flicker.assertions.FlickerTest
+import android.tools.flicker.assertions.FlickerChecker
 import android.tools.flicker.assertors.ComponentTemplate
 import android.tools.helpers.WindowUtils
 
@@ -28,13 +28,13 @@ class AppWindowHasDesktopModeInitialBoundsAtTheEnd(private val component: Compon
     AssertionTemplateWithComponent(component) {
 
     /** {@inheritDoc} */
-    override fun doEvaluate(scenarioInstance: ScenarioInstance, flicker: FlickerTest) {
+    override fun doEvaluate(scenarioInstance: ScenarioInstance, flicker: FlickerChecker) {
         flicker.assertLayersEnd {
             val displayBounds =
                 entry.physicalDisplayBounds ?: error("Missing physical display bounds")
             val stableBounds = WindowUtils.getInsetDisplayBounds(scenarioInstance.endRotation)
             val desktopModeInitialBoundsScale =
-                SystemProperties.getInt("persist.wm.debug.desktop_mode_initial_bounds_scale", 75) /
+                SystemProperties.getInt("persist.wm.debug.desktop_mode_initial_bounds_scale", 72) /
                     100f
 
             val desiredWidth = displayBounds.width().times(desktopModeInitialBoundsScale)

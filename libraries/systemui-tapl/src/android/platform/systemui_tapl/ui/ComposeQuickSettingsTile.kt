@@ -60,10 +60,10 @@ abstract class ComposeQuickSettingsTile private constructor(val displayId: Int =
     /** The human readable name of the tile. */
     val tileName: String
         get() =
-            if (!TextUtils.isEmpty(tile.contentDescription)) {
-                tile.contentDescription
+            if (isSmallTile) {
+                tile.getContentDescriptionFromSelfOrDescendant() ?: ""
             } else {
-                tile.getTextFromSelfOrChild()
+                tile.getTextFromSelfOrDescendant() ?: ""
             }
 
     /**
@@ -168,7 +168,7 @@ abstract class ComposeQuickSettingsTile private constructor(val displayId: Int =
         /** See https://hsv.googleplex.com/4910828112314368?node=28 */
         fun largeTileSelector(description: String, displayId: Int = DEFAULT_DISPLAY): BySelector {
             return sysuiResSelector(LARGE_TILE_TAG, displayId)
-                .hasChild(By.displayId(displayId).textStartsWith(description))
+                .hasDescendant(By.displayId(displayId).textStartsWith(description))
         }
 
         fun UiObject2.assertIsTile() {
@@ -296,10 +296,18 @@ private class DualTargetImpl(innerTarget: UiObject2) :
     Clickable by ClickableImpl(innerTarget),
     LongPressable by LongPressableImpl(innerTarget)
 
-private fun UiObject2.getTextFromSelfOrChild(): String {
+private fun UiObject2.getTextFromSelfOrDescendant(): String? {
     return if (!TextUtils.isEmpty(text)) {
         text
     } else {
-        children.firstOrNull { !TextUtils.isEmpty(it.text) }?.text ?: ""
+        children.firstNotNullOfOrNull { it.getTextFromSelfOrDescendant() }
+    }
+}
+
+private fun UiObject2.getContentDescriptionFromSelfOrDescendant(): String? {
+    return if (!TextUtils.isEmpty(contentDescription)) {
+        contentDescription
+    } else {
+        this.children.firstNotNullOfOrNull { it.getContentDescriptionFromSelfOrDescendant() }
     }
 }

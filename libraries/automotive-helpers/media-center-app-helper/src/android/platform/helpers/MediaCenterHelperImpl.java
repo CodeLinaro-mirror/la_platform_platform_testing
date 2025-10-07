@@ -42,6 +42,7 @@ public class MediaCenterHelperImpl extends AbstractStandardAppHelper implements 
 
     private static final String LOG_TAG = MediaCenterHelperImpl.class.getSimpleName();
 
+    private static final int WAIT_MS = 10000;
     private MediaSessionManager mMediaSessionManager;
     private UiAutomation mUiAutomation;
 
@@ -537,6 +538,16 @@ public class MediaCenterHelperImpl extends AbstractStandardAppHelper implements 
         getSpectatioUiUtil().clickAndWait(menuItemElements.get(settingsItemPosition));
     }
 
+    /** {@inheritDoc} */
+    @Override
+    public void openTestMediaAppSettings() {
+        BySelector testMediaAppSettingsSelector =
+                getUiElementFromConfig(AutomotiveConfigConstants.MEDIA_APP_SETTINGS);
+        UiObject2 testMediaAppSettings =
+                getSpectatioUiUtil().findUiObject(testMediaAppSettingsSelector);
+        getSpectatioUiUtil().clickAndWait(testMediaAppSettings);
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -572,6 +583,7 @@ public class MediaCenterHelperImpl extends AbstractStandardAppHelper implements 
     public boolean isBluetoothAudioDisconnectedLabelVisible() {
         BySelector isBluetoothAudioDisconnectedLabel =
                 getUiElementFromConfig(AutomotiveConfigConstants.BLUETOOTH_DISCONNECTED_LABEL);
+        getSpectatioUiUtil().waitForUiObject(isBluetoothAudioDisconnectedLabel, WAIT_MS);
         return getSpectatioUiUtil().hasUiElement(isBluetoothAudioDisconnectedLabel);
     }
 
@@ -582,6 +594,7 @@ public class MediaCenterHelperImpl extends AbstractStandardAppHelper implements 
     public boolean isConnectToBluetoothLabelVisible() {
         BySelector connectToBluetoothLabel =
                 getUiElementFromConfig(AutomotiveConfigConstants.CONNECT_TO_BLUETOOTH);
+        getSpectatioUiUtil().waitForUiObject(connectToBluetoothLabel, WAIT_MS);
         return getSpectatioUiUtil().hasUiElement(connectToBluetoothLabel);
     }
 
@@ -590,6 +603,7 @@ public class MediaCenterHelperImpl extends AbstractStandardAppHelper implements 
     public boolean isCancelButtonVisible() {
         BySelector cancelBluetoothAudioConncetionButton =
                 getUiElementFromConfig(AutomotiveConfigConstants.CANCEL_BT_AUDIO_CONNECTION_BUTTON);
+        getSpectatioUiUtil().waitForUiObject(cancelBluetoothAudioConncetionButton, WAIT_MS);
         return getSpectatioUiUtil().hasUiElement(cancelBluetoothAudioConncetionButton);
     }
 

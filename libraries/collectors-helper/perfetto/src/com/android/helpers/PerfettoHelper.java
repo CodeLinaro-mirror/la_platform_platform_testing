@@ -16,7 +16,6 @@
 
 package com.android.helpers;
 
-import android.app.UiAutomation;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
 import android.util.Log;
@@ -26,13 +25,12 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.uiautomator.UiDevice;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Random;
 import java.util.HashSet;
+import java.util.Random;
 import java.util.Set;
 
 /**
@@ -48,8 +46,9 @@ public class PerfettoHelper {
     //   perfetto --background-wait -c /data/misc/perfetto-traces/trace_config.pb -o
     //   /data/misc/perfetto-traces/trace_output.perfetto-trace
     private static final String PERFETTO_START_BG_WAIT_CMD =
-            "perfetto --background-wait -c %s%s -o %s";
-    private static final String PERFETTO_START_CMD = "perfetto --background -c %s%s -o %s";
+            "perfetto --background-wait --config %s --out %s %s";
+    private static final String PERFETTO_START_CMD =
+            "perfetto --background --config %s --out %s %s";
     // Additional arg to indicate that the perfetto config file is text format.
     private static final String PERFETTO_TXT_PROTO_ARG = " --txt";
     // Command to stop (i.e kill) the perfetto tracing.
@@ -82,7 +81,7 @@ public class PerfettoHelper {
 
     private int mPerfettoProcId = 0;
 
-    private String mTextProtoConfig;
+    private byte[] mTraceConfig;
     private String mConfigFileName;
     private boolean mIsTextProtoConfig;
     private boolean mTrackPerfettoPidFlag;
@@ -111,8 +110,8 @@ public class PerfettoHelper {
     }
 
     /** Set content of the perfetto configuration to be used when tracing */
-    public PerfettoHelper setTextProtoConfig(String value) {
-        mTextProtoConfig = value;
+    public PerfettoHelper setTraceConfig(byte[] value) {
+        mTraceConfig = value;
         return this;
     }
 
@@ -137,85 +136,72 @@ public class PerfettoHelper {
      * @return true if trace collection started successfully otherwise return false.
      */
     public boolean startCollecting() {
-        String textProtoConfig = mTextProtoConfig != null ? mTextProtoConfig : "";
-        String configFileName = mConfigFileName != null ? mConfigFileName : "";
-        if (textProtoConfig.isEmpty() && configFileName.isEmpty()) {
+        if (mTraceConfig != null) {
+            return startCollectingFromConfig(mTraceConfig);
+        } else if (mConfigFileName != null) {
+            return startCollectingFromConfigFile(mConfigFileName, mIsTextProtoConfig);
+        } else {
             throw new IllegalStateException(
                     "Perfetto helper not configured. Set a configuration "
                             + "or a configuration file before start tracing");
         }
-
-        if (!textProtoConfig.isEmpty()) {
-            return startCollectingFromConfig(mTextProtoConfig);
-        }
-
-        return startCollectingFromConfigFile(mConfigFileName, mIsTextProtoConfig);
     }
 
     /**
      * Start the perfetto tracing in background using the given config and write the output to
      * /data/misc/perfetto-traces/trace_output.perfetto-trace.
      *
-     * @param textProtoConfig configuration in text proto format to pass to perfetto
+     * @param perfettoConfigContent configuration in text proto format to pass to perfetto
      * @return true if trace collection started successfully otherwise return false.
      */
     @VisibleForTesting
-    public boolean startCollectingFromConfig(String textProtoConfig) {
-        mPerfettoPidFile = null;
-        String startOutput = null;
-        if (textProtoConfig == null || textProtoConfig.isEmpty()) {
+    public boolean startCollectingFromConfig(byte[] perfettoConfigContent) {
+        if (perfettoConfigContent == null || perfettoConfigContent.length == 0) {
             Log.e(LOG_TAG, "Perfetto config is null or empty.");
             return false;
         }
+        Log.i(LOG_TAG, "Start collecting from stdin.");
+        mPerfettoPidFile = null;
 
         try {
             if (!canSetupBeforeStartCollecting()) {
                 return false;
             }
 
+            String additionalArgs = mIsTextProtoConfig ? PERFETTO_TXT_PROTO_ARG : "";
             String perfettoCmd =
                     String.format(
                             mPerfettoStartBgWait ? PERFETTO_START_BG_WAIT_CMD : PERFETTO_START_CMD,
-                            "- ",
-                            "--txt",
-                            mTmpOutputFilePath);
+                            "-", // from stdin
+                            mTmpOutputFilePath,
+                            additionalArgs);
 
             // Start perfetto tracing.
-            Log.i(LOG_TAG, "Starting perfetto tracing.");
-            UiAutomation uiAutomation =
-                    InstrumentationRegistry.getInstrumentation().getUiAutomation();
-            ParcelFileDescriptor[] fileDescriptor = uiAutomation.executeShellCommandRw(perfettoCmd);
-            ParcelFileDescriptor inputStreamDescriptor = fileDescriptor[0];
-            ParcelFileDescriptor outputStreamDescriptor = fileDescriptor[1];
+            Log.i(LOG_TAG, "Starting perfetto tracing from stdin with: " + perfettoCmd);
 
-            try (ParcelFileDescriptor.AutoCloseOutputStream outputStream =
-                    new ParcelFileDescriptor.AutoCloseOutputStream(outputStreamDescriptor)) {
-                outputStream.write(textProtoConfig.getBytes());
-            }
+            String commandStdOut =
+                    new String(
+                            executeShellCommandWithInputStream(perfettoCmd, perfettoConfigContent));
 
-            try (ParcelFileDescriptor.AutoCloseInputStream inputStream =
-                    new ParcelFileDescriptor.AutoCloseInputStream(inputStreamDescriptor)) {
-                startOutput = new String(inputStream.readAllBytes());
-                // Persist perfetto pid in a file and use it for cleanup if the instrumentation
-                // crashes.
-                if (mTrackPerfettoPidFlag) {
-                    mPerfettoPidFile = writePidToFile(startOutput);
-                }
-                if (!canUpdateAfterStartCollecting(startOutput)) {
+            // Persist perfetto pid in a file and use it for cleanup if the instrumentation
+            // crashes.
+            if (mTrackPerfettoPidFlag) {
+                try {
+                    mPerfettoPidFile = writePidToFile(commandStdOut);
+                } catch (IOException ioe) {
+                    Log.e(
+                            LOG_TAG,
+                            "Unable to write perfetto process id to a file." + ioe.getMessage());
+                    Log.i(LOG_TAG, "Stopping perfetto tracing because perfetto id is not tracked.");
+                    stopPerfetto(Integer.parseInt(commandStdOut.trim()));
                     return false;
                 }
             }
-        } catch (FileNotFoundException fnf) {
-            Log.e(LOG_TAG, "Unable to write perfetto process id to a file :" + fnf.getMessage());
-            Log.i(LOG_TAG, "Stopping perfetto tracing because perfetto id is not tracked.");
-            try {
-                stopPerfetto(Integer.parseInt(startOutput.trim()));
-            } catch (IOException ie) {
-                Log.e(LOG_TAG, "Unable to stop perfetto process output file." + ie.getMessage());
+            if (!canUpdateAfterStartCollecting(commandStdOut)) {
+                return false;
             }
-            return false;
         } catch (IOException ioe) {
-            Log.e(LOG_TAG, "Unable to start the perfetto tracing due to :" + ioe.getMessage());
+            Log.e(LOG_TAG, "Unable to start the perfetto tracing due to :" + ioe.getMessage(), ioe);
             return false;
         }
         Log.i(LOG_TAG, "Perfetto tracing started successfully.");
@@ -234,8 +220,9 @@ public class PerfettoHelper {
      */
     @VisibleForTesting
     public boolean startCollectingFromConfigFile(String configFileName, boolean isTextProtoConfig) {
+        Log.i(LOG_TAG, "Start collecting from config file path.");
         mPerfettoPidFile = null;
-        String startOutput = null;
+
         if (configFileName == null || configFileName.isEmpty()) {
             Log.e(LOG_TAG, "Perfetto config file name is null or empty.");
             return false;
@@ -251,45 +238,69 @@ public class PerfettoHelper {
                 return false;
             }
 
+            String configFilePath = new File(mConfigRootDir, configFileName).getPath();
+            String additionalArgs = isTextProtoConfig ? PERFETTO_TXT_PROTO_ARG : "";
             String perfettoCmd =
                     String.format(
                             mPerfettoStartBgWait ? PERFETTO_START_BG_WAIT_CMD : PERFETTO_START_CMD,
-                            mConfigRootDir,
-                            configFileName,
-                            mTmpOutputFilePath);
-
-            if (isTextProtoConfig) {
-                perfettoCmd = perfettoCmd + PERFETTO_TXT_PROTO_ARG;
-            }
+                            configFilePath,
+                            mTmpOutputFilePath,
+                            additionalArgs);
 
             // Start perfetto tracing.
-            Log.i(LOG_TAG, "Starting perfetto tracing.");
-            startOutput = mUIDevice.executeShellCommand(perfettoCmd);
+            Log.i(LOG_TAG, "Starting perfetto tracing with command: " + perfettoCmd);
+            String startOutput = mUIDevice.executeShellCommand(perfettoCmd);
+
+            // Persist perfetto pid in a file and use it for cleanup if the instrumentation
+            // crashes.
             if (mTrackPerfettoPidFlag) {
-                // Persist perfetto pid in a file and use it for cleanup if the instrumentation
-                // crashes.
-                mPerfettoPidFile = writePidToFile(startOutput);
+                try {
+                    mPerfettoPidFile = writePidToFile(startOutput);
+                } catch (IOException ioe) {
+                    Log.e(
+                            LOG_TAG,
+                            "Unable to write perfetto process id to a file." + ioe.getMessage());
+                    Log.i(LOG_TAG, "Stopping perfetto tracing because perfetto id is not tracked.");
+                    stopPerfetto(Integer.parseInt(startOutput.trim()));
+                    return false;
+                }
             }
-            Log.i(LOG_TAG, String.format("Perfetto start command output - %s", startOutput));
 
             if (!canUpdateAfterStartCollecting(startOutput)) {
                 return false;
             }
-        } catch (FileNotFoundException fnf) {
-            Log.e(LOG_TAG, "Unable to write perfetto process id to a file :" + fnf.getMessage());
-            Log.i(LOG_TAG, "Stopping perfetto tracing because perfetto id is not tracked.");
-            try {
-                stopPerfetto(Integer.parseInt(startOutput.trim()));
-            } catch (IOException ie) {
-                Log.e(LOG_TAG, "Unable to stop perfetto process output file." + ie.getMessage());
-            }
-            return false;
         } catch (IOException ioe) {
-            Log.e(LOG_TAG, "Unable to start the perfetto tracing due to :" + ioe.getMessage());
+            Log.e(LOG_TAG, "Unable to start the perfetto tracing due to :" + ioe.getMessage(), ioe);
             return false;
         }
         Log.i(LOG_TAG, "Perfetto tracing started successfully.");
         return true;
+    }
+
+    private byte[] executeShellCommandWithInputStream(String cmd, byte[] stdin) {
+        var uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        var fileDescriptors = uiAutomation.executeShellCommandRw(cmd);
+        var stdoutFileDescriptor = fileDescriptors[0];
+        var stdinFileDescriptor = fileDescriptors[1];
+
+        try (var stdinStream =
+                new ParcelFileDescriptor.AutoCloseOutputStream(stdinFileDescriptor)) {
+            stdinStream.write(stdin);
+        } catch (IOException e) {
+            Log.e(LOG_TAG, "Failed to write stdin", e);
+            throw new RuntimeException(e);
+        }
+
+        byte[] res = null;
+        try (var stdoutStream =
+                new ParcelFileDescriptor.AutoCloseInputStream(stdoutFileDescriptor)) {
+            res = stdoutStream.readAllBytes();
+        } catch (IOException e) {
+            Log.e(LOG_TAG, "Failed to read stdout", e);
+            throw new RuntimeException(e);
+        }
+
+        return res;
     }
 
     private boolean canSetupBeforeStartCollecting() throws IOException {
@@ -313,13 +324,14 @@ public class PerfettoHelper {
     private boolean canUpdateAfterStartCollecting(String startOutput) {
         Log.i(LOG_TAG, String.format("Perfetto start command output - %s", startOutput));
 
-        if (!startOutput.isEmpty()) {
-            mPerfettoProcId = Integer.parseInt(startOutput.trim());
-            sPerfettoProcessIds.add(mPerfettoProcId);
-            Log.i(
-                    LOG_TAG,
-                    String.format("Perfetto process id %d added for tracking", mPerfettoProcId));
+        if (startOutput.trim().isEmpty()) {
+            Log.e(LOG_TAG, "Perfetto command did not return a process id.");
+            return false;
         }
+
+        mPerfettoProcId = Integer.parseInt(startOutput.trim());
+        sPerfettoProcessIds.add(mPerfettoProcId);
+        Log.i(LOG_TAG, String.format("Perfetto process id %d added for tracking", mPerfettoProcId));
 
         // If the perfetto background wait option is not used then add a explicit wait after
         // starting the perfetto trace.
@@ -350,17 +362,12 @@ public class PerfettoHelper {
 
         // Stop the perfetto and copy the output file.
         Log.i(LOG_TAG, "Stopping perfetto.");
-        try {
-            if (stopPerfetto(mPerfettoProcId)) {
-                if (!copyFileOutput(destinationFile)) {
-                    return false;
-                }
-            } else {
-                Log.e(LOG_TAG, "Perfetto failed to stop.");
+        if (stopPerfetto(mPerfettoProcId)) {
+            if (!copyFileOutput(destinationFile)) {
                 return false;
             }
-        } catch (IOException ioe) {
-            Log.e(LOG_TAG, "Unable to stop the perfetto tracing due to " + ioe.getMessage());
+        } else {
+            Log.e(LOG_TAG, "Perfetto failed to stop.");
             return false;
         }
         // Delete the perfetto process id file if the perfetto tracing successfully ended.
@@ -383,11 +390,17 @@ public class PerfettoHelper {
      * @param perfettoProcId perfetto process id.
      * @return true if perfetto is stopped successfully.
      */
-    public boolean stopPerfetto(int perfettoProcId) throws IOException {
-        Log.i(LOG_TAG, String.format("Killing the process id - %d", perfettoProcId));
-        String stopOutput =
-                mUIDevice.executeShellCommand(String.format(PERFETTO_STOP_CMD, perfettoProcId));
-        Log.i(LOG_TAG, String.format("Perfetto stop command output - %s", stopOutput));
+    public boolean stopPerfetto(int perfettoProcId) {
+        try {
+            Log.i(LOG_TAG, String.format("Killing the process id - %d", perfettoProcId));
+            String stopOutput =
+                    mUIDevice.executeShellCommand(String.format(PERFETTO_STOP_CMD, perfettoProcId));
+            Log.i(LOG_TAG, String.format("Perfetto stop command output - %s", stopOutput));
+        } catch (IOException ioe) {
+            Log.e(LOG_TAG, "Unable to execute kill command due to " + ioe.getMessage());
+            return false;
+        }
+
         int waitCount = 0;
         while (isTestPerfettoRunning(perfettoProcId)) {
             // 60 secs timeout for perfetto shutdown.
@@ -415,8 +428,9 @@ public class PerfettoHelper {
      * @param perfettoStartOutput perfetto process id.
      * @return File with perfetto process id written in it.
      */
-    private File writePidToFile(String perfettoStartOutput)
-            throws IOException, FileNotFoundException {
+    private File writePidToFile(String perfettoStartOutput) throws IOException {
+        Log.i(LOG_TAG, String.format("Writing Perfetto Process id to file"));
+
         File perfettoPidFile =
                 new File(
                         String.format(

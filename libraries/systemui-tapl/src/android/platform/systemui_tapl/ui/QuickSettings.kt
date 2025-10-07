@@ -16,12 +16,11 @@
 package android.platform.systemui_tapl.ui
 
 import android.graphics.PointF
+import android.platform.helpers.ShadeUtils
 import android.platform.systemui_tapl.utils.DeviceUtils
 import android.platform.systemui_tapl.utils.DeviceUtils.sysuiResSelector
 import android.platform.systemui_tapl.utils.SETTINGS_PACKAGE
 import android.platform.systemui_tapl.utils.SYSUI_PACKAGE
-import android.platform.test.scenario.tapl_common.TaplUiDevice
-import android.platform.test.scenario.tapl_common.TaplUiObject
 import android.platform.uiautomatorhelpers.BetterSwipe
 import android.platform.uiautomatorhelpers.DeviceHelpers.assertInvisible
 import android.platform.uiautomatorhelpers.DeviceHelpers.assertVisible
@@ -38,19 +37,24 @@ import java.util.regex.Pattern
 
 /** System UI test automation object representing quick settings in the notification shade. */
 class QuickSettings internal constructor(val displayId: Int = DEFAULT_DISPLAY) {
-    // TODO(279061302): Remove TaplUiObject after BetterSwipe has a scroll wrapper.
-    private val pager: TaplUiObject
-
     private val clazzNamePattern = Pattern.compile("android\\.widget\\.((Switch)|(Button))")
 
     private val qsContainer = sysuiResSelector("quick_settings_panel", displayId)
     private val footerSelector = sysuiResSelector("qs_footer_actions", displayId)
-    private val pagerUISelector = sysuiResSelector(PAGER_UI_OBJECT_RES_ID, displayId)
 
     init {
         qsContainer.assertVisible { "Quick settings didn't open" }
-        footerSelector.assertVisible()
-        pager = TaplUiDevice.waitForObject(pagerUISelector, "QS pager")
+        if (!ShadeUtils.isDualShadeConfig()) {
+            footerSelector.assertVisible()
+        } else {
+            waitForObj(sysuiResSelector(SETTINGS_BUTTON_RES_ID, displayId))
+        }
+    }
+
+    /** Presses Edit button to open edit mode. */
+    fun openEditMode(): QSEditMode {
+        waitForObj(sysuiResSelector(EDIT_MODE_BTN_RES_ID)).click()
+        return QSEditMode()
     }
 
     /** Presses Power button to open the power panel. */
@@ -115,14 +119,10 @@ class QuickSettings internal constructor(val displayId: Int = DEFAULT_DISPLAY) {
             return UniversalMediaObject()
         }
 
-    /** Swipes up back to QQS or closes shade in case of split shade. */
-    fun close() {
+    /** Swipes up back to QQS or closes shade in case of split- or dual shade. */
+    fun closeWithSwipe() {
         swipeUp()
         qsContainer.assertInvisible()
-    }
-
-    fun swipeLeft() {
-        pager.fling(Direction.LEFT, 0.5f)
     }
 
     private fun swipeUp() {
@@ -138,6 +138,9 @@ class QuickSettings internal constructor(val displayId: Int = DEFAULT_DISPLAY) {
     companion object {
         // https://hsv.googleplex.com/5291196806070272?node=109
         private const val POWER_BTN_RES_ID = "pm_lite"
+
+        // https://hsv.googleplex.com/4765631852314624?node=446
+        private const val EDIT_MODE_BTN_RES_ID = "qs_edit_mode_button"
 
         // https://hsv.googleplex.com/5291196806070272?node=108
         private const val SETTINGS_BUTTON_RES_ID = "settings_button_container"

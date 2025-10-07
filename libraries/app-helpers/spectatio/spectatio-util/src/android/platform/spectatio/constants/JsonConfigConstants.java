@@ -16,6 +16,9 @@
 
 package android.platform.spectatio.constants;
 
+import java.util.EnumSet;
+import java.util.Set;
+
 public class JsonConfigConstants {
     // Spectatio Config Constants
     public static final String ACTIONS = "ACTIONS";
@@ -80,12 +83,18 @@ public class JsonConfigConstants {
         HAS_PACKAGE_IN_FOREGROUND,
         // Validates if Ui Element is in foreground ( throws exception if it is not in foreground )
         HAS_UI_ELEMENT_IN_FOREGROUND,
+        // Scroll to the beginning of the given element
+        SCROLL_TO_BEGINNING,
+        // Scroll to the end of the given element
+        SCROLL_TO_END,
         // Finds the given UI Element by Scrolling and Click on it ( Throws an exception if
         // UI Element not found )
         SCROLL_TO_FIND_AND_CLICK,
         // Finds the given UI Element by Scrolling and Click on it if found ( i.e. No Exception
         // even if UI Element is missing )
         SCROLL_TO_FIND_AND_CLICK_IF_EXIST,
+        // Finds the given UI Element by Scrolling ( Throws an exception if UI Element not found )
+        SCROLL_TO_FIND,
         // Sets the text of an element (used for quickly filling search boxes)
         SET_TEXT,
         // Swipes once
@@ -96,12 +105,21 @@ public class JsonConfigConstants {
         // Finds the given UI Element by Swiping and Click on it if found ( i.e. No Exception
         // even if UI Element is missing )
         SWIPE_TO_FIND_AND_CLICK_IF_EXIST,
+        // Finds the given UI Element by Swiping ( Throws an exception if UI Element not found )
+        SWIPE_TO_FIND,
         // Confirm that the given value is what's expected, and fail the test by throwing an
         // exception if it's not
         VALIDATE_VALUE,
         // Wait For Given Time in milliseconds
         WAIT_MS;
     }
+
+    public static Set<SupportedWorkFlowTasks> NO_BASE_CONFIG =
+            EnumSet.of(
+                    SupportedWorkFlowTasks.SCROLL_TO_BEGINNING,
+                    SupportedWorkFlowTasks.SCROLL_TO_END,
+                    SupportedWorkFlowTasks.SWIPE
+            );
 
     // Workflow Task Config
     public static final String CONFIG_TEXT = "TEXT";

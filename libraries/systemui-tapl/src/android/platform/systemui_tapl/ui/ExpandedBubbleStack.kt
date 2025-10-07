@@ -50,10 +50,27 @@ class ExpandedBubbleStack internal constructor() {
     val bubbles: List<Bubble>
         get() = bubbleViews.map { bubbleView: UiObject2 -> Bubble(bubbleView) }
 
+    /**
+     * Returns bubble bar handle.
+     *
+     * It's caller's responsibility to check whether the handle is visible.
+     */
+    val bubbleBarHandle
+        get() = BubbleBarHandle()
+
     /** Clicks the overflow button and returns the overflow panel that appears. */
     fun openOverflow(): BubbleOverflow {
         bubbleOverflow.click()
         return BubbleOverflow()
+    }
+
+    /** Verifies if the overflow icon is visible. */
+    fun verifyBubbleOverflowIsVisible() {
+        if (CommonUtils.isLargeScreen()) {
+            BUBBLE_BAR_OVERFLOW.assertVisible(timeout = FIND_OBJECT_TIMEOUT)
+        } else {
+            BUBBLE_OVERFLOW_BUTTON.assertVisible(timeout = FIND_OBJECT_TIMEOUT)
+        }
     }
 
     /** Closes the stack by swiping up. */

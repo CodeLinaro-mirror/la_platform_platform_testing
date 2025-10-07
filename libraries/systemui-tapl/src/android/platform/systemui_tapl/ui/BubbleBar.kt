@@ -24,10 +24,7 @@ import android.platform.uiautomatorhelpers.DeviceHelpers.assertVisible
 import android.platform.uiautomatorhelpers.DeviceHelpers.click
 import android.platform.uiautomatorhelpers.DeviceHelpers.uiDevice
 import android.platform.uiautomatorhelpers.DeviceHelpers.waitForObj
-import android.platform.uiautomatorhelpers.PRECISE_GESTURE_INTERPOLATOR
 import com.google.common.truth.Truth.assertThat
-import java.time.Duration
-import java.time.temporal.ChronoUnit
 
 /**
  * Provides an API for interacting with the collapsed bubble bar within launcher in UI automation
@@ -37,7 +34,7 @@ import java.time.temporal.ChronoUnit
  *
  * @see [ExpandedBubbleBar]
  */
-class BubbleBar {
+class BubbleBar : BubbleBarDragTarget {
 
     init {
         BUBBLE_BAR_VIEW.assertVisible { "Failed while waiting for bubble bar to become visible" }
@@ -61,6 +58,10 @@ class BubbleBar {
      */
     val bubbles: List<BubbleBarItem>
         get() = waitForObj(BUBBLE_BAR_VIEW).children.map { BubbleBarItem(it) }
+
+    /** Returns the current position of the bubble bar. */
+    override val visibleCenter: Point
+        get() = waitForObj(BUBBLE_BAR_VIEW).visibleCenter
 
     /** Expands the bubble bar by clicking on it and returns [ExpandedBubbleBar]. */
     fun expand(): ExpandedBubbleBar {
@@ -86,15 +87,8 @@ class BubbleBar {
      * Drags the bubble bar to the dismiss target. At the end of the gesture the bubble bar will be
      * gone.
      */
-    fun dragToDismiss() {
-        BetterSwipe.swipe(waitForObj(BUBBLE_BAR_VIEW).visibleCenter) {
-            pause()
-            to(
-                waitForObj(DISMISS_VIEW).visibleCenter,
-                Duration.of(500, ChronoUnit.MILLIS),
-                PRECISE_GESTURE_INTERPOLATOR,
-            )
-        }
+    override fun dragToDismiss() {
+        super.dragToDismiss()
 
         BUBBLE_BAR_VIEW.assertInvisible {
             "Failed while waiting for bubble bar to become invisible"
@@ -103,6 +97,6 @@ class BubbleBar {
 
     companion object {
         internal val BUBBLE_BAR_VIEW = launcherResSelector("taskbar_bubbles")
-        private val DISMISS_VIEW = launcherResSelector("dismiss_view")
+        internal val DISMISS_VIEW = launcherResSelector("dismiss_view")
     }
 }

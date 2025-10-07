@@ -433,7 +433,7 @@ public class SettingsPrivacyHelperImpl extends AbstractStandardAppHelper
                         .findUiObject(
                                 getUiElementFromConfig(
                                         AutomotiveConfigConstants
-                                                .SETTINGS_SUB_SETTING_SCROLL_ELEMENT));
+                                                .SETTINGS_SUB_PRIVACY_SETTING_SCROLL_ELEMENT));
         UiObject2 locationObject =
                 getSpectatioUiUtil()
                         .findUiObjectInGivenElement(
@@ -490,4 +490,22 @@ public class SettingsPrivacyHelperImpl extends AbstractStandardAppHelper
     public boolean isCarInformationUIElementDisplayed() {
         return mSettingUIHelper.get().hasUIElement(AutomotiveConfigConstants.CAR_INFORMATION);
     }
+
+    /** {@inheritDoc} */
+    @Override
+    public void turnOnMicroPhone(boolean onOff) {
+        boolean isOn = isMicroPhoneOn();
+        if (isOn != onOff) {
+            BySelector microPhoneSwitchSelector =
+                    getUiElementFromConfig(AutomotiveConfigConstants.TOGGLE_MICROPHONE);
+            UiObject2 microPhoneSwitch =
+                    getSpectatioUiUtil().findUiObject(microPhoneSwitchSelector);
+            getSpectatioUiUtil()
+                    .validateUiObject(
+                            microPhoneSwitch, AutomotiveConfigConstants.TOGGLE_MICROPHONE);
+            getSpectatioUiUtil().clickAndWait(microPhoneSwitch);
+        }
+    }
 }
+
+

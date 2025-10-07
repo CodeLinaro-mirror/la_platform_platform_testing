@@ -16,17 +16,16 @@
 
 package android.tools.collectors;
 
-import android.content.Context;
+
 import android.device.collectors.PerfettoListener;
 import android.device.collectors.PerfettoTracingStrategy;
 import android.os.Bundle;
-import android.util.Log;
 
+import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
-import androidx.test.platform.app.InstrumentationRegistry;
 
-import java.io.IOException;
-import java.io.InputStream;
+import org.junit.runner.notification.RunListener;
+
 import java.util.List;
 
 /**
@@ -34,10 +33,8 @@ import java.util.List;
  * and save the perfetto trace files under
  * <root>/<test_name>/PerfettoListener/<test_name>-<invocation_count>.perfetto-trace
  */
-public class DefaultUITraceListener extends PerfettoListener {
-    private static final String LOG_TAG = "UITraceListener";
-    private static final String DEFAULT_TEXT_CONFIG_FILE = "trace_config.textproto";
-    private static final String DEFAULT_FILE_PREFIX = "uiTrace_";
+@RunListener.ThreadSafe
+public class DefaultUITraceListener extends UiTraceListener {
 
     @SuppressWarnings("unused")
     public DefaultUITraceListener() {
@@ -54,27 +51,28 @@ public class DefaultUITraceListener extends PerfettoListener {
     }
 
     @Override
-    public void setupAdditionalArgs() {
-        Bundle args = getArgsBundle();
-        args.putString(PerfettoTracingStrategy.PERFETTO_CONFIG_TEXT_PROTO, "true");
-        String protoConfig;
-        try {
-            protoConfig = readDefaultConfig();
-        } catch (IOException e) {
-            throw new RuntimeException("Unable to read config asset", e);
-        }
-        args.putString(
-                PerfettoTracingStrategy.PERFETTO_CONFIG_OUTPUT_FILE_PREFIX, DEFAULT_FILE_PREFIX);
-        args.putString(PerfettoTracingStrategy.PERFETTO_CONFIG_TEXT_CONTENT, protoConfig);
-        super.setupAdditionalArgs();
+    protected boolean traceFtrace(Bundle args) {
+        return Boolean.parseBoolean(args.getString(TRACE_FTRACE_KEY, "true"));
     }
 
-    private String readDefaultConfig() throws IOException {
-        Context context = InstrumentationRegistry.getInstrumentation().getContext();
+    @Override
+    protected boolean traceLayers(Bundle args) {
+        return Boolean.parseBoolean(args.getString(TRACE_LAYERS_KEY, "true"));
+    }
 
-        try (InputStream inputStream = context.getAssets().open(DEFAULT_TEXT_CONFIG_FILE)) {
-            Log.v(LOG_TAG, "context.assets");
-            return new String(inputStream.readAllBytes());
-        }
+    @Override
+    protected boolean traceShellTransitions(Bundle args) {
+        return Boolean.parseBoolean(args.getString(TRACE_SHELL_TRANSITIONS_KEY, "true"));
+    }
+
+    @Override
+    protected boolean traceInput(Bundle args) {
+        return Boolean.parseBoolean(args.getString(TRACE_INPUT_KEY, "true"));
+    }
+
+    @Nullable
+    @Override
+    protected String getDefaultProtoLogFromLevel(Bundle args) {
+        return args.getString(PROTOLOG_DEFAULT_LOG_FROM_LEVEL_KEY, "DEBUG");
     }
 }

@@ -29,6 +29,9 @@ public class SettingUserHelperImpl extends AbstractStandardAppHelper implements 
     private static final String TAG = "SettingUserHelperImpl";
     private static final int MAX_WAIT_COUNT = 4;
     private static final int WAIT_MS = 40000;
+
+    private static final int TEN_SECONDS_WAIT = 10000;
+
     private ScrollUtility mScrollUtility;
     private ScrollActions mScrollAction;
     private BySelector mBackwardButtonSelector;
@@ -105,7 +108,11 @@ public class SettingUserHelperImpl extends AbstractStandardAppHelper implements 
             getSpectatioUiUtil().clickAndWait(userObject);
             clickbutton(AutomotiveConfigConstants.USER_SETTINGS_DELETE);
             clickbutton(AutomotiveConfigConstants.USER_SETTINGS_DELETE);
-            getSpectatioUiUtil().wait5Seconds();
+            getSpectatioUiUtil()
+                    .waitForUiObject(
+                            getUiElementFromConfig(
+                                    AutomotiveConfigConstants.USER_SETTINGS_ADD_PROFILE),
+                            TEN_SECONDS_WAIT);
         }
     }
     // delete self User
@@ -137,7 +144,6 @@ public class SettingUserHelperImpl extends AbstractStandardAppHelper implements 
         //             AutomotiveConfigConstants.USER_SETTINGS_ADD_PROFILE, addUserButton));
         if (addUserButton == null) {
             clickbutton(AutomotiveConfigConstants.USER_SETTINGS_MANAGE_OTHER_PROFILES);
-            getSpectatioUiUtil().wait5Seconds();
             UiObject2 UserObject =
                     mScrollUtility.scrollAndFindUiObject(
                             mScrollAction,
@@ -180,6 +186,7 @@ public class SettingUserHelperImpl extends AbstractStandardAppHelper implements 
         int count = 0;
         clickbutton(AutomotiveConfigConstants.HOME_PROFILE_ICON_BUTTON);
         clickbutton(userNameConfigKey);
+        skipSetupWizard();
         BySelector homeSelector =
                 getUiElementFromConfig(AutomotiveConfigConstants.HOME_BOTTOM_CARD);
         getSpectatioUiUtil().waitForUiObject(homeSelector, WAIT_MS);
@@ -243,7 +250,6 @@ public class SettingUserHelperImpl extends AbstractStandardAppHelper implements 
     public boolean isNewUserAnAdmin(String user) {
         boolean isUserAdmin = true;
         clickbutton(AutomotiveConfigConstants.USER_SETTINGS_MANAGE_OTHER_PROFILES);
-        getSpectatioUiUtil().wait5Seconds();
         UiObject2 UserObject =
                 mScrollUtility.scrollAndFindUiObject(
                         mScrollAction,
@@ -298,7 +304,7 @@ public class SettingUserHelperImpl extends AbstractStandardAppHelper implements 
     @Override
     public boolean toggle(String buttonText) {
         boolean currentStatus = isToggleOn(buttonText);
-        getSpectatioUiUtil().clickAndWait(mEnableOption);
+        getSpectatioUiUtil().clickAndWait(mEnableOption, 10000);
         boolean finalStatus = isToggleOn(buttonText);
         return finalStatus != currentStatus;
     }
@@ -317,5 +323,19 @@ public class SettingUserHelperImpl extends AbstractStandardAppHelper implements 
         BySelector homeButtonSelector =
                 getUiElementFromConfig(AutomotiveConfigConstants.HOME_PROFILE_ICON_BUTTON);
         getSpectatioUiUtil().waitForUiObject(homeButtonSelector, WAIT_MS);
+    }
+
+    @Override
+    public void chooseNewAdmin() {
+        int count = 0;
+        clickbutton(AutomotiveConfigConstants.USER_SETTINGS_CHOOSE_ADMIN);
+        BySelector userTitleSelector =
+                getUiElementFromConfig(AutomotiveConfigConstants.HOME_SECONDARY_USER_BUTTON);
+        UiObject2 userTitle = getSpectatioUiUtil().findUiObject(userTitleSelector);
+        getSpectatioUiUtil().clickAndWait(userTitle);
+        clickbutton(AutomotiveConfigConstants.USER_SETTINGS_MAKE_ADMIN_CONFIRM);
+        BySelector homeBottomCardSelector =
+                getUiElementFromConfig(AutomotiveConfigConstants.HOME_BOTTOM_CARD);
+        getSpectatioUiUtil().waitForUiObject(homeBottomCardSelector, WAIT_MS);
     }
 }

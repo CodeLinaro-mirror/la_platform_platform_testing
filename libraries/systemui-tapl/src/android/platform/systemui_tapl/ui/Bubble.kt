@@ -21,15 +21,9 @@ import android.os.SystemClock
 import android.platform.helpers.CommonUtils
 import android.platform.systemui_tapl.utils.DeviceUtils.launcherResSelector
 import android.platform.systemui_tapl.utils.DeviceUtils.sysuiResSelector
-import android.platform.uiautomatorhelpers.BetterSwipe
-import android.platform.uiautomatorhelpers.DeviceHelpers.context
 import android.platform.uiautomatorhelpers.DeviceHelpers.hasObject
 import android.platform.uiautomatorhelpers.DeviceHelpers.uiDevice
-import android.platform.uiautomatorhelpers.DeviceHelpers.waitForNullableObj
 import android.platform.uiautomatorhelpers.DeviceHelpers.waitForPossibleEmpty
-import android.platform.uiautomatorhelpers.PRECISE_GESTURE_INTERPOLATOR
-import android.view.WindowInsets
-import android.view.WindowManager
 import androidx.test.uiautomator.UiObject2
 import com.android.wm.shell.Flags
 import com.google.common.truth.Truth.assertWithMessage
@@ -39,7 +33,8 @@ import java.time.Duration
  * System UI test automation object representing a notification bubble, specifically the view
  * representing the bubble, shown when the stack is collapsed or expanded.
  */
-class Bubble internal constructor(private val bubbleView: UiObject2) {
+class Bubble internal constructor(private val bubbleView: UiObject2) : BubbleDragTarget {
+
     /** Expands the bubble into the stack. */
     fun expand(): ExpandedBubbleStack {
         bubbleView.click()
@@ -70,14 +65,14 @@ class Bubble internal constructor(private val bubbleView: UiObject2) {
 
     /** Dismisses the bubble by dragging it to the Dismiss target. */
     fun dismiss() {
-        dragBubbleToDismiss()
+        dragToDismiss()
         // check if bubble stack education is visible and blocked interaction
         // education visibility can be checked only after interacting with the bubble (swipe)
         // it might be invoked by user interaction, if it wasn't presented yet
         if (isEducationVisible) {
             // retry drag interaction
             // if education is visible, the previous interaction was blocked and didn't drag bubble
-            dragBubbleToDismiss()
+            dragToDismiss()
         }
     }
 
@@ -86,32 +81,11 @@ class Bubble internal constructor(private val bubbleView: UiObject2) {
         get() = BubbleFlyout()
 
     /** Is Welcome education visible and stopped bubbles expand */
-    private val isEducationVisible: Boolean
+    val isEducationVisible: Boolean
         get() = hasObject(BUBBLE_STACK_EDUCATION)
 
-    /** Drag bubble to Dismiss target */
-    private fun dragBubbleToDismiss() {
-        val windowMetrics =
-            context.getSystemService(WindowManager::class.java)!!.currentWindowMetrics
-        val insets =
-            windowMetrics.windowInsets.getInsetsIgnoringVisibility(
-                WindowInsets.Type.mandatorySystemGestures() or
-                        WindowInsets.Type.navigationBars() or
-                        WindowInsets.Type.displayCutout()
-            )
-        val destination =
-            Point(windowMetrics.bounds.width() / 2, (windowMetrics.bounds.height() - insets.bottom))
-        // drag to bottom of the screen, wait for dismiss view to appear, drag to dismiss view
-        BetterSwipe.swipe(bubbleView.visibleCenter) {
-            to(destination, interpolator = PRECISE_GESTURE_INTERPOLATOR)
-            // Make dismiss view optional in case the EDU view was shown and first swipe hid that.
-            // We will do a second swipe to actually dismiss.
-            val dismissView = waitForNullableObj(DISMISS_VIEW)
-            if (dismissView != null) {
-                to(dismissView.visibleCenter, interpolator = PRECISE_GESTURE_INTERPOLATOR)
-            }
-        }
-    }
+    override val visibleCenter: Point
+        get() = bubbleView.visibleCenter
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -125,7 +99,7 @@ class Bubble internal constructor(private val bubbleView: UiObject2) {
         val FIND_OBJECT_TIMEOUT = Duration.ofSeconds(20)
         val BUBBLE_VIEW = sysuiResSelector("bubble_view")
         val BUBBLE_BAR_VIEWS = launcherResSelector("bubble_view")
-        private val DISMISS_VIEW = sysuiResSelector("dismiss_view")
+        internal val DISMISS_VIEW = sysuiResSelector("dismiss_view")
         private val STACK_EXPAND_TIMEOUT = Duration.ofSeconds(1)
         private val BUBBLE_STACK_EDUCATION = sysuiResSelector("stack_education_layout")
 

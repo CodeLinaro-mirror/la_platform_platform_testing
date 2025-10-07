@@ -27,6 +27,7 @@ import androidx.test.uiautomator.UiObject2;
 
 /** Helper class for functional test for App Grid test */
 public class AppGridHelperImpl extends AbstractStandardAppHelper implements IAutoAppGridHelper {
+    private static final int APP_GRID_WAIT_TIME = 30000;
     private ScrollUtility mScrollUtility;
     private ScrollActions mScrollAction;
     private BySelector mBackwardButtonSelector;
@@ -80,7 +81,7 @@ public class AppGridHelperImpl extends AbstractStandardAppHelper implements IAut
             getSpectatioUiUtil()
                     .executeShellCommand(
                             getCommandFromConfig(AutomotiveConfigConstants.OPEN_APP_GRID_COMMAND));
-            getSpectatioUiUtil().wait5Seconds();
+            getSpectatioUiUtil().wait1Second();
         }
     }
 
@@ -123,8 +124,7 @@ public class AppGridHelperImpl extends AbstractStandardAppHelper implements IAut
                         String.format("Scroll on app grid to find %s", appName));
 
         getSpectatioUiUtil().validateUiObject(app, String.format("Given app %s", appName));
-        getSpectatioUiUtil().clickAndWait(app);
-        getSpectatioUiUtil().wait5Seconds();
+        getSpectatioUiUtil().clickAndWaitUntilNewWindowAppears(app);
     }
 
     /** {@inherticDoc} */
@@ -290,6 +290,8 @@ public class AppGridHelperImpl extends AbstractStandardAppHelper implements IAut
     public boolean isRecentsScreenLaunched() {
         BySelector recentAppsThumbnailSelector =
                 getUiElementFromConfig(AutomotiveConfigConstants.RECENT_APPS_THUMBNAIL);
+        getSpectatioUiUtil()
+                .waitForUiObjectToBeGone(recentAppsThumbnailSelector, APP_GRID_WAIT_TIME);
         return getSpectatioUiUtil().hasUiElement(recentAppsThumbnailSelector);
     }
 
@@ -308,5 +310,71 @@ public class AppGridHelperImpl extends AbstractStandardAppHelper implements IAut
                         String.format("Scroll on app grid to find %s", appName));
 
         return app != null;
+    }
+
+    @Override
+    public void unpinAppOnDock(String target) {
+        BySelector appNameOnDockerSelector = getUiElementFromConfig(target);
+        UiObject2 appNameOnDockerObject =
+                getSpectatioUiUtil().waitForUiObject(appNameOnDockerSelector);
+  getSpectatioUiUtil()
+                .validateUiObject(
+                        appNameOnDockerObject,
+                        String.format("App is not static, do not have unpin buton"));
+        getSpectatioUiUtil().longPress(appNameOnDockerObject);
+        BySelector unpinAppSelector =
+                getUiElementFromConfig(AutomotiveConfigConstants.UNPIN_APP_BUTTON);
+        UiObject2 unpinAppObject = getSpectatioUiUtil().waitForUiObject(unpinAppSelector);
+        getSpectatioUiUtil().clickAndWait(unpinAppObject);
+    }
+
+    @Override
+    public boolean verifyUnpinOptionForStaticAppOnDock(String target) {
+        BySelector appNameOnDockerSelector = getUiElementFromConfig(target);
+        UiObject2 appNameOnDockerObject =
+                getSpectatioUiUtil().waitForUiObject(appNameOnDockerSelector);
+        getSpectatioUiUtil()
+                .validateUiObject(
+                        appNameOnDockerObject,
+                        String.format("App is not static, do not have unpin button"));
+        getSpectatioUiUtil().longPress(appNameOnDockerObject);
+        BySelector unpinAppSelector =
+                getUiElementFromConfig(AutomotiveConfigConstants.UNPIN_APP_BUTTON);
+        UiObject2 unpinAppObject = getSpectatioUiUtil().waitForUiObject(unpinAppSelector);
+        boolean unpinValue = getSpectatioUiUtil().hasUiElement(unpinAppSelector);
+        getSpectatioUiUtil().clickAndWait(unpinAppObject);
+        return unpinValue;
+    }
+
+    @Override
+    public boolean verifyPinOptionForDynamicAppOnDock(String target) {
+        BySelector appNameOnDockerSelector = getUiElementFromConfig(target);
+        UiObject2 appNameOnDockerObject =
+                getSpectatioUiUtil().waitForUiObject(appNameOnDockerSelector);
+        getSpectatioUiUtil()
+                .validateUiObject(
+                        appNameOnDockerObject,
+                        String.format("App is not dynamic, do not have pin buton"));
+        getSpectatioUiUtil().longPress(appNameOnDockerObject);
+        BySelector pinAppSelector =
+                getUiElementFromConfig(AutomotiveConfigConstants.PIN_APP_BUTTON);
+        UiObject2 pinAppObject = getSpectatioUiUtil().waitForUiObject(pinAppSelector);
+        boolean pinValue = getSpectatioUiUtil().hasUiElement(pinAppSelector);
+        getSpectatioUiUtil().clickAndWait(pinAppObject);
+        return pinValue;
+    }
+
+    @Override
+    public boolean verifyAppOnDock(String target) {
+        BySelector appNameOnDockerSelector = getUiElementFromConfig(target);
+        return getSpectatioUiUtil().hasUiElement(appNameOnDockerSelector);
+    }
+
+    @Override
+    public boolean isAppGridIconPresent() {
+        BySelector appGridFacetSelector =
+                getUiElementFromConfig(AutomotiveConfigConstants.APP_GRID_FACET_BUTTON);
+        getSpectatioUiUtil().waitForUiObject(appGridFacetSelector);
+        return getSpectatioUiUtil().hasUiElement(appGridFacetSelector);
     }
 }
