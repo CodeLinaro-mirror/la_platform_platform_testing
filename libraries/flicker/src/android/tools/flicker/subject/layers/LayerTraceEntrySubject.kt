@@ -230,6 +230,33 @@ constructor(
     }
 
     /** {@inheritDoc} */
+    override fun isOccluded(componentMatcher: IComponentMatcher): LayerTraceEntrySubject = apply {
+        contains(componentMatcher)
+        val layers = subjects.map { it.layer }
+        val hasOccludedComponent =
+            componentMatcher.check(layers) { componentLayers ->
+                componentLayers.all { layer ->
+                    subjects.first { subject -> subject.layer == layer }.isOccluded
+                }
+            }
+
+        if (hasOccludedComponent) {
+            return@apply
+        }
+
+        val failedEntries = componentMatcher.filterLayers(layers)
+        val errorMsgBuilder =
+            ExceptionMessageBuilder()
+                .forSubject(this)
+                .forIncorrectOcclusion(
+                    componentMatcher.toLayerIdentifier(),
+                    expectElementOccluded = true,
+                )
+                .setActual(failedEntries)
+        throw IncorrectVisibilityException(errorMsgBuilder)
+    }
+
+    /** {@inheritDoc} */
     override fun isSplashScreenVisibleFor(
         componentMatcher: IComponentNameMatcher
     ): LayerTraceEntrySubject = apply {
@@ -307,7 +334,7 @@ constructor(
 
             val hasRoundedCornersLayer =
                 componentMatcher.check(subjects.map { it.layer }) {
-                    it.all { layer -> layer.cornerRadius > 0 }
+                    it.all { layer -> !layer.cornerRadii.isEmpty() }
                 }
 
             if (!hasRoundedCornersLayer) {
@@ -329,7 +356,7 @@ constructor(
 
             val hasNoRoundedCornersLayer =
                 componentMatcher.check(subjects.map { it.layer }) {
-                    it.all { layer -> layer.cornerRadius == 0f }
+                    it.all { layer -> layer.cornerRadii.isEmpty() }
                 }
 
             if (!hasNoRoundedCornersLayer) {

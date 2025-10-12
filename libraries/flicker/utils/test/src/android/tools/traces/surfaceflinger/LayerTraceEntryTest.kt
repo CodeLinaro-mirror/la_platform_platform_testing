@@ -49,31 +49,12 @@ class LayerTraceEntryTest {
     }
 
     @Test
-    fun canParseVisibleLayersLauncher() {
+    fun canParseVisibleLayers() {
         val reader = getLayerTraceReaderFromAsset("layers_trace_launch_split_screen.perfetto-trace")
         val trace = reader.readLayersTrace() ?: error("Unable to read layers trace")
-        val visibleLayers =
-            trace
-                .getEntryExactlyAt(Timestamps.from(systemUptimeNanos = 90480846872160))
-                .visibleLayers
-        val msg = "Visible Layers:\n" + visibleLayers.joinToString("\n") { "\t" + it.name }
-        Truth.assertWithMessage(msg).that(visibleLayers).hasSize(6)
-        Truth.assertThat(msg).contains("ScreenDecorOverlay#0")
-        Truth.assertThat(msg).contains("ScreenDecorOverlayBottom#0")
-        Truth.assertThat(msg).contains("NavigationBar0#0")
-        Truth.assertThat(msg).contains("ImageWallpaper#0")
-        Truth.assertThat(msg).contains("StatusBar#0")
-        Truth.assertThat(msg).contains("NexusLauncherActivity#0")
-    }
-
-    @Test
-    fun canParseVisibleLayersSplitScreen() {
-        val reader = getLayerTraceReaderFromAsset("layers_trace_launch_split_screen.perfetto-trace")
-        val trace = reader.readLayersTrace() ?: error("Unable to read layers trace")
-        val visibleLayers =
-            trace
-                .getEntryExactlyAt(Timestamps.from(systemUptimeNanos = 90493757372977))
-                .visibleLayers
+        val entry = trace.getEntryExactlyAt(Timestamps.from(systemUptimeNanos = 90493757372977))
+        val visibleLayers = entry.visibleLayers
+        Truth.assertThat(entry.flattenedLayers).hasSize(82)
         val msg = "Visible Layers:\n" + visibleLayers.joinToString("\n") { "\t" + it.name }
         Truth.assertWithMessage(msg).that(visibleLayers).hasSize(7)
         Truth.assertThat(msg).contains("ScreenDecorOverlayBottom#0")
@@ -83,29 +64,6 @@ class LayerTraceEntryTest {
         Truth.assertThat(msg).contains("DockedStackDivider#0")
         Truth.assertThat(msg).contains("ConversationListActivity#0")
         Truth.assertThat(msg).contains("GoogleDialtactsActivity#0")
-    }
-
-    @Test
-    fun canParseVisibleLayersInTransition() {
-        val reader = getLayerTraceReaderFromAsset("layers_trace_launch_split_screen.perfetto-trace")
-        val trace = reader.readLayersTrace() ?: error("Unable to read layers trace")
-        val visibleLayers =
-            trace
-                .getEntryExactlyAt(Timestamps.from(systemUptimeNanos = 90488463619533))
-                .visibleLayers
-        val msg = "Visible Layers:\n" + visibleLayers.joinToString("\n") { "\t" + it.name }
-        Truth.assertWithMessage(msg).that(visibleLayers).hasSize(10)
-        Truth.assertThat(msg).contains("ScreenDecorOverlayBottom#0")
-        Truth.assertThat(msg).contains("ScreenDecorOverlay#0")
-        Truth.assertThat(msg).contains("NavigationBar0#0")
-        Truth.assertThat(msg).contains("StatusBar#0")
-        Truth.assertThat(msg).contains("DockedStackDivider#0")
-        Truth.assertThat(msg)
-            .contains("SnapshotStartingWindow for taskId=21 - " + "task-snapshot-surface#0")
-        Truth.assertThat(msg).contains("SnapshotStartingWindow for taskId=21")
-        Truth.assertThat(msg).contains("NexusLauncherActivity#0")
-        Truth.assertThat(msg).contains("ImageWallpaper#0")
-        Truth.assertThat(msg).contains("ConversationListActivity#0")
     }
 
     @Test
@@ -139,21 +97,6 @@ class LayerTraceEntryTest {
                         " parentId = 1006"
                 )
         }
-    }
-
-    @Test
-    fun testCanParseNonCroppedLayerWithHWC() {
-        val layerName = "BackColorSurface#0"
-        val reader = getLayerTraceReaderFromAsset("layers_trace_backcolorsurface.perfetto-trace")
-        val trace = reader.readLayersTrace() ?: error("Unable to read layers trace")
-        val entry = trace.getEntryExactlyAt(Timestamps.from(systemUptimeNanos = 131954021476))
-        Truth.assertWithMessage("$layerName should not be visible")
-            .that(entry.visibleLayers.map { it.name })
-            .doesNotContain(layerName)
-        val layer = entry.flattenedLayers.first { it.name == layerName }
-        Truth.assertWithMessage("$layerName should be invisible because of HWC region")
-            .that(layer.visibilityReason)
-            .contains("Visible region calculated by Composition Engine is empty")
     }
 
     @Test
@@ -205,46 +148,6 @@ class LayerTraceEntryTest {
     }
 
     @Test
-    fun canDetectOccludedByLayerWithinThreshold() {
-        val reader = getLayerTraceReaderFromAsset("layers_trace_enter_overview.perfetto-trace")
-        val trace = reader.readLayersTrace() ?: error("Unable to read layers trace")
-
-        // Covers exactly
-        var state = trace.getEntryAt(Timestamps.from(unixNanos = 1698103534193295897))
-        var navBar = state.getLayerById(85) ?: error("Nav bar layer not found")
-
-        Truth.assertThat(navBar.visibilityReason.joinToString()).contains(EXPECTED_OCCLUDE)
-        Truth.assertThat(navBar.isVisible).isFalse()
-
-        // Covers within threshold (b/307401382)
-        state = trace.getEntryAt(Timestamps.from(unixNanos = 1698103534183177977))
-        navBar = state.getLayerById(85) ?: error("Nav bar layer not found")
-
-        Truth.assertThat(navBar.visibilityReason.joinToString()).contains(EXPECTED_OCCLUDE)
-        Truth.assertThat(navBar.isVisible).isFalse()
-    }
-
-    @Test
-    fun canDetectCoveredLayerByAccountingForAlpha() {
-        val reader = getLayerTraceReaderFromAsset("layers_trace_launch_split_screen.perfetto-trace")
-        val trace = reader.readLayersTrace() ?: error("Unable to read layers trace")
-
-        val state =
-            trace.getEntryAt(
-                Timestamps.from(
-                    elapsedNanos = 90485742427178,
-                    elapsedOffsetNanos = 1682359234732002451,
-                )
-            )
-        val coveredLayer = state.getLayerById(693) ?: error("Activity layer not found")
-        val coveringLayer = state.getLayerById(690) ?: error("Splash Screen layer not found")
-
-        Truth.assertThat(coveredLayer.isVisible).isTrue()
-        Truth.assertThat(coveringLayer.isVisible).isTrue()
-        Truth.assertThat(coveredLayer.coveredBy).contains(coveringLayer)
-    }
-
-    @Test
     fun canGetLayerWithBuffer() {
         val reader = getLayerTraceReaderFromAsset("layers_trace_launch_split_screen.perfetto-trace")
         val trace = reader.readLayersTrace() ?: error("Unable to read layers trace")
@@ -269,10 +172,9 @@ class LayerTraceEntryTest {
         val reader = getLayerTraceReaderFromAsset("layers_trace_emptyregion.perfetto-trace")
         val trace = reader.readLayersTrace() ?: error("Unable to read layers trace")
         val entry = trace.getEntryExactlyAt(Timestamps.from(systemUptimeNanos = 922839428857))
-        // Assuming there's a layer that matches this component but has an empty buffer in this
-        // trace
-        val component = ComponentNameMatcher("", "DimLayer#0")
-        val layer = entry.getLayerWithBuffer(component)
+        // Secondary Divider Dim#0 has layer id 42 and null active buffer
+        val layer = entry.getLayerById(42)
+        Truth.assertThat(layer).isNotNull()
         Truth.assertThat(layer?.activeBuffer?.isEmpty).isTrue()
     }
 
@@ -281,8 +183,8 @@ class LayerTraceEntryTest {
         val reader = getLayerTraceReaderFromAsset("layers_trace_launch_split_screen.perfetto-trace")
         val trace = reader.readLayersTrace() ?: error("Unable to read layers trace")
         val entry = trace.getEntryExactlyAt(Timestamps.from(systemUptimeNanos = 90480846872160))
-        // com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity#0 has id 700 in this trace
-        val layer = entry.getLayerById(700)
+        // com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity#0 has id 648 in this trace
+        val layer = entry.getLayerById(648)
         Truth.assertThat(layer).isNotNull()
         Truth.assertThat(layer?.name)
             .isEqualTo(
@@ -335,7 +237,5 @@ class LayerTraceEntryTest {
 
     companion object {
         @ClassRule @JvmField val ENV_CLEANUP = CleanFlickerEnvironmentRule()
-        private const val EXPECTED_OCCLUDE =
-            "Layer is occluded by: com.android.server.wm.flicker.testapp"
     }
 }

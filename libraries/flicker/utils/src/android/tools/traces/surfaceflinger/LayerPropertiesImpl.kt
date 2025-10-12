@@ -31,9 +31,8 @@ private constructor(
     override val flags: Int,
     override val bounds: RectF,
     override val color: Color,
-    private val _isOpaque: Boolean,
     override val shadowRadius: Float,
-    override val cornerRadius: Float,
+    override val cornerRadii: CornerRadii,
     override val screenBounds: RectF,
     override val transform: Transform,
     override val effectiveScalingMode: Int,
@@ -44,19 +43,15 @@ private constructor(
     override val isRelativeOf: Boolean,
     override val zOrderRelativeOfId: Int,
     override val stackId: Int,
-    override val excludesCompositionState: Boolean,
 ) : LayerProperties {
-    override val isOpaque: Boolean = if (color.alpha() != 1.0f) false else _isOpaque
-
     override fun hashCode(): Int {
         var result = visibleRegion.hashCode()
         result = 31 * result + activeBuffer.hashCode()
         result = 31 * result + flags
         result = 31 * result + bounds.hashCode()
         result = 31 * result + color.hashCode()
-        result = 31 * result + _isOpaque.hashCode()
         result = 31 * result + shadowRadius.hashCode()
-        result = 31 * result + cornerRadius.hashCode()
+        result = 31 * result + cornerRadii.hashCode()
         result = 31 * result + screenBounds.hashCode()
         result = 31 * result + transform.hashCode()
         result = 31 * result + effectiveScalingMode
@@ -68,22 +63,19 @@ private constructor(
         result = 31 * result + zOrderRelativeOfId
         result = 31 * result + stackId
         result = 31 * result + screenBounds.hashCode()
-        result = 31 * result + isOpaque.hashCode()
-        result = 31 * result + excludesCompositionState.hashCode()
         return result
     }
 
     override fun toString(): String {
         return "LayerProperties(visibleRegion=$visibleRegion, activeBuffer=$activeBuffer, " +
-            "flags=$flags, bounds=$bounds, color=$color, _isOpaque=$_isOpaque, " +
-            "shadowRadius=$shadowRadius, cornerRadius=$cornerRadius, " +
+            "flags=$flags, bounds=$bounds, color=$color, " +
+            "shadowRadius=$shadowRadius, cornerRadii=$cornerRadii, " +
             "screenBounds=$screenBounds, transform=$transform, " +
             "effectiveScalingMode=$effectiveScalingMode, bufferTransform=$bufferTransform, " +
             "hwcCompositionType=$hwcCompositionType, " +
             "backgroundBlurRadius=$backgroundBlurRadius, crop=$crop, isRelativeOf=$isRelativeOf, " +
             "zOrderRelativeOfId=$zOrderRelativeOfId, stackId=$stackId, " +
-            "screenBounds=$screenBounds, isOpaque=$isOpaque, " +
-            "excludesCompositionState=$excludesCompositionState)"
+            "screenBounds=$screenBounds)"
     }
 
     override fun equals(other: Any?): Boolean {
@@ -95,9 +87,8 @@ private constructor(
         if (flags != other.flags) return false
         if (bounds != other.bounds) return false
         if (color != other.color) return false
-        if (_isOpaque != other._isOpaque) return false
         if (shadowRadius != other.shadowRadius) return false
-        if (cornerRadius != other.cornerRadius) return false
+        if (cornerRadii != other.cornerRadii) return false
         if (screenBounds != other.screenBounds) return false
         if (transform != other.transform) return false
         if (effectiveScalingMode != other.effectiveScalingMode) return false
@@ -109,8 +100,6 @@ private constructor(
         if (zOrderRelativeOfId != other.zOrderRelativeOfId) return false
         if (stackId != other.stackId) return false
         if (screenBounds != other.screenBounds) return false
-        if (isOpaque != other.isOpaque) return false
-        if (excludesCompositionState != other.excludesCompositionState) return false
 
         return true
     }
@@ -124,9 +113,8 @@ private constructor(
                     flags = 0,
                     bounds = RectF(),
                     color = emptyColor(),
-                    _isOpaque = false,
                     shadowRadius = 0f,
-                    cornerRadius = 0f,
+                    cornerRadii = CornerRadii.EMPTY,
                     screenBounds = RectF(),
                     transform = Transform.EMPTY,
                     effectiveScalingMode = 0,
@@ -136,7 +124,6 @@ private constructor(
                     isRelativeOf = false,
                     zOrderRelativeOfId = 0,
                     stackId = 0,
-                    excludesCompositionState = false,
                 )
             }
 
@@ -148,9 +135,8 @@ private constructor(
             flags: Int = 0,
             bounds: RectF = RectF(),
             color: Color = emptyColor(),
-            isOpaque: Boolean = false,
             shadowRadius: Float = 0f,
-            cornerRadius: Float = 0f,
+            cornerRadii: CornerRadii = CornerRadii.EMPTY,
             screenBounds: RectF = RectF(),
             transform: Transform = Transform.EMPTY,
             effectiveScalingMode: Int = 0,
@@ -161,7 +147,6 @@ private constructor(
             isRelativeOf: Boolean = false,
             zOrderRelativeOfId: Int = 0,
             stackId: Int = 0,
-            excludesCompositionState: Boolean = false,
         ): LayerProperties {
             return withCache {
                 LayerPropertiesImpl(
@@ -170,20 +155,18 @@ private constructor(
                     flags,
                     bounds,
                     color,
-                    isOpaque,
                     shadowRadius,
-                    cornerRadius,
+                    cornerRadii,
                     screenBounds,
                     transform,
                     effectiveScalingMode,
                     bufferTransform,
                     hwcCompositionType,
                     backgroundBlurRadius,
-                    crop ?: RectF(),
+                    crop,
                     isRelativeOf,
                     zOrderRelativeOfId,
                     stackId,
-                    excludesCompositionState,
                 )
             }
         }
