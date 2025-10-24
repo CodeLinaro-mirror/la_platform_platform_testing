@@ -516,7 +516,7 @@
     },
     "HOME_MAPS_WIDGET": {
       "TYPE": "TEXT",
-      "VALUE": "Open Maps"
+      "VALUE": "Welcome to Google Maps"
     },
     "HOME_PROFILE_ICON_BUTTON": {
       "TYPE": "RESOURCE_ID",
@@ -546,6 +546,11 @@
     "HOME_NETWORK_BUTTON": {
       "TYPE": "RESOURCE_ID",
       "VALUE": "connectivity_panel_button",
+      "PACKAGE": "com.android.systemui"
+    },
+    "HOME_PROFILE_NAMES": {
+      "TYPE": "RESOURCE_ID",
+      "VALUE": "qc_title",
       "PACKAGE": "com.android.systemui"
     },
     "HOME_PROFILE_GUEST_ICON": {
@@ -1152,7 +1157,7 @@
     },
     "SYSTEM_SETTINGS_SCROLL_ELEMENT": {
       "TYPE": "RESOURCE_ID",
-      "VALUE": "fragment_container",
+      "VALUE": "car_ui_recycler_view",
       "PACKAGE": "com.android.car.settings"
     },
     "RECENT_NOTIFICATIONS": {
@@ -1221,6 +1226,26 @@
             "DESCENDANT": {
               "TYPE": "TEXT",
               "VALUE": "Brightness level"
+            }
+          }
+        }
+      ]
+    },
+    "MEDIA_SOUND_SEEKBAR": {
+      "TYPE": "MULTIPLE",
+      "SPECIFIERS": [
+        {
+          "TYPE": "CLASS",
+          "VALUE": "android.widget.SeekBar"
+        },
+        {
+          "TYPE": "HAS_ANCESTOR",
+          "MAX_DEPTH": 2,
+          "ANCESTOR": {
+            "TYPE": "HAS_DESCENDANT",
+            "DESCENDANT": {
+              "TYPE": "TEXT",
+              "VALUE": "Media volume"
             }
           }
         }
@@ -1548,6 +1573,67 @@
       "VALUE": "album_title",
       "PACKAGE": "com.android.car.media"
     },
+    "ALBUM_THUMBNAIL": {
+      "TYPE": "RESOURCE_ID",
+      "VALUE": "album_art",
+      "PACKAGE": "com.android.car.media"
+    },
+    "BASIC_SONGS_CATEGORY": {
+      "TYPE": "MULTIPLE",
+      "SPECIFIERS": [
+        {
+          "TYPE": "TEXT",
+          "VALUE": "Basic songs"
+        },
+        {
+          "TYPE": "RESOURCE_ID",
+          "VALUE": "car_ui_toolbar_tab_item_text",
+          "PACKAGE": "com.android.car.media"
+        }
+      ]
+    },
+    "ADVANCED_CATEGORY": {
+      "TYPE": "MULTIPLE",
+      "SPECIFIERS": [
+        {
+          "TYPE": "TEXT",
+          "VALUE": "Advanced"
+        },
+        {
+          "TYPE": "RESOURCE_ID",
+          "VALUE": "car_ui_toolbar_tab_item_text",
+          "PACKAGE": "com.android.car.media"
+        }
+      ]
+    },
+    "RABBIT_HOLE_CATEGORY": {
+      "TYPE": "MULTIPLE",
+      "SPECIFIERS": [
+        {
+          "TYPE": "TEXT",
+          "VALUE": "Rabbit hole 2"
+        },
+        {
+          "TYPE": "RESOURCE_ID",
+          "VALUE": "car_ui_toolbar_tab_item_text",
+          "PACKAGE": "com.android.car.media"
+        }
+      ]
+    },
+    "EMPTY_CATEGORY": {
+      "TYPE": "MULTIPLE",
+      "SPECIFIERS": [
+        {
+          "TYPE": "TEXT",
+          "VALUE": "Empty"
+        },
+        {
+          "TYPE": "RESOURCE_ID",
+          "VALUE": "car_ui_toolbar_tab_item_text",
+          "PACKAGE": "com.android.car.media"
+        }
+      ]
+    },
     "CURRENT_SONG_TIME": {
       "TYPE": "RESOURCE_ID",
       "VALUE": "current_time",
@@ -1589,9 +1675,33 @@
       "TYPE": "RESOURCE_ID",
       "VALUE": "car_ui_toolbar_menu_item_icon"
     },
+    "MEDIA_APP_QUEUE_MENU": {
+      "TYPE": "RESOURCE_ID",
+      "VALUE": "car_ui_toolbar_menu_item_icon"
+    },
+    "MEDIA_APP_QUEUE_SCROLL": {
+      "TYPE": "RESOURCE_ID",
+      "VALUE": "car_ui_scrollbar_track"
+    },
+    "MEDIA_APP_QUEUE_SCROLL_UP": {
+      "TYPE": "RESOURCE_ID",
+      "VALUE": "car_ui_scrollbar_page_up"
+    },
+    "MEDIA_APP_QUEUE_SCROLL_DOWN": {
+      "TYPE": "RESOURCE_ID",
+      "VALUE": "car_ui_scrollbar_page_down"
+    },
     "MEDIA_APP_SETTINGS": {
       "TYPE": "RESOURCE_ID",
       "VALUE": "menu_item_setting"
+    },
+    "MEDIA_APP_SEARCH": {
+      "TYPE": "RESOURCE_ID",
+      "VALUE": "menu_item_search"
+    },
+    "MEDIA_SEARCH_RESTRICTED_MESSAGE": {
+      "TYPE": "TEXT",
+      "VALUE": "Feature not available while driving"
     },
     "MEDIA_APP_NO_LOGIN_MSG": {
       "TYPE": "RESOURCE_ID",
@@ -1624,8 +1734,7 @@
     },
     "MEDIA_PLAYLIST_ICON": {
       "TYPE": "RESOURCE_ID",
-      "VALUE": "car_ui_toolbar_menu_item_icon",
-      "PACKAGE": "com.chassis.car.ui.plugin"
+      "VALUE": "car_ui_toolbar_menu_item_icon"
     },
     "PREVIOUS_BUTTON_HOME_SCREEN": {
       "TYPE": "RESOURCE_ID",
@@ -1657,8 +1766,7 @@
     },
     "MEDIA_APP_SCROLL_ELEMENT": {
       "TYPE": "RESOURCE_ID",
-      "VALUE": "car_ui_internal_recycler_view",
-      "PACKAGE": "com.android.car.ui.sharedlibrary"
+      "VALUE": "car_ui_internal_recycler_view"
     },
     "ACCOUNT_SETTINGS_GOOGLE_SIGN_IN_SCREEN": {
       "TYPE": "TEXT",

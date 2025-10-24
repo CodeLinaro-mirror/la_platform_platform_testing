@@ -260,12 +260,19 @@ class DesktopMouseTestRule() : TestRule {
      * implementation is actually using Int. For example, evdev injection only supports Int.
      * Therefore, it's currently not possible to move to a floating point coordinates.
      *
+     * NOTE: This method blocks the thread to wait for the cursor position to be expected.
+     * Do no call this in the main thread.
+     *
      * @param targetDisplayId The ID of the destination display.
-     * @param targetX The target X (PX) coordinate relative to the target display.
-     * @param targetY The target Y (PX) coordinate relative to the target display.
+     * @param targetXPx The target X (PX) coordinate relative to the target display.
+     * @param targetYPx The target Y (PX) coordinate relative to the target display.
      */
     fun move(targetDisplayId: Int, targetXPx: Int, targetYPx: Int) {
         Log.i(TAG, "Try moving to display#$targetDisplayId ($targetXPx, $targetYPx)")
+        check(Looper.myLooper() != Looper.getMainLooper()) {
+            "This method should not be called on the main thread"
+        }
+
         val currentCursorDisplayId = getCursorDisplayId()
 
         if (targetDisplayId != currentCursorDisplayId) {
@@ -278,8 +285,8 @@ class DesktopMouseTestRule() : TestRule {
             Log.i(TAG, "Cursor is already on the same display with $targetDisplayId")
         }
 
-        val currentPosition = getCursorPosition(targetDisplayId).roundToInt()
-        performSteppedMove(Point(targetXPx, targetYPx) - currentPosition)
+        val currentPosition = getCursorPosition(targetDisplayId)
+        performSteppedMove(Point(targetXPx, targetYPx) - currentPosition.roundToInt())
 
         WaitUtils.ensureThat(
             errorProvider = {
@@ -289,14 +296,18 @@ class DesktopMouseTestRule() : TestRule {
                     "Current pos: display#$displayId ${getCursorPosition(displayId)}"
             }
         ) {
-            val finalPosition = getCursorPosition(targetDisplayId).roundToInt()
-            val delta = finalPosition - Point(targetXPx, targetYPx)
+            val finalPosition = getCursorPosition(targetDisplayId)
+            val delta = finalPosition - PointF(targetXPx.toFloat(), targetYPx.toFloat())
             // As mentioned in the javadoc above, InputManager API doesn't support floating-point
             // movements. Hence, with all the floating-point calculation above, there might be
             // slight difference (within `FLOATING_ROUND_CORRECTION`) in the final cursor position.
-            delta.dx <= FLOATING_ROUNDING_CORRECTION && delta.dy <= FLOATING_ROUNDING_CORRECTION
+            abs(delta.dx) < FLOATING_ROUNDING_CORRECTION &&
+                abs(delta.dy) < FLOATING_ROUNDING_CORRECTION
         }
-        Log.i(TAG, "Successfully moved to display#$targetDisplayId ($targetXPx, $targetYPx)")
+        Log.i(
+            TAG,
+            "Successfully moved to display#$targetDisplayId ${getCursorPosition(targetDisplayId)}",
+        )
     }
 
     /**

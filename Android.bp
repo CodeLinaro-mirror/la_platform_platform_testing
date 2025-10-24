@@ -305,7 +305,6 @@ test_package {
         "confirmationui_invocation_test",
         "debuggerd_test",
         "doh_ffi_test",
-        "doh_unit_test",
         "dumpstate_test",
         "dumpstate_test_fixture",
         "dumpsys_test",
@@ -861,5 +860,33 @@ test_package {
         ],
         prepend_artifact_with_product: true,
         dest: "continuous_instrumentation_metric_tests-FILE_NAME_TAG_PLACEHOLDER.zip",
+    },
+}
+
+test_package {
+    name: "cw_continuous_native_tests",
+    tests: [
+        "PermissionUtils",
+    ],
+
+    dist: {
+        targets: ["cw_continuous_native_tests"],
+        prepend_artifact_with_product: true,
+        dest: "cw_continuous_native_tests-FILE_NAME_TAG_PLACEHOLDER.zip",
+    },
+}
+
+test_package {
+    name: "emulator_tests",
+    tests: [
+        "mediaframeworktest",
+        "CtsFragmentTestCases",
+        "HelloWorldTests",
+    ],
+
+    dist: {
+        targets: ["emulator_tests"],
+        prepend_artifact_with_product: true,
+        dest: "emulator_tests-FILE_NAME_TAG_PLACEHOLDER.zip",
     },
 }

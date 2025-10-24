@@ -28,7 +28,9 @@ import android.tools.traces.wm.WindowingMode
 import android.util.Log
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
+import androidx.test.uiautomator.BySelector
 import androidx.test.uiautomator.UiDevice
+import androidx.test.uiautomator.UiObject2
 import androidx.test.uiautomator.Until
 import java.time.Duration
 
@@ -84,6 +86,13 @@ constructor(
                 WAIT_TIME_IN_MILLISECONDS,
             )
             .click()
+    }
+
+    /** Clicks add to home screen button in menu and clicks add when the dialog appear. */
+    fun clickAddToHomeScreenInMenu() {
+        findObject(By.text(ADD_TO_HOME_SCREEN_TEXT)).also { it.click() }
+        findObject(By.res(packageName, "positive_button")).also { it.click() }
+        device.waitForIdle()
     }
 
     /** Clears the Chrome application's storage and data. */
@@ -200,6 +209,30 @@ constructor(
         return false
     }
 
+    /**
+     * Clicks share button in toolbar.
+     *
+     * This will trigger the app dialog when the share button is clicked.
+     */
+    fun clickShareButtonInToolbar() {
+        findObject(By.descContains(SHARE_BUTTON_DESC)).also { it.click() }
+        device.waitForIdle()
+    }
+
+    /**
+     * Clicks voice search button in search box.
+     *
+     * This will trigger the permissions dialog if microphone permissions are not yet granted.
+     */
+    fun clickVoiceButtonInSearchBox() {
+        findObject(By.res(packageName, VOICE_SEARCH_BUTTON_ID)).also { it.click() }
+        device.waitForIdle()
+    }
+
+    private fun findObject(selector: BySelector): UiObject2 =
+        uiDevice.wait(Until.findObject(selector), WAIT_TIME_IN_MILLISECONDS)
+        ?: error("Can't find object $selector")
+
     companion object {
         enum class TabDraggingDirection {
             TOP_LEFT
@@ -213,9 +246,19 @@ constructor(
         private const val NEGATIVE_BUTTON_ID = "negative_button"
         private const val MORE_BUTTON_ID = "more_button"
         private const val ACKNOWLEDGED_BUTTON_TEXT = "Got it"
+        private const val ADD_TO_HOME_SCREEN_TEXT = "Add to Home screen"
+        private const val SHARE_BUTTON_DESC = "Share"
+        private const val VOICE_SEARCH_BUTTON_ID = "voice_search_button"
 
         private val WAIT_TIME_IN_MILLISECONDS = Duration.ofSeconds(3).toMillis()
         private const val MIN_WINDOW_WIDTH_FOR_TAB_TEARING_DP = 475
+
+        /**  Opens a specified web page in the Chrome browser. */
+        fun getSpecialBrowserIntent(intentString: String): Intent {
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("http://$intentString"))
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            return intent
+        }
 
         private fun getBrowserIntent(): Intent {
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse("http://"))
