@@ -977,6 +977,17 @@ public class MediaCenterHelperImpl extends AbstractStandardAppHelper implements 
         return mediaCardPauseButton != null;
     }
 
+    @Override
+    public void clickContactsContinueButton() {
+        BySelector continueBtnSelector =
+                getUiElementFromConfig(AutomotiveConfigConstants.CONTACTS_ALLOW_CONTINUE_BUTTON);
+
+        if (getSpectatioUiUtil().hasUiElement(continueBtnSelector)) {
+            UiObject2 continueBtnObject = getSpectatioUiUtil().findUiObject(continueBtnSelector);
+            getSpectatioUiUtil().clickAndWait(continueBtnObject);
+        }
+    }
+
     /** {@inheritDoc} */
     @Override
     public boolean isMediaCardNextButtonDisplaying() {
@@ -1186,5 +1197,33 @@ public class MediaCenterHelperImpl extends AbstractStandardAppHelper implements 
                         String.format("Test Media Song in Media Card is not displayed"));
         String songName = getSpectatioUiUtil().getTextForUiElement(songObject);
         return (songName != null && songName.equals(defaultSongName));
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void clickOnThreeDotButtonMediaCard() {
+        BySelector threedotbutton =
+                getUiElementFromConfig(AutomotiveConfigConstants.MEDIA_CARD_THREE_DOT_BUTTON);
+        UiObject2 threedotbuttonObject = getSpectatioUiUtil().findUiObject(threedotbutton);
+        getSpectatioUiUtil().clickAndWait(threedotbuttonObject);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean isExtendedMenuDisplayedOnMediaCard() {
+        BySelector extendedmenu =
+                getUiElementFromConfig(AutomotiveConfigConstants.MEDIA_CARD_EXTENDED_MENU);
+        getSpectatioUiUtil().waitForUiObject(extendedmenu, WAIT_MS);
+        return getSpectatioUiUtil().hasUiElement(extendedmenu);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void closeExtendedMenu() {
+        BySelector extendedmenuclose =
+                getUiElementFromConfig(
+                        AutomotiveConfigConstants.MEDIA_CARD_EXTENDED_MENU_CLOSE_BUTTON);
+        UiObject2 extendedmenucloseObject = getSpectatioUiUtil().findUiObject(extendedmenuclose);
+        getSpectatioUiUtil().clickAndWait(extendedmenucloseObject);
     }
 }
