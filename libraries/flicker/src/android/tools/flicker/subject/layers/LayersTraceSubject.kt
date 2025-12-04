@@ -178,6 +178,19 @@ constructor(val trace: LayersTrace, override val reader: Reader? = null) :
     }
 
     /** {@inheritDoc} */
+    override fun isOccluded(componentMatcher: IComponentMatcher): LayersTraceSubject = apply {
+        isOccluded(componentMatcher, isOptional = false)
+    }
+
+    /** See [isOccluded] */
+    fun isOccluded(componentMatcher: IComponentMatcher, isOptional: Boolean): LayersTraceSubject =
+        apply {
+            addAssertion("isOccluded(${componentMatcher.toLayerIdentifier()})", isOptional) {
+                it.isOccluded(componentMatcher)
+            }
+        }
+
+    /** {@inheritDoc} */
     override fun isSplashScreenVisibleFor(
         componentMatcher: IComponentNameMatcher
     ): LayersTraceSubject = isSplashScreenVisibleFor(componentMatcher, isOptional = false)
@@ -333,10 +346,10 @@ constructor(val trace: LayersTrace, override val reader: Reader? = null) :
     @JvmOverloads
     fun getEntryBySystemUpTime(
         timestamp: Long,
-        byElapsedTimestamp: Boolean = false,
+        byMonotonicTimestamp: Boolean = false,
     ): LayerTraceEntrySubject {
-        return if (byElapsedTimestamp) {
-            subjects.first { it.entry.elapsedTimestamp == timestamp }
+        return if (byMonotonicTimestamp) {
+            subjects.first { it.entry.monotonicTimestamp == timestamp }
         } else {
             subjects.first { it.entry.timestamp.systemUptimeNanos == timestamp }
         }

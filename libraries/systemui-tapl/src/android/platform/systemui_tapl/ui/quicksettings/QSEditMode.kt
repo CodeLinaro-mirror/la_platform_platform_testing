@@ -29,7 +29,9 @@ import androidx.test.uiautomator.By
 import androidx.test.uiautomator.BySelector
 import androidx.test.uiautomator.UiObject2
 import java.time.Duration
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 
 /** System UI test automation object representing QS edit mode. */
 class QSEditMode(val displayId: Int = DEFAULT_DISPLAY) {
@@ -68,14 +70,14 @@ class QSEditMode(val displayId: Int = DEFAULT_DISPLAY) {
      * This will throw an error if [source] or [target] isn't found.
      */
     fun longPressAndDrag(source: QSEditTile, target: QSEditTile) {
-        val targetUiObject = waitForObj(target.selector)
+        val endTarget = waitForObj(target.selector).visibleCenter
         BetterSwipe.swipe(source.getClickTarget()) {
             // Pause before the swipe to simulate a long press
             pause()
 
             // Drag to the target's center
             to(
-                end = targetUiObject.visibleCenter,
+                end = endTarget,
                 duration = Duration.ofMillis(1000),
                 interpolator = DecelerateInterpolator(),
             )
@@ -83,6 +85,29 @@ class QSEditMode(val displayId: Int = DEFAULT_DISPLAY) {
             // Pause at the end of the gesture before releasing to make sure the list is updated
             pause()
         }
+    }
+
+    /**
+     * Clicks on the top app bar Remove button
+     *
+     * Throws an [AssertionError] if the button isn't clickable
+     */
+    fun clickOnRemoveButton() {
+        with(waitForObj(REMOVE_BUTTON_SELECTOR)) {
+            assertTrue(isClickable)
+            click()
+        }
+    }
+
+    /**
+     * Asserts the top app bar Remove button's state.
+     *
+     * The Remove button is disabled if there's no selected tile or if the selection is not
+     * removable
+     */
+    fun assertRemoveButtonState(isEnabled: Boolean) {
+        val uiObject = waitForObj(REMOVE_BUTTON_SELECTOR)
+        assertEquals(isEnabled, uiObject.isEnabled)
     }
 
     private fun UiObject2.scrollUntilFound(selector: BySelector, scrollingUp: Boolean): UiObject2? {
@@ -112,5 +137,8 @@ class QSEditMode(val displayId: Int = DEFAULT_DISPLAY) {
 
         // https://hsv.googleplex.com/4784770226585600?node=95
         private val BACK_ARROW_SELECTOR = By.desc("Navigate up")
+
+        // https://hsv.googleplex.com/4623996246032384?node=92
+        private val REMOVE_BUTTON_SELECTOR = By.hasChild(By.text("Remove"))
     }
 }
