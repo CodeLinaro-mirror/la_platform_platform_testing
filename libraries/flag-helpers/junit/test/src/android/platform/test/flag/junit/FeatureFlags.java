@@ -23,6 +23,10 @@ public interface FeatureFlags {
 
     boolean flagName4();
 
+    boolean flagName5();
+
+    boolean flagName6();
+
     boolean roEnabled();
 
     boolean roDisabled();
