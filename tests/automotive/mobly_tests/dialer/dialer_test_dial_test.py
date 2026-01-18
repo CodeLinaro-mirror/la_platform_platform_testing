@@ -44,7 +44,7 @@ class BluetoothDialTest(bluetooth_base_test.BluetoothBaseTest):
             self.target.serial,dialer_test_phone_number
         )
         self.call_utils.wait_with_log(2)
-        self.call_utils.dial_a_number(dialer_test_phone_number);
+        self.call_utils.dial_a_number(dialer_test_phone_number)
         self.call_utils.make_call()
         self.call_utils.wait_with_log(5)
         self.call_utils.verify_dialing_number(dialer_test_phone_number)
