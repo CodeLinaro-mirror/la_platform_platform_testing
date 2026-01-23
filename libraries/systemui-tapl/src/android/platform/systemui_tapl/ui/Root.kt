@@ -149,6 +149,26 @@ class Root private constructor(val displayId: Int = DEFAULT_DISPLAY) {
         }
     }
 
+    /** Opens the notification shade by tapping the status bar icon, with retry logic. */
+    fun openNotificationShadeViaTap() {
+        return executeWithRetry(
+            description = "Open notification shade by tap on display $displayId"
+        ) {
+            statusBar.notificationIconContainer.click()
+            waitForNotificationStackScroller()
+        }
+    }
+
+    /** Closes the notification shade by tapping the status bar icon, with retry logic. */
+    fun closeNotificationShadeViaTap() {
+        return executeWithRetry(
+            description = "Close notification shade by tap on display $displayId"
+        ) {
+            statusBar.notificationIconContainer.click()
+            waitForShadeToClose(displayId)
+        }
+    }
+
     /**
      * Opens the notification shade via swipe with retrying on failure. Use this for opening the
      * notification shade using a swipe gesture.
@@ -370,6 +390,26 @@ class Root private constructor(val displayId: Int = DEFAULT_DISPLAY) {
         }
         waitForQuickSettingsToOpen()
         return QuickSettings(displayId)
+    }
+
+    /** Opens the Quick Settings shade by clicking the status icon container, with retry logic. */
+    fun openQuickSettingsByTapWithRetry() {
+        executeWithRetry(
+            description = "Open quick settings shade by mouse on display $displayId"
+        ) {
+            statusBar.statusIconContainer.click()
+            waitForQuickSettingsToOpen()
+        }
+    }
+
+    /** Closes the Quick Settings shade by clicking the status icon container, with retry logic. */
+    fun closeQuickSettingsByTapWithRetry() {
+        executeWithRetry(
+            description = "Close quick settings shade by mouse on display $displayId"
+        ) {
+            statusBar.statusIconContainer.click()
+            waitForShadeToClose(displayId)
+        }
     }
 
     fun openQuickSettingsWithRetry(): QuickSettings {

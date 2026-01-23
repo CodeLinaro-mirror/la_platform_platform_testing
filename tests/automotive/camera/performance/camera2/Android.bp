@@ -8,6 +8,7 @@ python_test_host {
     main: "boot_test.py",
     libs: [
         "utilities",
+        "camera_performance_base_test_lib",
     ],
     srcs: [
         "boot_test.py",
