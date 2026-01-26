@@ -16,6 +16,4 @@
 
 package android.tools.traces.wm
 
-import android.graphics.Rect
-
-data class InsetsSourceProvider(val frame: Rect?, val source: InsetsSource?)
+data class InsetsSourceProvider(val source: InsetsSource?)
