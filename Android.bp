@@ -698,6 +698,9 @@ test_package {
     ],
     tests_if_exist_device_both: [
     ],
+    tests_if_exist_device_first: [
+        "ImsStackNativeTests",
+    ],
     host_tests: [
         "perfetto_trace_processor_shell",
     ],
