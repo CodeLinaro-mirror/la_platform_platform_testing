@@ -18,6 +18,7 @@ package {
 
 java_test_host {
     name: "PowerHostRunner",
+    team: "trendy_team_android_platform_performance_testing",
     srcs: ["src/**/*.java"],
     static_libs: ["host_runner_utils"],
     libs: ["tradefed"],

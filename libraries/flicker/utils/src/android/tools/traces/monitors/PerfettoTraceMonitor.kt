@@ -24,6 +24,7 @@ import java.util.concurrent.locks.ReentrantLock
 import perfetto.protos.PerfettoConfig
 import perfetto.protos.PerfettoConfig.DataSourceConfig
 import perfetto.protos.PerfettoConfig.FtraceConfig
+import perfetto.protos.PerfettoConfig.InputMethodConfig
 import perfetto.protos.PerfettoConfig.PriorityBoostConfig
 import perfetto.protos.PerfettoConfig.ProcessStatsConfig
 import perfetto.protos.PerfettoConfig.SurfaceFlingerLayersConfig
@@ -34,6 +35,8 @@ import perfetto.protos.PerfettoConfig.WindowManagerConfig
 /* Captures traces from Perfetto. */
 open class PerfettoTraceMonitor(
     val config: TraceConfig,
+    private val setupAction: Runnable? = null,
+    private val tearDownAction: Runnable? = null,
     private val jankCujEnabled: Boolean = false,
 ) : TraceMonitor() {
     override val traceType = TraceType.PERFETTO
@@ -70,6 +73,8 @@ open class PerfettoTraceMonitor(
         val fileName = File.createTempFile(traceType.fileName, "").name
         traceFile = PERFETTO_TRACES_DIR.resolve(fileName)
 
+        setupAction?.run()
+
         val command =
             "perfetto --background-wait" + " --config -" + " --out ${traceFile?.absolutePath}"
         val stdout = String(executeShellCommand(command, config.toByteArray()))
@@ -97,18 +102,23 @@ open class PerfettoTraceMonitor(
                 "The Perfetto tracing session likely failed to start... " +
                 "See the logs for more details..."
         }
-        killPerfettoProcess(requireNotNull(perfettoPid))
-        waitPerfettoProcessExits(requireNotNull(perfettoPid))
-        perfettoPid = null
-        if (jankCujEnabled) {
-            originalJankSamplingInterval?.let {
-                executeShellCommand(
-                    "device_config put interaction_jank_monitor sampling_interval $it"
-                )
+
+        try {
+            killPerfettoProcess(requireNotNull(perfettoPid))
+            waitPerfettoProcessExits(requireNotNull(perfettoPid))
+            perfettoPid = null
+            if (jankCujEnabled) {
+                originalJankSamplingInterval?.let {
+                    executeShellCommand(
+                        "device_config put interaction_jank_monitor sampling_interval $it"
+                    )
+                }
+                originalJankMonitorEnabled?.let {
+                    executeShellCommand("device_config put interaction_jank_monitor enabled $it")
+                }
             }
-            originalJankMonitorEnabled?.let {
-                executeShellCommand("device_config put interaction_jank_monitor enabled $it")
-            }
+        } finally {
+            tearDownAction?.run()
         }
 
         return requireNotNull(traceFile)
@@ -127,7 +137,24 @@ open class PerfettoTraceMonitor(
         private var uniqueSessionName: String? = null
         private var jankCujEnabled = false
 
-        fun enableImeTrace(): Builder = apply { enableCustomTrace(createImeDataSourceConfig()) }
+        fun enableImeTrace(
+            client: Boolean = true,
+            service: Boolean = true,
+            managerService: Boolean = true,
+        ): Builder = apply {
+            val dsConfig =
+                DataSourceConfig.newBuilder()
+                    .setName(IME_DATA_SOURCE)
+                    .setInputmethodConfig(
+                        InputMethodConfig.newBuilder()
+                            .setClient(client)
+                            .setService(service)
+                            .setManagerService(managerService)
+                            .build()
+                    )
+                    .build()
+            enableCustomTrace(dsConfig)
+        }
 
         fun enableCujTrace(): Builder = apply { jankCujEnabled = true }
 
@@ -285,14 +312,41 @@ open class PerfettoTraceMonitor(
                 )
             }
 
+            var setup: Runnable? = null
+            var teardown: Runnable? = null
+            if (jankCujEnabled) {
+                val originalSamplingInterval =
+                    executeShellCommand(
+                            "device_config get interaction_jank_monitor sampling_interval"
+                        )
+                        .toString(charset("UTF-8"))
+                        .trim()
+
+                setup = Runnable {
+                    executeShellCommand(
+                        "device_config put interaction_jank_monitor sampling_interval 1"
+                    )
+                }
+
+                teardown = Runnable {
+                    if (originalSamplingInterval.isEmpty() || originalSamplingInterval == "null") {
+                        executeShellCommand(
+                            "device_config delete interaction_jank_monitor sampling_interval"
+                        )
+                    } else {
+                        executeShellCommand(
+                            "device_config put interaction_jank_monitor sampling_interval $originalSamplingInterval"
+                        )
+                    }
+                }
+            }
+
             return PerfettoTraceMonitor(
                 config = configBuilder.build(),
+                setupAction = setup,
+                tearDownAction = teardown,
                 jankCujEnabled = jankCujEnabled,
             )
-        }
-
-        private fun createImeDataSourceConfig(): DataSourceConfig {
-            return DataSourceConfig.newBuilder().setName(IME_DATA_SOURCE).build()
         }
 
         private fun createLayersTraceDataSourceConfig(

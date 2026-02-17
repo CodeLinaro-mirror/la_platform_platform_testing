@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copyright (C) 2026 The Android Open Source Project
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<configuration description="One Device Test: {MODULE}">
+  <!--
+      Template for One Device Test.
+      This is common for all tests.
+  -->
+  <option name="test-suite-tag" value="catbox-display-safety" />
+
+  <device name="device1">
+    <!-- Python Dependencies -->
+    <target_preparer class="com.android.tradefed.targetprep.PythonVirtualenvPreparer">
+      <option name="disable" value="false" />
+      <option name="dep-module" value="mobly==1.13" />
+      <!-- Required for Parameterization -->
+      <option name="dep-module" value="absl-py==2.1.0" />
+      <!-- Required for Display Safety -->
+      <option name="dep-module" value="grpcio==1.74.0"/>
+      <option name="dep-module" value="protobuf" />
+      <option name="dep-module" value="importlib-resources" />
+      <option name="dep-module" value="opencv-python" />
+      <option name="dep-module" value="numpy" />
+      <option name="dep-module" value="Pillow" />
+      <option name="dep-module" value="google-genai" />
+      <option name="dep-module" value="httplib2" />"
+    </target_preparer>
+
+    <!-- ADB Root -->
+    <target_preparer class="com.android.tradefed.targetprep.RootTargetPreparer" />
+  </device>
+
+  <!-- Mobly test defaults for one device -->
+  <test class="com.android.tradefed.testtype.mobly.MoblyBinaryHostTest">
+      <option name="mobly-par-file-name" value="{MODULE}" />
+      <!-- Timeout limit in milliseconds -->
+      <option name="mobly-test-timeout" value="300000" />
+      <!-- Testbed config file -->
+      <option name="mobly-config-file-name" value="automotive_one_device_config.yaml" />
+  </test>
+</configuration>

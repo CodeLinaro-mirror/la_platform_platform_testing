@@ -16,21 +16,24 @@
 
 package android.platform.systemui_tapl.ui
 
+import android.Manifest
 import android.graphics.Point
 import android.graphics.PointF
 import android.graphics.Rect
+import android.hardware.display.DisplayManager
 import android.os.RemoteException
 import android.os.SystemClock
-import android.os.SystemClock.sleep
 import android.platform.helpers.ShadeUtils
 import android.platform.systemui_tapl.controller.LockscreenController
 import android.platform.systemui_tapl.controller.NotificationIdentity
+import android.platform.systemui_tapl.controller.VolumeController
 import android.platform.systemui_tapl.ui.ExpandedBubbleStack.Companion.BUBBLE_EXPANDED_VIEW
 import android.platform.systemui_tapl.ui.NotificationShade.Companion.waitForShadeToClose
 import android.platform.systemui_tapl.ui.quicksettings.BrightnessSlider
 import android.platform.systemui_tapl.ui.quicksettings.PowerPanel
 import android.platform.systemui_tapl.ui.quicksettings.QuickSettings
 import android.platform.systemui_tapl.utils.DeviceUtils.LONG_WAIT
+import android.platform.systemui_tapl.utils.DeviceUtils.SHORT_WAIT
 import android.platform.systemui_tapl.utils.DeviceUtils.sysuiResSelector
 import android.platform.systemui_tapl.utils.LAUNCHER_PACKAGE
 import android.platform.uiautomatorhelpers.BetterSwipe
@@ -50,13 +53,14 @@ import android.view.KeyEvent
 import android.view.WindowInsets
 import android.view.WindowManager
 import android.view.WindowMetrics
+import androidx.annotation.RequiresPermission
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
+import androidx.test.uiautomator.BySelector
 import androidx.test.uiautomator.UiSelector
 import androidx.test.uiautomator.Until
 import com.android.app.tracing.traceSection
 import com.android.launcher3.tapl.LauncherInstrumentation
-import com.android.launcher3.tapl.Workspace
 import com.android.systemui.Flags
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
@@ -88,13 +92,26 @@ class Root private constructor(val displayId: Int = DEFAULT_DISPLAY) {
         }
     }
 
-    /** Executes a given block of code and retries if it fails with an exception. */
-    private fun <T> executeWithRetry(description: String, block: () -> T): T {
+    /**
+     * Executes a given block of code and retries if it fails with an exception.
+     *
+     * @param description Describe the operation for logging.
+     * @param resetAction Optional logic to run if an exception occurs (e.g., clearing a cache or
+     *   resetting a connection). Defaults to empty.
+     * @param block The main operation to execute.
+     */
+    private fun <T> executeWithRetry(
+        description: String,
+        resetAction: () -> Unit = {},
+        block: () -> T,
+    ): T {
         var lastException: Exception? = null
         for (attempt in 1..MAX_RETRY_ATTEMPTS) {
             try {
                 return block()
             } catch (e: Exception) {
+                resetAction()
+
                 lastException = e
                 if (attempt < MAX_RETRY_ATTEMPTS) {
                     Log.w(
@@ -394,9 +411,7 @@ class Root private constructor(val displayId: Int = DEFAULT_DISPLAY) {
 
     /** Opens the Quick Settings shade by clicking the status icon container, with retry logic. */
     fun openQuickSettingsByTapWithRetry() {
-        executeWithRetry(
-            description = "Open quick settings shade by mouse on display $displayId"
-        ) {
+        executeWithRetry(description = "Open quick settings shade by mouse on display $displayId") {
             statusBar.statusIconContainer.click()
             waitForQuickSettingsToOpen()
         }
@@ -455,6 +470,67 @@ class Root private constructor(val displayId: Int = DEFAULT_DISPLAY) {
             uiDevice.executeShellCommand("cmd statusbar collapse")
         }
         waitForShadeToClose(displayId)
+    }
+
+    /**
+     * Simulates a brightness up key press event and verifying that the brightness slider appears on
+     * screen. The brightness is reset to its original level if the action fails.
+     */
+    @RequiresPermission(Manifest.permission.CONTROL_DISPLAY_BRIGHTNESS)
+    fun increaseBrightnessByKeyAndVerifySlider(
+        displayManager: DisplayManager
+    ): BrightnessDialogSlider {
+        val brightnessBefore = displayManager.getBrightness(displayId)
+
+        return executeWithRetry(
+            description = "Press brightness up key and verify slider visibility",
+            resetAction = { displayManager.setBrightness(displayId, brightnessBefore) },
+        ) {
+            val result = uiDevice.pressKeyCode(KeyEvent.KEYCODE_BRIGHTNESS_UP)
+            if (!result) {
+                throw IllegalStateException("Failed to inject BRIGHTNESS_UP key event.")
+            }
+
+            BrightnessDialogSlider()
+        }
+    }
+
+    /**
+     * Simulates a volume up key press event and verifying that the volume slider appears on screen.
+     * The volume is reset to its original level if the action fails.
+     */
+    fun increaseVolumeByKey(volumeController: VolumeController) {
+        val volumeBefore = volumeController.volume
+        executeWithRetry(
+            description = "Press volume up key and verify slider visibility",
+            resetAction = { volumeController.volume = volumeBefore },
+        ) {
+            val result = uiDevice.pressKeyCode(KeyEvent.KEYCODE_VOLUME_UP)
+            if (!result) {
+                throw IllegalStateException("Failed to inject VOLUME_UP key event.")
+            }
+
+            volumeSliderContainerSelector.assertVisible(timeout = SHORT_WAIT)
+        }
+    }
+
+    /**
+     * Mutes the volume by pressing the mute key and verifies that the volume slider appears on
+     * screen. The volume is reset to its original level if the action fails.
+     */
+    fun muteVolumeByKey(volumeController: VolumeController) {
+        val volumeBefore = volumeController.volume
+        executeWithRetry(
+            description = "Press mute key and verify slider visibility",
+            resetAction = { volumeController.volume = volumeBefore },
+        ) {
+            val result = uiDevice.pressKeyCode(KeyEvent.KEYCODE_VOLUME_MUTE)
+            if (!result) {
+                throw IllegalStateException("Failed to inject VOLUME_MUTE key event.")
+            }
+
+            volumeSliderContainerSelector.assertVisible(timeout = SHORT_WAIT)
+        }
     }
 
     /** Gets status bar. */
@@ -590,17 +666,11 @@ class Root private constructor(val displayId: Int = DEFAULT_DISPLAY) {
      * LauncherInstrumentation.goHome because LauncherInstrumentation.goHome expects all prior
      * animations to settle before it's used, which is true for Launcher tests that use it, but not
      * necessarily true for SysUI tests.
-     *
-     * @return the Workspace object.
      */
-    fun goHomeViaKeycode(): Workspace {
+    fun goHomeViaKeycode() {
         uiDevice.pressHome()
-        // getWorkspace will check `expectedRotation` and fail if it doesn't match the one from
-        // the device. However, if the test has an Orientation annotation, the orientation won't
-        // be fixed back until after this is run, possibly failing the test.
-        val instrumentation = LauncherInstrumentation()
-        instrumentation.setExpectedRotation(uiDevice.displayRotation)
-        return instrumentation.getWorkspace()
+        // Not waiting for any UI may cause race conditions.
+        uiDevice.waitForIdle()
     }
 
     private fun wakeUp() {
@@ -614,6 +684,9 @@ class Root private constructor(val displayId: Int = DEFAULT_DISPLAY) {
     /** Returns the volume dialog or fails if it's invisible. */
     val volumeDialog: VolumeDialog
         get() = VolumeDialog()
+
+    val volumeSliderContainerSelector: BySelector
+        get() = sysuiResSelector("volume_dialog_main_slider_container", displayId)
 
     /** Asserts that the volume dialog is not visible. */
     fun assertVolumeDialogNotVisible() {
