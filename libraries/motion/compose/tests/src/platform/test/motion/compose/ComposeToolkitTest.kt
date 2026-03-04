@@ -55,6 +55,7 @@ import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.IterableSubject
 import com.google.common.truth.Truth.assertThat
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.launch
 import org.junit.Rule
 import org.junit.Test
@@ -68,13 +69,12 @@ import platform.test.motion.golden.DataPointTypes
 import platform.test.motion.golden.NotFoundDataPoint
 import platform.test.motion.golden.ValueDataPoint
 import platform.test.motion.testing.createGoldenPathManager
-import kotlin.time.Duration.Companion.milliseconds
 
 @RunWith(AndroidJUnit4::class)
 class ComposeToolkitTest {
     private val pathManager =
         createGoldenPathManager("platform_testing/libraries/motion/compose/tests/goldens")
-    @get:Rule val motionRule = createFixedConfigurationComposeMotionTestRule(pathManager)
+    @get:Rule val motionRule = createComposeMotionTestRule(pathManager)
 
     @Test
     fun recordMotion_capturePosition() =
@@ -592,6 +592,39 @@ class ComposeToolkitTest {
             // and no recomposition happened yet.
             assertThat(awaitStartRecordingInvocationFrames).containsExactly(6, 107).inOrder()
             assertThat(awaitAnimationEndInvocationFrames).containsExactly(108, 109, 110).inOrder()
+        }
+
+    @Test
+    fun performance_captureHundredProperties() =
+        motionRule.runTest {
+            var completed = false
+
+            val motion =
+                recordMotion(
+                    content = { play ->
+                        Box(
+                            modifier =
+                                Modifier.testTag("foo")
+                                    .animateContentSize { _, _ -> completed = true }
+                                    .width(if (play) 90.dp else 10.dp)
+                                    .height(10.dp)
+                                    .background(Color.Red)
+                        )
+                    },
+                    ComposeRecordingSpec.until({ completed }) {
+                        repeat(100) {
+                            feature(
+                                hasTestTag("foo"),
+                                ComposeFeatureCaptures.dpSize,
+                                name = "foo_$it",
+                            )
+                        }
+                    },
+                )
+
+            // needs all 100 features, and needs to finish within the test timeout (it only does
+            // that with useCachedSemanticNodeFetcher == true)
+            assertThat(motion.timeSeries.features.keys).hasSize(100)
         }
 
     /** @see assertThatFrameCountValues */
