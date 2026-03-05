@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from sdv_test_fw.waiting_methods.waiting_methods import WaitingMethods
+from sdv_test_fw.verification import polling
 from vpm.sdv_vpm import SdvVpm
 
 # This base class should be started with two VMs.
@@ -21,7 +21,7 @@ from vpm.sdv_vpm import SdvVpm
 class SdvCuj22Base():
     ERROR_MESSAGE_AUTHZ_PUBLISHER_GREP = \
         '\n[FAILURE]: Service Bundle expected to be authorized to publish messages'
-    AUTHZ_RPC_SERVICE_UNIT_LOG = 'instance.*:com.sdv.google.sample.foo.ServiceBundleFoo/instance#com-sdv-google-sample-foo-foo-rpc allows access to instance.*:com.sdv.google.sample.bar.ServiceBundleBar/instance'
+    AUTHZ_RPC_SERVICE_UNIT_LOG = 'instance.*:com.android.sdv.sample.foo.ServiceBundleFoo/instance#com-android-sdv-sample-foo-foo-rpc allows access to instance.*:com.android.sdv.sample.bar.ServiceBundleBar/instance'
     ERROR_MESSAGE_AUTHZ_RPC_CLIENT_GREP = \
         '\n[FAILURE]: Service Bundle expected to be authorized to call RPC server'
 
@@ -52,10 +52,10 @@ class SdvCuj22Base():
 
 
     def verify_server_bundle_started(self):
-        self.verify_service_bundle_started(self.adb_device_server, 'instance1', 'com.sdv.google.sample.foo', 'ServiceBundleFoo')
+        self.verify_service_bundle_started(self.adb_device_server, 'instance1', 'com.android.sdv.sample.foo', 'ServiceBundleFoo')
 
     def verify_client_bundle_started(self):
-        self.verify_service_bundle_started(self.adb_device_client, 'instance2', 'com.sdv.google.sample.bar', 'ServiceBundleBar')
+        self.verify_service_bundle_started(self.adb_device_client, 'instance2', 'com.android.sdv.sample.bar', 'ServiceBundleBar')
 
 
     def verify_service_bundle_started(self, device, vm_instance, package_name, bundle_name):
@@ -66,14 +66,14 @@ class SdvCuj22Base():
         Args:
             device_name: Either self.adb_device_server or self.adb_device_client
             vm_instance: Typically either 'instance1' or 'instance2'
-            package_name: Typically either 'com.sdv.google.sample.foo' or 'com.sdv.google.sample.bar'
+            package_name: Typically either 'com.android.sdv.sample.foo' or 'com.android.sdv.sample.bar'
             bundle_name: Typically either 'ServiceBundleFoo' or 'ServiceBundleBar'
         """
         starting_text = 'Starting {vm_instance}:{package}.{bundle_name}/instance'
         error_message_creation_grep = \
         '\n[FAILURE]: Service Bundle expected to be started.'
 
-        WaitingMethods.wait_and_verify_expected_logs(
+        polling.wait_and_verify_expected_logs(
             sdv_device = device,
             grep_text = starting_text.format(
                 vm_instance = vm_instance,
@@ -94,13 +94,13 @@ class SdvCuj22Base():
             '\n[FAILURE]: Service Bundle expected to send/receive Foo Message.'
 
         # FooMessage sent by ServiceBundleFoo
-        WaitingMethods.wait_and_verify_expected_logs(
+        polling.wait_and_verify_expected_logs(
             sdv_device = self.adb_device_server,
             grep_text = sent_message,
             assert_msg = error_message_foo_message_grep,
         )
         # FooMessage received by ServiceBundleBar
-        WaitingMethods.wait_and_verify_expected_logs(
+        polling.wait_and_verify_expected_logs(
             sdv_device = self.adb_device_client,
             grep_text = received_message,
             assert_msg = error_message_foo_message_grep,
@@ -117,7 +117,7 @@ class SdvCuj22Base():
 
 
         # FooRPC::foo(GetFooRequest) and GetFooResponse are received.
-        WaitingMethods.wait_and_verify_expected_logs(
+        polling.wait_and_verify_expected_logs(
             sdv_device = self.adb_device_client,
             grep_text = rpc_request_response,
             assert_msg = error_message_foo_rpc_grep,
@@ -127,10 +127,10 @@ class SdvCuj22Base():
         """
         Verify logs that Pub is authorized
         """
-        authz_pubsub_unit_type_log = 'com.sdv.google.sample.foo.FooMessage allows access to instance.*:com.sdv.google.sample.foo.ServiceBundleFoo/instance'
+        authz_pubsub_unit_type_log = 'com.android.sdv.sample.foo.FooMessage allows access to instance.*:com.android.sdv.sample.foo.ServiceBundleFoo/instance'
 
         # Publisher is authorized to publish message.
-        WaitingMethods.wait_and_verify_expected_logs(
+        polling.wait_and_verify_expected_logs(
             sdv_device = self.adb_device_server,
             grep_text = authz_pubsub_unit_type_log,
             assert_msg = self.ERROR_MESSAGE_AUTHZ_PUBLISHER_GREP,
@@ -141,11 +141,11 @@ class SdvCuj22Base():
         """
         Verify logs that Sub is authorized
         """
-        authz_pubsub_service_unit_log = 'instance.*:com.sdv.google.sample.foo.ServiceBundleFoo/instance#com-sdv-google-sample-foo-foo-message-core allows access to instance.*:com.sdv.google.sample.bar.ServiceBundleBar/instance'
+        authz_pubsub_service_unit_log = 'instance.*:com.android.sdv.sample.foo.ServiceBundleFoo/instance#com-android-sdv-sample-foo-foo-message-core allows access to instance.*:com.android.sdv.sample.bar.ServiceBundleBar/instance'
 
         # Subscriber is authorized to discover and to subscribe
         # to the publisher.
-        WaitingMethods.wait_and_verify_expected_logs(
+        polling.wait_and_verify_expected_logs(
             sdv_device = self.adb_device_client,
             grep_text = authz_pubsub_service_unit_log,
             assert_msg = self.ERROR_MESSAGE_AUTHZ_PUBLISHER_GREP,
@@ -155,18 +155,18 @@ class SdvCuj22Base():
         """
         Verify logs that RPC server is authorized
         """
-        authz_rpc_unit_type_log = 'com.sdv.google.sample.foo.FooRPC allows access to instance.*:com.sdv.google.sample.foo.ServiceBundleFoo/instance'
+        authz_rpc_unit_type_log = 'com.android.sdv.sample.foo.FooRPC allows access to instance.*:com.android.sdv.sample.foo.ServiceBundleFoo/instance'
         error_message_authz_rpc_server_grep = \
             '\n[FAILURE]: Service Bundle expected to be authorized to implement RPC interface'
 
         # RPC server is authorized to implement RPC interface.
-        WaitingMethods.wait_and_verify_expected_logs(
+        polling.wait_and_verify_expected_logs(
             sdv_device = self.adb_device_server,
             grep_text = authz_rpc_unit_type_log,
             assert_msg = error_message_authz_rpc_server_grep,
         )
         # RPC client is authorized to connect to the RPC server.
-        WaitingMethods.wait_and_verify_expected_logs(
+        polling.wait_and_verify_expected_logs(
             sdv_device = self.adb_device_server,
             grep_text = self.AUTHZ_RPC_SERVICE_UNIT_LOG,
             assert_msg = self.ERROR_MESSAGE_AUTHZ_RPC_CLIENT_GREP,
@@ -177,7 +177,7 @@ class SdvCuj22Base():
         Verify logs that RPC client is authorized
         """
         # RPC client is authorized to discover the RPC server.
-        WaitingMethods.wait_and_verify_expected_logs(
+        polling.wait_and_verify_expected_logs(
             sdv_device = self.adb_device_client,
             grep_text = self.AUTHZ_RPC_SERVICE_UNIT_LOG,
             assert_msg = self.ERROR_MESSAGE_AUTHZ_RPC_CLIENT_GREP,
@@ -221,7 +221,7 @@ class SdvCuj22Base():
             )
             return log_message is not None
 
-        WaitingMethods.wait_for_true(
+        polling.wait_for_true(
             _check_for_new_log, device_adb, grep_text, initial_timestamp, n_occurrences, timeout=timeout
         )
 

@@ -20,7 +20,7 @@ Tests is on one SDV VM
 from mobly import asserts
 import logging
 from sdv_test_fw.test_execution import sdv_base_test, sdv_test_runner
-from sdv_test_fw.waiting_methods.waiting_methods import WaitingMethods
+from sdv_test_fw.verification import polling
 
 class SdvE2EOrchestrationModesResetOnRebootTest(
     sdv_base_test.SdvBaseTestClass
@@ -51,10 +51,11 @@ class SdvE2EOrchestrationModesResetOnRebootTest(
         grep_text = "sdv_orchestration_agent:"
 
         logcat_result = self.sdv_device.grep_from_logcat(grep_text)
-        if not_expected_result in logcat_result:
-            asserts.fail(
-                f"Not expected logcat result found: {not_expected_result}"
-            )
+        asserts.assert_not_in(
+            not_expected_result,
+            logcat_result,
+            f"Not expected logcat result found: {not_expected_result}",
+        )
 
     def test_modes_reset_on_reboot(
         self
@@ -65,21 +66,21 @@ class SdvE2EOrchestrationModesResetOnRebootTest(
 
         # We set power, vehicle and custom modes to verify afterwards that they were not persisted.
         self.vpm_session.send_command('vepsm power-state power-on')
-        WaitingMethods.wait_and_verify_expected_logs(
+        polling.wait_and_verify_expected_logs(
             sdv_device=self.sdv_device,
             grep_text="sdv_orchestration_agent",
             expected_result=self.FINISHED_PROCESSING_POWER_ON,
             assert_msg="Power ON mode was never enforced",
         )
         self.vpm_session.send_command('vepsm vehicle-state park')
-        WaitingMethods.wait_and_verify_expected_logs(
+        polling.wait_and_verify_expected_logs(
             sdv_device=self.sdv_device,
             grep_text="sdv_orchestration_agent",
             expected_result=self.FINISHED_PROCESSING_VEHICLE_PARK,
             assert_msg="Vehicle PARK mode was never enforced",
         )
         self.custom_mode_session.send_command('orch_custom_mode_sample E2E-TESTS recover-custom-mode')
-        WaitingMethods.wait_and_verify_expected_logs(
+        polling.wait_and_verify_expected_logs(
             sdv_device=self.sdv_device,
             grep_text="sdv_orchestration_agent",
             expected_result=self.FINISHED_PROCESSING_CUSTOM_MODE,
@@ -90,7 +91,7 @@ class SdvE2EOrchestrationModesResetOnRebootTest(
         self.sdv_device.reboot_device()
 
         # Wait until we enforced the default mode to verify that none of the modes was enforced (meaning set on subscription)
-        WaitingMethods.wait_and_verify_expected_logs(
+        polling.wait_and_verify_expected_logs(
             sdv_device=self.sdv_device,
             grep_text="sdv_orchestration_agent",
             expected_result=self.FINISHED_PROCESSING_DEFAULT,

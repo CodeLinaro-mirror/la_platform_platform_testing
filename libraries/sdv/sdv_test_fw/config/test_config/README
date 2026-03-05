@@ -11,28 +11,9 @@
   limitations under the License.
 -->
 
-# OTA Update Test
+# SDV Test Framework ATest Configs
 
-## Test Execution
+These test configs are used to run atest for local testing.
 
-Read [SDV Testing instructions](/vendor/google_testing/software_defined_vehicle/README.md) for detailed information.
-
-### Mobly
-
-```
-To run locally
-
-1. make dist DIST_DIR=dist_output
-2. atest SdvE2EOtaUpdateTest -- --test-arg com.android.tradefed.testtype.mobly.MoblyBinaryHostTest:mobly-config-file-name:sdv_one_device_local_only_config.yaml
-
-```
-
-### CATBox
-
-```
-NOTIFY_AS_NATIVE=0.0.0.0:6520 ./tools/catbox-tradefed run commandAndExit sdv-e2e-ota-update-test --{device1}serial 0.0.0.0:6520
-```
-
-## CI/CD execution
-
-- Name: `sdv/e2e/ota_update_test`
+In CI/CD we use the CATBox configurations located at
+platform_testing/libraries/sdv/sdv_catbox.

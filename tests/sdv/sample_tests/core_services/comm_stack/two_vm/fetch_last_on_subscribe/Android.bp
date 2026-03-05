@@ -13,22 +13,29 @@
 // limitations under the License.
 
 package {
-    default_team: "trendy_team_automotive",
+    default_team: "trendy_team_auto_engprod",
     default_applicable_licenses: ["sdv_tests_license"],
 }
 
 python_test_host {
-    name: "SdvE2EOtaUpdateTest",
-    main: "sdv_e2e_ota_update_test.py",
-    srcs: ["sdv_e2e_ota_update_test.py"],
+    name: "SdvSampleCommStackTwoVMFetchLastOnSubscribeTest",
+    main: "sdv_sample_comm_stack_two_vm_fetch_last_on_subscribe_test.py",
+    srcs: ["sdv_sample_comm_stack_two_vm_fetch_last_on_subscribe_test.py"],
     data: [
         ":sdv_test_fw_device_configs",
     ],
     test_options: {
         unit_test: false,
     },
+    libs: [
+        "sdv_comm_helper_lib",
+    ],
     defaults: [
         "sdv_test_fw_defaults",
+        "sdv_perfetto_defaults",
+        "sdv_perfetto_trace_processor_defaults",
     ],
-    test_config_template: ":sdv_one_device",
+    // TODO(b/449630628): Replace with default template once no test-specific
+    // deps are required.
+    test_config_template: ":sdv_comm_helper_config_two_vm",
 }
