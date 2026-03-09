@@ -27,7 +27,7 @@ from enum import Enum
 
 from sdv_test_fw.device import sdv_adb
 from sdv_test_fw.test_execution import sdv_base_test
-from sdv_test_fw.waiting_methods.waiting_methods import WaitingMethods
+from sdv_test_fw.verification import polling
 
 
 @dataclass
@@ -66,11 +66,11 @@ class SdvSBLifecycleRobustnessTestBase(sdv_base_test.SdvBaseTestClass):
     LOGCAT_LIFECYCLE_REGEX = "Service bundle.*{bundle_package}.*{bundle_name}.*{regex}"
 
     # Foo VM properties
-    SYS_PROP_FOO_PUB_INTERVAL = "persist.com.sdv.google.sample.foo.pub_interval_ms"
+    SYS_PROP_FOO_PUB_INTERVAL = "persist.com.android.sdv.sample.foo.pub_interval_ms"
     FOO_PUB_INTERVAL_IN_MS = 200
 
     # Bar VM properties
-    SYS_PROP_BAZ_SUB_INTERVAL = "persist.com.sdv.google.sample.baz.sub_interval_ms"
+    SYS_PROP_BAZ_SUB_INTERVAL = "persist.com.android.sdv.sample.baz.sub_interval_ms"
     BAZ_SUB_INTERVAL_IN_MS = 100
 
     # Given the comms stack propagation delays used in other tests (500 ms), waiting
@@ -111,9 +111,9 @@ class SdvSBLifecycleRobustnessTestBase(sdv_base_test.SdvBaseTestClass):
         self.foo_bundle = ServiceBundle(
             adb_device=foo_device,
             name="ServiceBundleFoo",
-            package="com.sdv.google.sample.foo",
-            fqin="local-vm:com.sdv.google.sample.foo.ServiceBundleFoo/instance",
-            tag="com_sdv_google_sample_foo_ServiceBundleFoo_instance",
+            package="com.android.sdv.sample.foo",
+            fqin="local-vm:com.android.sdv.sample.foo.ServiceBundleFoo/instance",
+            tag="com_android_sdv_sample_foo_ServiceBundleFoo_instance",
         )
 
         # Setup Bar ServiceBundle
@@ -127,18 +127,18 @@ class SdvSBLifecycleRobustnessTestBase(sdv_base_test.SdvBaseTestClass):
         self.bar_bundle = ServiceBundle(
             adb_device=bar_baz_device,
             name="ServiceBundleBar",
-            package="com.sdv.google.sample.bar",
-            fqin="local-vm:com.sdv.google.sample.bar.ServiceBundleBar/instance",
-            tag="com_sdv_google_sample_bar_ServiceBundleBar_instance",
+            package="com.android.sdv.sample.bar",
+            fqin="local-vm:com.android.sdv.sample.bar.ServiceBundleBar/instance",
+            tag="com_android_sdv_sample_bar_ServiceBundleBar_instance",
         )
 
         # Setup Baz ServiceBundle
         self.baz_bundle = ServiceBundle(
             adb_device=bar_baz_device,
             name="ServiceBundleBaz",
-            package="com.sdv.google.sample.baz",
-            fqin="local-vm:com.sdv.google.sample.baz.ServiceBundleBaz/instance",
-            tag="com_sdv_google_sample_baz_ServiceBundleBaz_instance",
+            package="com.android.sdv.sample.baz",
+            fqin="local-vm:com.android.sdv.sample.baz.ServiceBundleBaz/instance",
+            tag="com_android_sdv_sample_baz_ServiceBundleBaz_instance",
         )
 
     def set_sys_property(self, adb_device, sys_property, value):
@@ -172,7 +172,7 @@ class SdvSBLifecycleRobustnessTestBase(sdv_base_test.SdvBaseTestClass):
 
     def verify_bundle_lifecycle(self, service_bundle, transition):
         """Verifies that a service bundle has reached a specific lifecycle state."""
-        WaitingMethods.wait_and_verify_expected_logs(
+        polling.wait_and_verify_expected_logs(
             service_bundle.adb_device,
             logcat_args=self.LOGCAT_ARGS.format(tag="lifecycle_manager"),
             grep_args="-E",
@@ -194,7 +194,7 @@ class SdvSBLifecycleRobustnessTestBase(sdv_base_test.SdvBaseTestClass):
         # Ensure no old messages are picked up
         service_bundle.adb_device.clear_logcat()
         # FooMessage received by service_bundle
-        WaitingMethods.wait_and_verify_expected_logs(
+        polling.wait_and_verify_expected_logs(
             sdv_device=service_bundle.adb_device,
             logcat_args=self.LOGCAT_ARGS.format(tag=service_bundle.tag),
             grep_text=self.RECEIVED_MESSAGE,

@@ -27,7 +27,7 @@ from enum import Enum
 
 from sdv_test_fw.device import sdv_device
 from sdv_test_fw.test_execution import sdv_base_test
-from sdv_test_fw.waiting_methods.waiting_methods import WaitingMethods
+from sdv_test_fw.verification import polling
 
 class SdvSomeIpRobBaseTestClass(sdv_base_test.SdvBaseTestClass):
     def setup_class(self):
@@ -39,7 +39,7 @@ class SdvSomeIpRobBaseTestClass(sdv_base_test.SdvBaseTestClass):
         EXPECTED_LOG = f"Service bundle.*{name}.*succeed"
 
         """Verifies that a service bundle has reached a specific lifecycle state."""
-        WaitingMethods.wait_and_verify_expected_logs(
+        polling.wait_and_verify_expected_logs(
             self.sdv_device2,
             logcat_args="*:F sdv_service_bundle:*",
             grep_text= EXPECTED_LOG,
@@ -59,10 +59,11 @@ class SdvSomeIpRobBaseTestClass(sdv_base_test.SdvBaseTestClass):
 
     def verify_robustness_bundle_output(self, cuj_num, run_vsomeip_counterpart = True):
         VALID_CUJ_NUMS = [30, 31, 33]
-        if cuj_num not in VALID_CUJ_NUMS:
-            asserts.fail(
-                f"Unknown SOME/IP CUJ number: {cuj_num}"
-            )
+        asserts.assert_in(
+            cuj_num,
+            VALID_CUJ_NUMS,
+            f"Unknown SOME/IP CUJ number: {cuj_num}"
+        )
 
         self.execute_and_verify_service_bundle_action(action="start")
 
@@ -73,7 +74,7 @@ class SdvSomeIpRobBaseTestClass(sdv_base_test.SdvBaseTestClass):
         TIMEOUT_IN_SECS = 1800
         POLL_INTERVAL = 1
 
-        WaitingMethods.wait_and_verify_expected_logs(
+        polling.wait_and_verify_expected_logs(
             self.sdv_device2,
             logcat_args=LOGCAT_ARGS,
             grep_text="Robustness checker test passed",

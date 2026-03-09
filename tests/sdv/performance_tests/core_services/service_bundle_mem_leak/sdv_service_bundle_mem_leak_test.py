@@ -24,54 +24,54 @@ from sdv_perfetto import perfetto_collector, perfetto_trace_processor
 from sdv_test_fw.device import sdv_adb
 from sdv_test_fw.test_execution import sdv_base_test
 from sdv_test_fw.test_execution import sdv_test_runner
-from sdv_test_fw.waiting_methods.waiting_methods import WaitingMethods
+from sdv_test_fw.verification import polling
 
-SERVICE_BUNDLE_FOO_FQN = 'com.sdv.google.sample.foo.ServiceBundleFoo'
-SERVICE_BUNDLE_QUX_FQN = 'com.sdv.google.sample.qux.ServiceBundleQux'
-SYS_PROP_FOO_INTERVAL = 'persist.com.sdv.google.sample.foo.pub_interval_ms'
-SYS_PROP_QUX_INTERVAL = 'persist.com.sdv.google.sample.qux.pub_interval_ms'
-SYS_PROP_FOO_LOAD_SIZE = 'persist.com.sdv.google.sample.foo.load_size'
-SYS_PROP_QUX_LOAD_SIZE = 'persist.com.sdv.google.sample.qux.load_size'
-SYS_PROP_FOO_PUB_AMOUNT = 'persist.com.sdv.google.sample.foo.pub_maximum_amount'
-SYS_PROP_QUX_PUB_AMOUNT = 'persist.com.sdv.google.sample.qux.pub_maximum_amount'
+SERVICE_BUNDLE_FOO_FQN = 'com.android.sdv.sample.foo.ServiceBundleFoo'
+SERVICE_BUNDLE_QUX_FQN = 'com.android.sdv.sample.qux.ServiceBundleQux'
+SYS_PROP_FOO_INTERVAL = 'persist.com.android.sdv.sample.foo.pub_interval_ms'
+SYS_PROP_QUX_INTERVAL = 'persist.com.android.sdv.sample.qux.pub_interval_ms'
+SYS_PROP_FOO_LOAD_SIZE = 'persist.com.android.sdv.sample.foo.load_size'
+SYS_PROP_QUX_LOAD_SIZE = 'persist.com.android.sdv.sample.qux.load_size'
+SYS_PROP_FOO_PUB_AMOUNT = 'persist.com.android.sdv.sample.foo.pub_maximum_amount'
+SYS_PROP_QUX_PUB_AMOUNT = 'persist.com.android.sdv.sample.qux.pub_maximum_amount'
 FOO_APP_NAME = 'ServiceBundleFoo'
 QUX_APP_NAME = 'ServiceBundleQux'
 
 SERVICE_BUNDLE_FOO_CREATE_MESSAGE = (
     'Service bundle'
-    " 'local-vm:com.sdv.google.sample.foo.ServiceBundleFoo/instance' succeed to"
+    " 'local-vm:com.android.sdv.sample.foo.ServiceBundleFoo/instance' succeed to"
     " finished command 'Create'"
 )
 SERVICE_BUNDLE_QUX_CREATE_MESSAGE = (
     'Service bundle'
-    " 'local-vm:com.sdv.google.sample.qux.ServiceBundleQux/instance' succeed to"
+    " 'local-vm:com.android.sdv.sample.qux.ServiceBundleQux/instance' succeed to"
     " finished command 'Create'"
 )
 SERVICE_BUNDLE_FOO_START_MESSAGE = (
     'Service bundle'
-    " 'local-vm:com.sdv.google.sample.foo.ServiceBundleFoo/instance' succeed to"
+    " 'local-vm:com.android.sdv.sample.foo.ServiceBundleFoo/instance' succeed to"
     " finished command 'Start'"
 )
 SERVICE_BUNDLE_QUX_START_MESSAGE = (
     'Service bundle'
-    " 'local-vm:com.sdv.google.sample.qux.ServiceBundleQux/instance' succeed to"
+    " 'local-vm:com.android.sdv.sample.qux.ServiceBundleQux/instance' succeed to"
     " finished command 'Start'"
 )
 SERVICE_BUNDLE_FOO_STOP_MESSAGE = (
     'Service bundle'
-    " 'local-vm:com.sdv.google.sample.foo.ServiceBundleFoo/instance' succeed to"
+    " 'local-vm:com.android.sdv.sample.foo.ServiceBundleFoo/instance' succeed to"
     " finished command 'Stop'"
 )
 SERVICE_BUNDLE_QUX_STOP_MESSAGE = (
     'Service bundle'
-    " 'local-vm:com.sdv.google.sample.qux.ServiceBundleQux/instance' succeed to"
+    " 'local-vm:com.android.sdv.sample.qux.ServiceBundleQux/instance' succeed to"
     " finished command 'Stop'"
 )
 FOO_SEND_MESSAGE = (
-    'com_sdv_google_sample_foo_ServiceBundleFoo_instance: sample: Sent'
+    'com_android_sdv_sample_foo_ServiceBundleFoo_instance: sample: Sent'
 )
 QUX_SEND_MESSAGE = (
-    'com_sdv_google_sample_qux_ServiceBundleQux_instance: sample: Sent'
+    'com_android_sdv_sample_qux_ServiceBundleQux_instance: sample: Sent'
 )
 SERVICE_BUNDLE_START = 'start'
 SERVICE_BUNDLE_CREATE = 'create'
@@ -81,8 +81,8 @@ CREATED_LOG = 'Creating instance.*:{fqn}/instance'
 STARTED_LOG = 'Starting instance.*:{fqn}/instance'
 STOPPED_LOG = 'Joined execution thread'
 SAMPLES_LOGCAT_ARGS = (
-    '*:F com_sdv_google_sample_foo_ServiceBundleFoo_instance:*'
-    ' com_sdv_google_sample_qux_ServiceBundleQux_instance:*'
+    '*:F com_android_sdv_sample_foo_ServiceBundleFoo_instance:*'
+    ' com_android_sdv_sample_qux_ServiceBundleQux_instance:*'
 )
 
 
@@ -209,7 +209,7 @@ class SdvServiceBundleMemLeakTest(sdv_base_test.SdvBaseTestClass):
         device, service_bundle_name, SERVICE_BUNDLE_CREATE
     )
     # Wait for service bundle to be created.
-    # WaitingMethods.wait_and_verify_expected_logs seems not blocking the test,
+    # polling.wait_and_verify_expected_logs seems not blocking the test,
     # and the test will go to the next step to clear catlog and fail the
     # waiting.
     time.sleep(2)
@@ -254,12 +254,12 @@ class SdvServiceBundleMemLeakTest(sdv_base_test.SdvBaseTestClass):
     self.create_service_bundle(self.sdv_device_foo, SERVICE_BUNDLE_FOO_FQN)
     self.create_service_bundle(self.sdv_device_qux, SERVICE_BUNDLE_QUX_FQN)
     # Wait for service bundle to be created.
-    WaitingMethods.wait_and_verify_expected_logs(
+    polling.wait_and_verify_expected_logs(
         sdv_device=self.sdv_device_foo,
         grep_text=SERVICE_BUNDLE_FOO_CREATE_MESSAGE,
         assert_msg=f'Message: {SERVICE_BUNDLE_FOO_CREATE_MESSAGE} not found',
     )
-    WaitingMethods.wait_and_verify_expected_logs(
+    polling.wait_and_verify_expected_logs(
         sdv_device=self.sdv_device_qux,
         grep_text=SERVICE_BUNDLE_QUX_CREATE_MESSAGE,
         assert_msg=f'Message: {SERVICE_BUNDLE_QUX_CREATE_MESSAGE} not found',
@@ -276,22 +276,22 @@ class SdvServiceBundleMemLeakTest(sdv_base_test.SdvBaseTestClass):
           self.sdv_device_qux, SERVICE_BUNDLE_QUX_FQN, SERVICE_BUNDLE_START
       )
       # Wait for service bundle to be started n times.
-      WaitingMethods.wait_and_verify_expected_logs(
+      polling.wait_and_verify_expected_logs(
           sdv_device=self.sdv_device_foo,
           grep_text=SERVICE_BUNDLE_FOO_START_MESSAGE,
           assert_msg=f'Message: {SERVICE_BUNDLE_FOO_START_MESSAGE} not found',
       )
-      WaitingMethods.wait_and_verify_expected_logs(
+      polling.wait_and_verify_expected_logs(
           sdv_device=self.sdv_device_foo,
           grep_text=FOO_SEND_MESSAGE,
           assert_msg=f'Message: {FOO_SEND_MESSAGE} not found',
       )
-      WaitingMethods.wait_and_verify_expected_logs(
+      polling.wait_and_verify_expected_logs(
           sdv_device=self.sdv_device_qux,
           grep_text=SERVICE_BUNDLE_QUX_START_MESSAGE,
           assert_msg=f'Message: {SERVICE_BUNDLE_QUX_START_MESSAGE} not found',
       )
-      WaitingMethods.wait_and_verify_expected_logs(
+      polling.wait_and_verify_expected_logs(
           sdv_device=self.sdv_device_qux,
           grep_text=QUX_SEND_MESSAGE,
           assert_msg=f'Message: {QUX_SEND_MESSAGE} not found',
@@ -306,12 +306,12 @@ class SdvServiceBundleMemLeakTest(sdv_base_test.SdvBaseTestClass):
       self.manage_service_bundle(
           self.sdv_device_qux, SERVICE_BUNDLE_QUX_FQN, SERVICE_BUNDLE_STOP
       )
-      WaitingMethods.wait_and_verify_expected_logs(
+      polling.wait_and_verify_expected_logs(
           sdv_device=self.sdv_device_foo,
           grep_text=SERVICE_BUNDLE_FOO_STOP_MESSAGE,
           assert_msg=f'Message: {SERVICE_BUNDLE_FOO_STOP_MESSAGE} not found',
       )
-      WaitingMethods.wait_and_verify_expected_logs(
+      polling.wait_and_verify_expected_logs(
           sdv_device=self.sdv_device_qux,
           grep_text=SERVICE_BUNDLE_QUX_STOP_MESSAGE,
           assert_msg=f'Message: {SERVICE_BUNDLE_QUX_STOP_MESSAGE} not found',

@@ -28,41 +28,39 @@ import time
 
 from absl.testing import parameterized
 from sdv_test_fw.test_execution import sdv_base_test, sdv_test_runner
-from sdv_test_fw.waiting_methods.waiting_methods import WaitingMethods
+from sdv_test_fw.verification import polling
 
 class SdvCujCore25Test(sdv_base_test.SdvBaseTestClass, parameterized.TestCase):
 
-    SAMPLES_LOGCAT_ARGS_ALL_BUNDLES = '*:F com_sdv_google_sample_foo_ServiceBundleFoo_instance:* com_sdv_google_sample_bar_ServiceBundleBar_instance:* com_sdv_google_sample_baz_ServiceBundleBaz_instance:*'
+    SAMPLES_LOGCAT_ARGS_ALL_BUNDLES = '*:F com_android_sdv_sample_foo_ServiceBundleFoo_instance:* com_android_sdv_sample_bar_ServiceBundleBar_instance:* com_android_sdv_sample_baz_ServiceBundleBaz_instance:*'
     SAMPLES_LOGCAT_ARGS_LIFECYCLE_MANAGER = '*:F lifecycle_manager:*'
-    SAMPLES_LOGCAT_ARGS_FOO = '*:F com_sdv_google_sample_foo_ServiceBundleFoo_instance:*'
-    SAMPLES_LOGCAT_ARGS_BAR = '*:F com_sdv_google_sample_bar_ServiceBundleBar_instance:*'
-    SAMPLES_LOGCAT_ARGS_BAZ = '*:F com_sdv_google_sample_baz_ServiceBundleBaz_instance:*'
+    SAMPLES_LOGCAT_ARGS_FOO = '*:F com_android_sdv_sample_foo_ServiceBundleFoo_instance:*'
+    SAMPLES_LOGCAT_ARGS_BAR = '*:F com_android_sdv_sample_bar_ServiceBundleBar_instance:*'
+    SAMPLES_LOGCAT_ARGS_BAZ = '*:F com_android_sdv_sample_baz_ServiceBundleBaz_instance:*'
 
     # Foo VM properties
-    SYS_PROP_FOO_PUB_INTERVAL = "persist.com.sdv.google.sample.foo.pub_interval_ms"
+    SYS_PROP_FOO_PUB_INTERVAL = "persist.com.android.sdv.sample.foo.pub_interval_ms"
     SYS_PROP_FOO_PUB_INTERVAL_VALUE = 1000
-    SYS_PROP_FOO_LOAD_SIZE = "persist.com.sdv.google.sample.foo.load_size"
+    SYS_PROP_FOO_LOAD_SIZE = "persist.com.android.sdv.sample.foo.load_size"
     SYS_PROP_FOO_LOAD_SIZE_VALUE = 200000
-    SYS_PROP_FOO_PUB_AMOUNT = "persist.com.sdv.google.sample.foo.pub_maximum_amount"
-    SYS_PROP_FOO_PUB_AMOUNT_VALUE = 10
 
     # Bar VM properties
-    SYS_PROP_BAR_RPC_INTERVAL = "persist.com.sdv.google.sample.bar.rpc_interval_ms"
+    SYS_PROP_BAR_RPC_INTERVAL = "persist.com.android.sdv.sample.bar.rpc_interval_ms"
     SYS_PROP_BAR_RPC_INTERVAL_VALUE = 1000
-    SYS_PROP_BAR_LOAD_SIZE = "persist.com.sdv.google.sample.bar.load_size"
+    SYS_PROP_BAR_LOAD_SIZE = "persist.com.android.sdv.sample.bar.load_size"
     SYS_PROP_BAR_LOAD_SIZE_VALUE = 200000
 
     # Baz VM properties
-    SYS_PROP_BAZ_RPC_INTERVAL = "persist.com.sdv.google.sample.baz.rpc_interval_ms"
+    SYS_PROP_BAZ_RPC_INTERVAL = "persist.com.android.sdv.sample.baz.rpc_interval_ms"
     SYS_PROP_BAZ_RPC_INTERVAL_VALUE = 1000
-    SYS_PROP_BAZ_LOAD_SIZE = "persist.com.sdv.google.sample.baz.load_size"
+    SYS_PROP_BAZ_LOAD_SIZE = "persist.com.android.sdv.sample.baz.load_size"
     SYS_PROP_BAZ_LOAD_SIZE_VALUE = 200000
 
     # Test Parameters - logcat messages.
     STARTING_TEXT = 'Starting {vm_instance}:{package}.{bundle_name}/instance'
     SENT_MESSAGE = 'Sent.*FooMessage.*42'
     RECEIVED_MESSAGE = 'Received.*FooMessage.*42'
-    LIFECYCLE_STARTED = '{bundle_name} state is STARTED'
+    LIFECYCLE_STARTED = 'Service bundle.*{package_name}.*{bundle_name}.*(is started$|is already started.)'
     RPC_REQUEST_RESPONSE = "GetFooRequest.*GetFooResponse"
     # Test Parameters - error messages.
     ERROR_MESSAGE_LIFECYCLE_BUNDLE_NOT_STARTED = \
@@ -72,7 +70,7 @@ class SdvCujCore25Test(sdv_base_test.SdvBaseTestClass, parameterized.TestCase):
     ERROR_MESSAGE_FOO_MESSAGE_SEND_GREP = \
         '\n[FAILURE]: Service Bundle expected to send Foo Message.'
     ERROR_MESSAGE_FOO_MESSAGE_RECEIVE_GREP = \
-        '\n[FAILURE]: Service Bundle expected to receive Foo Message.'
+        '\n[FAILURE]: Service Bundle {device} expected to receive Foo Message.'
     ERROR_MESSAGE_FOO_RPC_GREP = \
         '\n[FAILURE]: Service Bundle expected to call Foo RPC.'
 
@@ -92,8 +90,6 @@ class SdvCujCore25Test(sdv_base_test.SdvBaseTestClass, parameterized.TestCase):
         self.set_sys_property(foo_device, self.SYS_PROP_FOO_PUB_INTERVAL, self.SYS_PROP_FOO_PUB_INTERVAL_VALUE)
         # Set publishing load size.
         self.set_sys_property(foo_device, self.SYS_PROP_FOO_LOAD_SIZE, self.SYS_PROP_FOO_LOAD_SIZE_VALUE)
-        # Set publishing amount.
-        self.set_sys_property(foo_device, self.SYS_PROP_FOO_PUB_AMOUNT, self.SYS_PROP_FOO_PUB_AMOUNT_VALUE)
         self.reboot_device(foo_device)
         self.adb_devices['foo_device'] = foo_device
 
@@ -153,7 +149,7 @@ class SdvCujCore25Test(sdv_base_test.SdvBaseTestClass, parameterized.TestCase):
 
     def log_exit(self):
         """ Unified logging exit test suit. """
-        logging.info(f"{self.get_suite_name()} :: Start Test {self.current_test_info.name}")
+        logging.info(f"{self.get_suite_name()} :: Stop Test {self.current_test_info.name}")
 
     ################################################
     ## Test orchestration configurations by       ##
@@ -164,36 +160,37 @@ class SdvCujCore25Test(sdv_base_test.SdvBaseTestClass, parameterized.TestCase):
             'testcase_name': 'foo',
             'device_name': 'foo_device',
             'vm_instance': 'instance1',
-            'package_name': 'com.sdv.google.sample.foo',
+            'package_name': 'com.android.sdv.sample.foo',
             'bundle_name' : 'ServiceBundleFoo'
         },
         {
             'testcase_name': 'bar',
             'device_name': 'bar_device',
             'vm_instance': 'instance2',
-            'package_name': 'com.sdv.google.sample.bar',
+            'package_name': 'com.android.sdv.sample.bar',
             'bundle_name' : 'ServiceBundleBar'
         },
         {
             'testcase_name': 'baz',
             'device_name': 'baz_device',
             'vm_instance': 'instance3',
-            'package_name': 'com.sdv.google.sample.baz',
+            'package_name': 'com.android.sdv.sample.baz',
             'bundle_name' : 'ServiceBundleBaz'
         },
     )
     def test_service_bundle(self, device_name, vm_instance, package_name, bundle_name):
         self.log_enter()
         # Lifecycle manager reports that the bundle was started.
-        WaitingMethods.wait_and_verify_expected_logs(
+        polling.wait_and_verify_expected_logs(
             self.adb_devices[device_name],
             logcat_args = self.SAMPLES_LOGCAT_ARGS_LIFECYCLE_MANAGER,
-            grep_text = self.LIFECYCLE_STARTED.format(bundle_name = bundle_name),
+            grep_text = self.LIFECYCLE_STARTED.format(package_name=package_name, bundle_name=bundle_name),
+            grep_args = "-E",
             assert_msg =  self.ERROR_MESSAGE_LIFECYCLE_BUNDLE_NOT_STARTED.format(bundle_name = bundle_name)
         )
 
         # Service bundle itself reports starting.
-        WaitingMethods.wait_and_verify_expected_logs(
+        polling.wait_and_verify_expected_logs(
             self.adb_devices[device_name],
             logcat_args = self.SAMPLES_LOGCAT_ARGS_ALL_BUNDLES,
             grep_text = self.STARTING_TEXT.format(
@@ -213,25 +210,25 @@ class SdvCujCore25Test(sdv_base_test.SdvBaseTestClass, parameterized.TestCase):
     def test_pub_sub_messages(self):
         self.log_enter()
         # FooMessage sent by ServiceBundleFoo
-        WaitingMethods.wait_and_verify_expected_logs(
+        polling.wait_and_verify_expected_logs(
             sdv_device = self.adb_devices['foo_device'],
             logcat_args = self.SAMPLES_LOGCAT_ARGS_FOO,
             grep_text = self.SENT_MESSAGE,
             assert_msg = self.ERROR_MESSAGE_FOO_MESSAGE_SEND_GREP,
         )
         # FooMessage received by ServiceBundleBaz
-        WaitingMethods.wait_and_verify_expected_logs(
+        polling.wait_and_verify_expected_logs(
             sdv_device = self.adb_devices['baz_device'],
             logcat_args = self.SAMPLES_LOGCAT_ARGS_BAZ,
             grep_text = self.RECEIVED_MESSAGE,
-            assert_msg = self.ERROR_MESSAGE_FOO_MESSAGE_RECEIVE_GREP,
+            assert_msg = self.ERROR_MESSAGE_FOO_MESSAGE_RECEIVE_GREP.format(device = 'baz_device'),
         )
         # FooMessage received by ServiceBundleBar
-        WaitingMethods.wait_and_verify_expected_logs(
+        polling.wait_and_verify_expected_logs(
             sdv_device = self.adb_devices['bar_device'],
             logcat_args = self.SAMPLES_LOGCAT_ARGS_BAR,
             grep_text = self.RECEIVED_MESSAGE,
-            assert_msg = self.ERROR_MESSAGE_FOO_MESSAGE_RECEIVE_GREP,
+            assert_msg = self.ERROR_MESSAGE_FOO_MESSAGE_RECEIVE_GREP.format(device = 'bar_device'),
         )
         self.log_exit()
 
@@ -242,14 +239,14 @@ class SdvCujCore25Test(sdv_base_test.SdvBaseTestClass, parameterized.TestCase):
     def test_rpc(self):
         self.log_enter()
         # FooRPC::foo(GetFooRequest) and GetFooResponse are received.
-        WaitingMethods.wait_and_verify_expected_logs(
+        polling.wait_and_verify_expected_logs(
             sdv_device = self.adb_devices['bar_device'],
             grep_text = self.RPC_REQUEST_RESPONSE,
             assert_msg = self.ERROR_MESSAGE_FOO_RPC_GREP,
         )
 
         # FooRPC::foo(GetFooRequest) and GetFooResponse are received.
-        WaitingMethods.wait_and_verify_expected_logs(
+        polling.wait_and_verify_expected_logs(
             sdv_device = self.adb_devices['baz_device'],
             grep_text = self.RPC_REQUEST_RESPONSE,
             assert_msg = self.ERROR_MESSAGE_FOO_RPC_GREP,

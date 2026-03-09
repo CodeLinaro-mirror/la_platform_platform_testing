@@ -42,6 +42,10 @@ python_library_host {
     data: [
         ":sdv_default_trace_config",
     ],
+    libs: [
+        "mobly",
+        "sdv_test_fw_lib",
+    ],
 }
 
 python_library_host {
@@ -54,6 +58,7 @@ python_library_host {
         "perfetto-trace-processor-python",
         "perfetto_metrics_python_protos",
         "sdv_perf_dashboard_lib",
+        "sdv_perf_common_lib",
     ],
 }
 

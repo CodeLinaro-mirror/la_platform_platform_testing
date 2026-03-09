@@ -21,7 +21,7 @@ Tests is on one SDV VM
 from mobly import asserts
 import logging
 from sdv_test_fw.test_execution import sdv_base_test, sdv_test_runner
-from sdv_test_fw.waiting_methods.waiting_methods import WaitingMethods
+from sdv_test_fw.verification import polling
 
 
 class SdvE2EOrchestrationModesRecoveredAfterCrashTest(
@@ -64,14 +64,10 @@ class SdvE2EOrchestrationModesRecoveredAfterCrashTest(
             ).find_message_after_timestamp(expected_result, timestamp)
             return res_timestamp
 
-        result = WaitingMethods().wait_and_return_result(
+        result = polling.wait_and_return_result(
             grep_with_timestamp, self.sdv_device, expected_result, timestamp)
-        if result is None:
-            asserts.fail(
-                f"Logcat result not found within timeout: {expected_result}"
-            )
-        else:
-            return result
+        asserts.assert_is_not_none(result, f"Logcat result not found within timeout: {expected_result}")
+        return result
 
     def test_modes_recovered_after_orch_crash(
         self
@@ -108,16 +104,18 @@ class SdvE2EOrchestrationModesRecoveredAfterCrashTest(
         # and not from when the modes were retrieved on subscribe.
         started_vehicle_bundle_timestamp = self.wait_for_logcat(
             self.FINISHED_STARTING_RECOVER_VEHICLE_MODE_SERVICE, timestamp=vehicle_transition_completed_timestamp)
-        if started_vehicle_bundle_timestamp >= vehicle_transition_completed_after_orch_crash:
-            asserts.fail(
-                f"Vehicle mode was started {started_vehicle_bundle_timestamp} after the vehicle subscription {vehicle_transition_completed_after_orch_crash}"
-            )
+        asserts.assert_less(
+            started_vehicle_bundle_timestamp,
+            vehicle_transition_completed_after_orch_crash,
+            f"Vehicle mode was started {started_vehicle_bundle_timestamp} after the vehicle subscription {vehicle_transition_completed_after_orch_crash}"
+        )
         started_power_bundle_timestamp = self.wait_for_logcat(
             self.FINISHED_STARTING_RECOVER_POWER_MODE_SERVICE, timestamp=power_transition_completed_timestamp)
-        if started_power_bundle_timestamp >= power_transition_completed_after_orch_crash:
-            asserts.fail(
-                f"Power mode was started {started_power_bundle_timestamp} after the power subscription {power_transition_completed_after_orch_crash}"
-            )
+        asserts.assert_less(
+            started_power_bundle_timestamp,
+            power_transition_completed_after_orch_crash,
+            f"Power mode was started {started_power_bundle_timestamp} after the power subscription {power_transition_completed_after_orch_crash}"
+        )
 
         # With custom modes we cannot check if they were enforced as separate modes (as opposed to power-vehicle modes that we get the values on subscribe)
         # because they will be stored in the config, but enforced in the Default mode set.

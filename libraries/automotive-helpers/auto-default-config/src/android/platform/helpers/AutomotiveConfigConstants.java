@@ -203,6 +203,7 @@ public class AutomotiveConfigConstants {
     public static final String LOCK_SCREEN_COMMAND = "LOCK_SCREEN_COMMAND";
     public static final String LOCK_SCREEN_EDIT_TEXT = "LOCK_SCREEN_EDIT_TEXT";
     public static final String LOCK_SCREEN_CONFIRM_BUTTON = "LOCK_SCREEN_CONFIRM_BUTTON";
+    public static final String SET_LOCK_SCREEN = "SET_LOCK_SCREEN";
 
     // Notification App Constants
     public static final String OPEN_NOTIFICATIONS_COMMAND = "OPEN_NOTIFICATIONS_COMMAND";
@@ -384,7 +385,9 @@ public class AutomotiveConfigConstants {
     public static final String TRACK_NAME_HOME_SCREEN = "TRACK_NAME_HOME_SCREEN";
     public static final String MEDIA_SOURCE_BUTTON = "MEDIA_SOURCE_BUTTON";
     public static final String MEDIA_SOURCE_NEWS_BUTTON = "MEDIA_SOURCE_NEWS_BUTTON";
+    public static final String MEDIA_SOURCE_RADIO_BUTTON = "MEDIA_SOURCE_RADIO_BUTTON";
     public static final String MEDIA_SOURCE_HISTORY_NEWS = "MEDIA_SOURCE_HISTORY_NEWS";
+    public static final String MEDIA_SOURCE_HISTORY_RADIO = "MEDIA_SOURCE_HISTORY_RADIO";
     public static final String MEDIA_SOURCE_HISTORY_ACTIVE_TITTLE =
             "MEDIA_SOURCE_HISTORY_ACTIVE_TITTLE";
     public static final String MEDIA_SOURCE_HISTORY_CARD = "MEDIA_SOURCE_HISTORY_CARD";
@@ -578,7 +581,6 @@ public class AutomotiveConfigConstants {
     public static final String USER_SETTINGS_SCROLL_MARGIN = "USER_SETTINGS_SCROLL_MARGIN";
     public static final String USER_SETTINGS_SCROLL_WAIT_TIME = "USER_SETTINGS_SCROLL_WAIT_TIME";
     public static final String SKIP_SETUP_WIZARD = "SKIP_SETUP_WIZARD";
-
     // Account Settings Constants
     public static final String ACCOUNT_SETTINGS_SCROLL_ACTION = "ACCOUNT_SETTINGS_SCROLL_ACTION";
     public static final String ACCOUNT_SETTINGS_SCROLL_DIRECTION =
@@ -698,6 +700,7 @@ public class AutomotiveConfigConstants {
     // Guest Profile
     public static final String HOME_PROFILE_GUEST_ICON = "HOME_PROFILE_GUEST_ICON";
     public static final String HOME_PROFILE_ICON_BUTTON = "HOME_PROFILE_ICON_BUTTON";
+    public static final String CLOSE_PROFILES_MENU_BUTTON = "CLOSE_PROFILES_MENU_BUTTON";
     public static final String HOME_GUEST_BUTTON = "HOME_GUEST_BUTTON";
     public static final String HOME_DRIVER_BUTTON = "HOME_DRIVER_BUTTON";
     public static final String HOME_SECONDARY_USER_BUTTON = "HOME_SECONDARY_USER_BUTTON";
@@ -787,6 +790,9 @@ public class AutomotiveConfigConstants {
     public static final String PRIVACY_CALENDAR = "PRIVACY_CALENDAR";
     public static final String RECENT_PERMISSION_DECISIONS = "RECENT_PERMISSION_DECISIONS";
     public static final String MICROPHONE_PERMISSIONS_PAGE = "MICROPHONE_PERMISSIONS_PAGE";
+    public static final String LOCK_SCREEN_PIN = "LOCK_SCREEN_PIN";
+    public static final String LOCK_SCREEN_ON_PROFILES = "LOCK_SCREEN_ON_PROFILES";
+    public static final String CLEAR_SET_LOCK = "CLEAR_SET_LOCK";
 
     // BT related
     public static final String BT_CONNECTED_STATUS = "BT_CONNECTED_STATUS";

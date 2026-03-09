@@ -16,10 +16,12 @@
 
 package android.tools.flicker.subject.layers
 
+import android.tools.flicker.assertions.AssertionsChecker
 import android.tools.flicker.subject.FlickerTraceSubject
 import android.tools.flicker.subject.exceptions.ExceptionMessageBuilder
 import android.tools.flicker.subject.exceptions.InvalidElementException
 import android.tools.flicker.subject.exceptions.InvalidPropertyException
+import android.tools.flicker.subject.exceptions.SubjectAssertionError
 import android.tools.flicker.subject.region.RegionTraceSubject
 import android.tools.function.AssertionPredicate
 import android.tools.io.Reader
@@ -31,6 +33,7 @@ import android.tools.traces.region.RegionTrace
 import android.tools.traces.surfaceflinger.Layer
 import android.tools.traces.surfaceflinger.LayersTrace
 import java.util.function.Predicate
+import kotlin.time.Duration
 
 /**
  * Subject for [LayersTrace] objects, used to make assertions over behaviors that occur throughout a
@@ -59,16 +62,60 @@ import java.util.function.Predicate
  */
 class LayersTraceSubject
 @JvmOverloads
-constructor(val trace: LayersTrace, override val reader: Reader? = null) :
-    FlickerTraceSubject<LayerTraceEntrySubject>(),
+constructor(
+    val trace: LayersTrace,
+    override val reader: Reader? = null,
+    val displayId: Int? = null,
+    assertionsChecker: AssertionsChecker<LayerTraceEntrySubject> = AssertionsChecker(),
+) :
+    FlickerTraceSubject<LayerTraceEntrySubject>(assertionsChecker),
     ILayerSubject<LayersTraceSubject, RegionTraceSubject> {
 
     override val subjects by lazy {
-        trace.entries.map { LayerTraceEntrySubject(it, reader, trace) }
+        trace.entries.map { LayerTraceEntrySubject(it, reader, trace, displayId) }
+    }
+
+    /** {@inheritDoc} */
+    override fun onDisplay(displayId: Int): LayersTraceSubject =
+        LayersTraceSubject(trace, reader, displayId, assertionsChecker)
+
+    /** {@inheritDoc} */
+    override fun addAssertion(
+        name: String,
+        isOptional: Boolean,
+        assertion: AssertionPredicate<LayerTraceEntrySubject>,
+    ) {
+        val displayId = this.displayId
+        val scopedAssertion =
+            AssertionPredicate<LayerTraceEntrySubject> {
+                val scopedSubject = if (displayId != null) it.onDisplay(displayId) else it
+                assertion.verify(scopedSubject)
+            }
+        super.addAssertion(name, isOptional, scopedAssertion)
+    }
+
+    /** {@inheritDoc} */
+    override fun first(): LayerTraceEntrySubject {
+        val first = super.first()
+        return if (displayId != null) first.onDisplay(displayId) else first
+    }
+
+    /** {@inheritDoc} */
+    override fun last(): LayerTraceEntrySubject {
+        val last = super.last()
+        return if (displayId != null) last.onDisplay(displayId) else last
     }
 
     /** {@inheritDoc} */
     override fun then(): LayersTraceSubject = apply { super.then() }
+
+    override fun forAtLeast(duration: Duration): LayersTraceSubject = apply {
+        super.forAtLeast(duration)
+    }
+
+    override fun forAtMost(duration: Duration): LayersTraceSubject = apply {
+        super.forAtMost(duration)
+    }
 
     override fun skipUntilFirstAssertion(): LayersTraceSubject = apply {
         super.skipUntilFirstAssertion()
@@ -114,13 +161,59 @@ constructor(val trace: LayersTrace, override val reader: Reader? = null) :
     fun visibleLayersShownMoreThanOneConsecutiveEntry(
         ignoreLayers: List<IComponentMatcher> = VISIBLE_FOR_MORE_THAN_ONE_ENTRY_IGNORE_LAYERS
     ): LayersTraceSubject = apply {
-        visibleEntriesShownMoreThanOneConsecutiveTime { subject ->
-            subject.entry.visibleLayers
-                .filter { visibleLayer ->
-                    ignoreLayers.none { matcher -> matcher.layerMatchesAnyOf(visibleLayer) }
+        if (subjects.isEmpty()) {
+            return@apply
+        }
+
+        val firstState = subjects.first()
+        val lastState = subjects.last()
+        val paddedSubjects =
+            subjects.toMutableList().also {
+                it.add(0, firstState)
+                it.add(lastState)
+            }
+
+        val vsyncToVisibleLayerNames: Map<Long, Set<String>> =
+            subjects.associate { subject ->
+                subject.entry.vSyncId to
+                    subject.entry.visibleLayers
+                        .filter { visibleLayer ->
+                            ignoreLayers.none { matcher -> matcher.layerMatchesAnyOf(visibleLayer) }
+                        }
+                        .map { it.name }
+                        .toSet()
+            }
+
+        paddedSubjects.windowed(3).forEach { window ->
+            val prevSubject = window[0]
+            val currSubject = window[1]
+            val nextSubject = window[2]
+
+            val prevVisible = vsyncToVisibleLayerNames[prevSubject.entry.vSyncId] ?: emptySet()
+            val currVisible = vsyncToVisibleLayerNames[currSubject.entry.vSyncId] ?: emptySet()
+            val nextVisible = vsyncToVisibleLayerNames[nextSubject.entry.vSyncId] ?: emptySet()
+
+            val newVisible = currVisible - prevVisible
+
+            if (newVisible.isNotEmpty()) {
+                val disappearedByNext = newVisible - nextVisible
+
+                if (disappearedByNext.isNotEmpty()) {
+                    val currVsyncId = currSubject.entry.vSyncId
+                    val nextVsyncId = nextSubject.entry.vSyncId
+
+                    if (nextVsyncId - currVsyncId == 1L) {
+                        val errorMsgBuilder =
+                            ExceptionMessageBuilder()
+                                .forSubject(currSubject)
+                                .setMessage(
+                                    "$disappearedByNext became invisible after being visible for only one frame. " +
+                                        "Appeared at Vsync $currVsyncId and disappeared by $nextVsyncId"
+                                )
+                        throw SubjectAssertionError(errorMsgBuilder)
+                    }
                 }
-                .map { it.name }
-                .toSet()
+            }
         }
     }
 

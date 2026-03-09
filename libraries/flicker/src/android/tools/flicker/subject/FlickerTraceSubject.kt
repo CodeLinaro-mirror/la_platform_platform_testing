@@ -21,13 +21,17 @@ import android.tools.flicker.assertions.AssertionsChecker
 import android.tools.flicker.subject.exceptions.ExceptionMessageBuilder
 import android.tools.flicker.subject.exceptions.SubjectAssertionError
 import android.tools.function.AssertionPredicate
+import kotlin.time.Duration
 
 /** Base subject for flicker trace assertions */
-abstract class FlickerTraceSubject<EntrySubject : FlickerSubject> : FlickerSubject() {
+abstract class FlickerTraceSubject<EntrySubject : FlickerSubject>
+@JvmOverloads
+constructor(
+    protected val assertionsChecker: AssertionsChecker<EntrySubject> = AssertionsChecker()
+) : FlickerSubject() {
     override val timestamp
         get() = subjects.firstOrNull()?.timestamp ?: Timestamps.empty()
 
-    protected val assertionsChecker = AssertionsChecker<EntrySubject>()
     private var newAssertionBlock = true
 
     abstract val subjects: List<EntrySubject>
@@ -42,7 +46,7 @@ abstract class FlickerTraceSubject<EntrySubject : FlickerSubject> : FlickerSubje
      * @param isOptional If this assertion is optional or must pass
      */
     @JvmOverloads
-    fun addAssertion(
+    open fun addAssertion(
         name: String,
         isOptional: Boolean = false,
         assertion: AssertionPredicate<EntrySubject>,
@@ -55,6 +59,24 @@ abstract class FlickerTraceSubject<EntrySubject : FlickerSubject> : FlickerSubje
         newAssertionBlock = false
     }
 
+    /**
+     * Asserts that the last added assertion block is true for at least [duration].
+     *
+     * @param duration Minimum duration
+     */
+    open fun forAtLeast(duration: Duration): FlickerTraceSubject<EntrySubject> = apply {
+        assertionsChecker.setLastAssertionMinDuration(duration)
+    }
+
+    /**
+     * Asserts that the last added assertion block is true for at most [duration].
+     *
+     * @param duration Maximum duration
+     */
+    open fun forAtMost(duration: Duration): FlickerTraceSubject<EntrySubject> = apply {
+        assertionsChecker.setLastAssertionMaxDuration(duration)
+    }
+
     /** Run the assertions for all trace entries */
     fun forAllEntries() {
         require(subjects.isNotEmpty()) { "Trace is empty" }
@@ -62,10 +84,10 @@ abstract class FlickerTraceSubject<EntrySubject : FlickerSubject> : FlickerSubje
     }
 
     /** User-defined entry point for the first trace entry */
-    fun first(): EntrySubject = subjects.firstOrNull() ?: error("Trace is empty")
+    open fun first(): EntrySubject = subjects.firstOrNull() ?: error("Trace is empty")
 
     /** User-defined entry point for the last trace entry */
-    fun last(): EntrySubject = subjects.lastOrNull() ?: error("Trace is empty")
+    open fun last(): EntrySubject = subjects.lastOrNull() ?: error("Trace is empty")
 
     /**
      * Signal that the last assertion set is complete. The next assertion added will start a new set

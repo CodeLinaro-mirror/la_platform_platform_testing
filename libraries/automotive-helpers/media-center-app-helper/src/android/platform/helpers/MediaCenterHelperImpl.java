@@ -49,7 +49,7 @@ public class MediaCenterHelperImpl extends AbstractStandardAppHelper implements 
     private MediaSessionManager mMediaSessionManager;
     private UiAutomation mUiAutomation;
 
-    private static HelperAccessor<IAutoAppGridHelper> sAppGridHelper =
+    private HelperAccessor<IAutoAppGridHelper> mAppGridHelper =
             new HelperAccessor<>(IAutoAppGridHelper.class);
 
     private ScrollUtility mScrollUtility;
@@ -673,11 +673,10 @@ public class MediaCenterHelperImpl extends AbstractStandardAppHelper implements 
      */
     @Override
     public void openBluetoothMediaApp() {
-        getSpectatioUiUtil().pressHome();
-        getSpectatioUiUtil().waitForIdle();
-        getSpectatioUiUtil()
-                .executeShellCommand(
-                        getCommandFromConfig(AutomotiveConfigConstants.MEDIA_LAUNCH_BLUETOOTH_AUDIO_COMMAND));
+        // TODO: Temporarily changed the logic to open BT Audio using Appgrid b/475056097
+        //       b/418063595 refers launching BT Audio media service based on device type
+        mAppGridHelper.get().open();
+        mAppGridHelper.get().openApp("Bluetooth Audio");
     }
 
     /**
@@ -901,7 +900,7 @@ public class MediaCenterHelperImpl extends AbstractStandardAppHelper implements 
     @Override
     public boolean isMediaAppOpenAndTrackPlaying(String track) {
         boolean mediAppOpenStatus = false;
-        if (sAppGridHelper
+        if (mAppGridHelper
                 .get()
                 .checkPackageInForeground(AutomotiveConfigConstants.RADIO_PACKAGE)) {
             if (getRadioStationName().contains(track.substring(0, 4)) && isPlaying()) {
@@ -933,8 +932,8 @@ public class MediaCenterHelperImpl extends AbstractStandardAppHelper implements 
     /** {@inheritDoc} */
     @Override
     public void openRadioAppAndPlayGivenStation(String media) {
-        sAppGridHelper.get().open();
-        sAppGridHelper.get().openApp(RADIO_APP);
+        mAppGridHelper.get().open();
+        mAppGridHelper.get().openApp(RADIO_APP);
         navigateMediaAppCategories(AutomotiveConfigConstants.BROWSE_RADIO_CATEGORY);
         selectMediaTrack(media);
         exit();
@@ -1019,16 +1018,16 @@ public class MediaCenterHelperImpl extends AbstractStandardAppHelper implements 
     /** {@inheritDoc} */
     @Override
     public void openMediaAppAndPlayGivenSong(String appName, String media) {
-        sAppGridHelper.get().open();
-        sAppGridHelper.get().openApp(appName);
+        mAppGridHelper.get().open();
+        mAppGridHelper.get().openApp(appName);
         selectMediaTrack(media);
     }
 
     /** {@inheritDoc} */
     @Override
     public void openNewsAppAndPlayGivenChannel(String media) {
-        sAppGridHelper.get().open();
-        sAppGridHelper.get().openApp(NEWS_APP);
+        mAppGridHelper.get().open();
+        mAppGridHelper.get().openApp(NEWS_APP);
         selectMediaTrack(media);
     }
 
@@ -1103,36 +1102,36 @@ public class MediaCenterHelperImpl extends AbstractStandardAppHelper implements 
 
     /** {@inheritDoc} */
     @Override
-    public boolean isNewsDisplayedInMediaSourceHistory() {
+    public boolean isRadioDisplayedInMediaSourceHistory() {
         BySelector newsSelector =
-                getUiElementFromConfig(AutomotiveConfigConstants.MEDIA_SOURCE_NEWS_BUTTON);
+                getUiElementFromConfig(AutomotiveConfigConstants.MEDIA_SOURCE_RADIO_BUTTON);
         return getSpectatioUiUtil().hasUiElement(newsSelector);
     }
 
     /** {@inheritDoc} */
     @Override
-    public String getNewsChannelNameFromMediaSourceHistory() {
+    public String getRadioChannelNameFromMediaSourceHistory() {
         UiObject2 mediaSourceHistoryParentObject =
                 getSpectatioUiUtil()
                         .waitForUiObject(
                                 getUiElementFromConfig(
-                                        AutomotiveConfigConstants.MEDIA_SOURCE_HISTORY_NEWS));
-        BySelector newsChannelNameSelector =
+                                        AutomotiveConfigConstants.MEDIA_SOURCE_HISTORY_RADIO));
+        BySelector radioChannelNameSelector =
                 getUiElementFromConfig(
                         AutomotiveConfigConstants.MEDIA_SOURCE_HISTORY_ACTIVE_TITTLE);
-        UiObject2 newsChannelNameObject =
+        UiObject2 radioChannelNameObject =
                 getSpectatioUiUtil()
                         .findUiObjectInGivenElement(
-                                mediaSourceHistoryParentObject, newsChannelNameSelector);
+                                mediaSourceHistoryParentObject, radioChannelNameSelector);
         getSpectatioUiUtil()
                 .validateUiObject(
-                        newsChannelNameObject,
-                        String.format("News in Media Source is not displayed"));
-        String newsChannelName = getSpectatioUiUtil().getTextForUiElement(newsChannelNameObject);
-        if (newsChannelName != null) {
-            return newsChannelName;
+                        radioChannelNameObject,
+                        String.format("Radio in Media Source is not displayed"));
+        String radioChannelName = getSpectatioUiUtil().getTextForUiElement(radioChannelNameObject);
+        if (radioChannelName != null) {
+            return radioChannelName;
         } else {
-            throw new IllegalArgumentException("News Channel Name is not displayed");
+            throw new IllegalArgumentException("Radio Channel Name is not displayed");
         }
     }
 

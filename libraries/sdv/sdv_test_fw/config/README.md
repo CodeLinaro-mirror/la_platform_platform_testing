@@ -18,4 +18,4 @@ Contains configuration and templates for device setup and test execution.
 > Warning: Do not change. These files are common to all tests.
 >
 > If you require personalized device configuration for your tests, please create
-> a new configuration file in your test folder instead of changing these.
+> a new configuration file in your test folder instead of updating these.
