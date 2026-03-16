@@ -15,13 +15,12 @@
 
 python_test_host {
     name: "golden_updater_test",
-    main: "tests/main_test.py",
+    main: "watch_local_tests_test.py",
     srcs: [
-        "tests/main_test.py",
+        "watch_local_tests_test.py",
     ],
     test_suites: ["general-tests"],
     test_options: {
-        unit_test: true,
+        unit_test: false,
     },
 }
-

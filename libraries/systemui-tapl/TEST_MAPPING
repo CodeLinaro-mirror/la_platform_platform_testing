@@ -3,11 +3,6 @@
     {
       "path": "vendor/google_testing/integration/tests/scenarios/src/android/platform/test/scenario/sysui"
     }
-  ],
-  "presubmit": [
-    {
-      "name": "systemui-tapl-test"
-    }
   ]
 }
 

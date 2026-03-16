@@ -88,8 +88,7 @@ class SimulatedDeviceController : PeripheralsController {
                             val size = mode.size
                             "${size.width}x${size.height}/$DEFAULT_DENSITY@${mode.refreshRate}"
                         }
-                    val uniqueId = createUniqueId(peripheral, peripherals)
-                    "$modeString,external,unique_id=$uniqueId,disable_window_interaction"
+                    "$modeString,disable_window_interaction"
                 }
             if (timeout.isPositive()) {
                 Settings.Global.putString(
@@ -104,11 +103,7 @@ class SimulatedDeviceController : PeripheralsController {
         val removedDisplays =
             currentDisplaysPeripherals?.filterNot { it.first in peripherals } ?: emptyList()
         currentDisplaysPeripherals =
-            displayMonitor.matchPeripherals(
-                /*isWaitingForCondition=*/ false,
-                peripherals,
-                /*isSimulated=*/ true,
-            )
+            displayMonitor.matchPeripherals(false, peripherals, Display.TYPE_OVERLAY)
 
         val curDisplayPeripherals =
             assertNotNull(currentDisplaysPeripherals, "Could not match all peripherals")
@@ -139,29 +134,9 @@ class SimulatedDeviceController : PeripheralsController {
         return addedResponse + removedResponse
     }
 
-    private fun createUniqueId(
-        peripheral: DisplayPeripheral,
-        peripherals: List<DisplayPeripheral>,
-    ): String {
-        var sameSizeCounter = 0
-        for (p in peripherals) {
-            if (p == peripheral) {
-                break
-            }
-            if (p.size == peripheral.size) {
-                sameSizeCounter += 1
-            }
-        }
-        return "${sameSizeCounter}_${peripheral.size.name.lowercase()}"
-    }
-
     private fun createDisplayExpectation(peripherals: List<DisplayPeripheral>): Condition =
         Condition {
-            displayMonitor.matchPeripherals(
-                /*isWaitingForCondition=*/ it,
-                peripherals,
-                /*isSimulated=*/ true,
-            ) != null
+            displayMonitor.matchPeripherals(it, peripherals, Display.TYPE_OVERLAY) != null
         }
 
     private companion object {
