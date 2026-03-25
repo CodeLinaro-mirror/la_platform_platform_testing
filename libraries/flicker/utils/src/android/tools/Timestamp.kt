@@ -28,9 +28,8 @@ import kotlin.math.max
 data class Timestamp
 internal constructor(
     val elapsedNanos: Long = 0L,
-    @Deprecated("Moving to store a single timestamp for simplicity")
     val systemUptimeNanos: Long = 0L,
-    @Deprecated("Moving to store a single timestamp for simplicity") val unixNanos: Long = 0L,
+    val unixNanos: Long = 0L,
     private val realTimestampFormatter: (Long) -> String,
 ) : Comparable<Timestamp> {
     init {
@@ -44,9 +43,7 @@ internal constructor(
     }
 
     val hasElapsedTimestamp = elapsedNanos != 0L
-    @Deprecated("Moving to store a single timestamp for simplicity")
     val hasSystemUptimeTimestamp = systemUptimeNanos != 0L
-    @Deprecated("Moving to store a single timestamp for simplicity")
     val hasUnixTimestamp = unixNanos != 0L
     val isEmpty = !hasElapsedTimestamp && !hasSystemUptimeTimestamp && !hasUnixTimestamp
     val hasAllTimestamps = hasUnixTimestamp && hasSystemUptimeTimestamp && hasElapsedTimestamp
@@ -80,20 +77,18 @@ internal constructor(
             append(
                 mutableListOf<String>()
                     .apply {
-                        if (!android.tracing.Flags.nativeProtoLogging()) {
-                            if (hasUnixTimestamp) {
-                                add("UNIX=${realTimestampFormatter(unixNanos)}(${unixNanos}ns)")
-                            } else {
-                                add("UNIX=${unixNanos}ns")
-                            }
-                            if (hasSystemUptimeTimestamp) {
-                                add(
-                                    "UPTIME=${formatElapsedTimestamp(systemUptimeNanos)}" +
-                                        "(${systemUptimeNanos}ns)"
-                                )
-                            } else {
-                                add("UPTIME=${systemUptimeNanos}ns")
-                            }
+                        if (hasUnixTimestamp) {
+                            add("UNIX=${realTimestampFormatter(unixNanos)}(${unixNanos}ns)")
+                        } else {
+                            add("UNIX=${unixNanos}ns")
+                        }
+                        if (hasSystemUptimeTimestamp) {
+                            add(
+                                "UPTIME=${formatElapsedTimestamp(systemUptimeNanos)}" +
+                                    "(${systemUptimeNanos}ns)"
+                            )
+                        } else {
+                            add("UPTIME=${systemUptimeNanos}ns")
                         }
                         if (hasElapsedTimestamp) {
                             add(
@@ -138,7 +133,6 @@ internal constructor(
         return Timestamp(elapsedNanos, systemUptimeNanos, unixNanos, realTimestampFormatter)
     }
 
-    @Deprecated("Moving to store a single timestamp for simplicity")
     enum class PreferredType {
         ELAPSED,
         SYSTEM_UPTIME,
@@ -146,7 +140,6 @@ internal constructor(
         ANY,
     }
 
-    @Deprecated("Moving to store a single timestamp for simplicity")
     // The preferred and most accurate time type to use when running Timestamp operations or
     // comparisons
     private val preferredType: PreferredType
@@ -156,7 +149,7 @@ internal constructor(
                 hasElapsedTimestamp -> PreferredType.ELAPSED
                 hasSystemUptimeTimestamp -> PreferredType.SYSTEM_UPTIME
                 hasUnixTimestamp -> PreferredType.UNIX
-                else -> error("No valid timestamp available: $this")
+                else -> error("No valid timestamp available")
             }
 
     override fun equals(other: Any?): Boolean {

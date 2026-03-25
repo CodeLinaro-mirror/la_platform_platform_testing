@@ -21,7 +21,6 @@ from mobly import asserts, signals
 import collections
 import logging
 from sdv_test_fw.test_execution import sdv_base_test, sdv_test_runner
-from sdv_test_fw.device.sdv_property import SdvDeviceProperty
 from vpm.sdv_vpm import SdvVpm
 
 
@@ -39,11 +38,7 @@ class SdvHmShutdownTest(sdv_base_test.SdvBaseTestClass):
         self.sdv_device = self.get_device("device1").adb()
         self.device_vpm = SdvVpm(self.sdv_device)
 
-        self.sdv_authz_enable_value = self.sdv_device.prop.get(SdvDeviceProperty.AUTHZ_ENABLE)
-        self.sdv_device.prop.set(SdvDeviceProperty.AUTHZ_ENABLE, "permissions_only")
-
     def teardown_class(self):
-        self.sdv_device.prop.set(SdvDeviceProperty.AUTHZ_ENABLE, self.sdv_authz_enable_value)
         # Manually destroy controllers. This is necessary because the device
         # goes offline during the test, which prevents the default Mobly
         # controller cleanup mechanism from executing correctly.

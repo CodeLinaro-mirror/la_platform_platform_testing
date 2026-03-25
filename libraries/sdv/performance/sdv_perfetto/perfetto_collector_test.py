@@ -93,7 +93,6 @@ class PerfettoCollectorTest(unittest.TestCase):
   def _mock_start_trace(self):
     self.mock_device.execute_shell_command.side_effect = [
         'perfetto',
-        'sync',
         '1234',
     ]
     self.mock_device.push.return_value = 'push_config'
@@ -108,7 +107,6 @@ class PerfettoCollectorTest(unittest.TestCase):
   def test_start_trace_failed(self):
     self.mock_device.execute_shell_command.side_effect = [
         'perfetto',
-        'sync',
         adb.Error,
     ]
     with self.assertRaises(perfetto_collector.PerfettoCollectorError):
@@ -194,7 +192,6 @@ class PerfettoCollectorTest(unittest.TestCase):
         'perfetto',  # check if last_pid is perfetto
         'check_traceing_command_after_kill',
         'no_trace_running_after_kill',
-        'sync',
         'rm_config',
         'rm_trace',
     ]
@@ -253,7 +250,6 @@ class PerfettoCollectorTest(unittest.TestCase):
         'perfetto',  # check if last_pid is perfetto
         'check_traceing_command_after_kill',
         'no_trace_running_after_kill',
-        'sync',
         'rm_config',
         'rm_trace',
     ]

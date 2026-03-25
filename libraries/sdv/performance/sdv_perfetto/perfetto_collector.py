@@ -96,7 +96,6 @@ PERFETTO_CMD = 'perfetto'
 
 TRACED_ENABLE_PROP = 'persist.traced.enable'
 TRACE_ON_BOOT_PROP = 'persist.debug.perfetto.boottrace'
-SDV_TRACE_ON_BOOT_PROP = 'persist.debug.sdv.boottrace'
 
 KILL_PERFETTO_WAIT_COUNT = 5
 KILL_PERFETTO_WAIT_TIME = 5
@@ -393,7 +392,8 @@ class PerfettoCollector:
             self._device.push(
                 [self._config.config_path, self._device_trace_config_path]
             )
-            self._adb_shell('sync')
+            # Todo: b/380834817 - Replace sleep with a better solution.
+            time.sleep(PUSH_CONFIG_WAIT_TIME)
 
             cmd = [
                 PERFETTO_CMD,
@@ -470,13 +470,11 @@ class PerfettoCollector:
         self._device.push(
             [self._config.config_path, self._device_trace_config_path]
         )
-        self._device.execute_shell_command(['setprop', TRACE_ON_BOOT_PROP, '1'])
-        self._device.execute_shell_command(['setprop', SDV_TRACE_ON_BOOT_PROP, '1'])
+        self._device.execute_shell_command(
+            ['setprop', TRACE_ON_BOOT_PROP, '1'])
         self.device_trace_output = os.path.join(
             DEVICE_TRACE_DIR, DEVICE_ON_BOOT_TRACE_OUTPUT_FILENAME
         )
-        # Ensure that the config file is written before the device is rebooted.
-        self._adb_shell('sync')
 
     def stop_trace(
         self,
@@ -535,7 +533,6 @@ class PerfettoCollector:
         try:
             if self.trace_running(read_from_running_process):
                 self._kill_perfetto()
-                self._adb_shell('sync')
         except adb.Error as e:
             # reboot device if failed to kill perfetto to assure perfetto process is to be interrupted
             self._device.reboot_device()

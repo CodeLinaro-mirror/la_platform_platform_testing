@@ -46,19 +46,19 @@ class MediaKeys(functional_test_base.FunctionalTestBaseClass):
                 self.mbs.hardkeyVolumeUp, f'up{swap_number}.png', sleep_after=0
             )
             volume_check = image_comparison.CompareImagesUsingPIL(
-                f'up{swap_number}.png',
-                f'up{(swap_number+2)%3}.png',
+                'up0.png',
+                'up1.png',
                 include_area=VOLUME_AREA,
             )
-            swap_number = (swap_number + 1) % 3
-            tries -= 1
             if volume_check.are_images_similar():
                 break
+            swap_number = 1 - swap_number
+            tries -= 1
 
         self.hardkey_and_screenshot(self.mbs.hardkeyVolumeDown, 'down.png', sleep_after=0)
         volume_check = image_comparison.CompareImagesUsingPIL(
             'down.png',
-            f'up{swap_number}.png',
+            'up0.png',
             include_area=VOLUME_AREA,
         )
         self.asserts.assert_false(volume_check.are_images_similar(), "Volume down lowered volume")
