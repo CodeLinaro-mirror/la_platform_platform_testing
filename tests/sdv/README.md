@@ -14,7 +14,7 @@ limitations under the License. -->
 
 # SDV Testing
 
-This folder contains SDV System tests implemented using the [SDV Test Framework](libraries/sdv).
+This folder contains SDV System tests implemented using the [SDV Test Framework](/platform_testing/libraries/sdv).
 
 See [Android partner documentation](https://docs.partner.android.com/automotive/sdv/overview)
 for general information about SDV.
