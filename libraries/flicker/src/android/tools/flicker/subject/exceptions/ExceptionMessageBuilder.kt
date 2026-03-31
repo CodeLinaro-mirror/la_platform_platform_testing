@@ -26,9 +26,12 @@ import android.tools.io.Reader
 class ExceptionMessageBuilder {
     private var timestamp = Timestamps.empty()
     private var expected = ""
+    private var expectedLabel = "Expected"
     private var actual = mutableListOf<String>()
+    private var actualLabel = "Actual"
     private var headerDescription = ""
     private var extraDescription = mutableListOf<Fact>()
+    private var customSections = mutableMapOf<String, List<String>>()
 
     fun forSubject(value: FlickerSubject) = apply {
         setTimestamp(value.timestamp)
@@ -46,10 +49,14 @@ class ExceptionMessageBuilder {
     fun forIncorrectVisibility(elementName: String, expectElementVisible: Boolean) =
         setMessage("$elementName should ${if (expectElementVisible) "" else "not "}be visible")
             .setExpected(elementName)
+            .setExpectedLabel("Searching for")
+            .setActualLabel("Found")
 
     fun forIncorrectOcclusion(elementName: String, expectElementOccluded: Boolean) =
         setMessage("$elementName should ${if (expectElementOccluded) "" else "not "}be occluded")
             .setExpected(elementName)
+            .setExpectedLabel("Searching for")
+            .setActualLabel("Found")
 
     fun forInvalidProperty(propertyName: String) = setMessage("Incorrect value for $propertyName")
 
@@ -61,9 +68,17 @@ class ExceptionMessageBuilder {
 
     fun setExpected(value: Any?) = apply { expected = value?.toString() ?: "null" }
 
+    fun setExpectedLabel(value: String) = apply { expectedLabel = value }
+
     fun setActual(value: Collection<String>) = apply { actual.addAll(value) }
 
     fun setActual(value: Any?) = setActual(listOf(value?.toString() ?: "null"))
+
+    fun setActualLabel(value: String) = apply { actualLabel = value }
+
+    fun addSection(title: String, content: Collection<String>) = apply {
+        customSections[title] = content.toList()
+    }
 
     fun setReader(value: Reader) {
         for (artifact in value.artifacts) {
@@ -77,6 +92,8 @@ class ExceptionMessageBuilder {
 
     fun addExtraDescription(value: Collection<Fact>) = apply { extraDescription.addAll(value) }
 
+    fun addHint(hint: String) = apply { addSection("Debugging Hint", listOf(hint)) }
+
     fun build(): String = buildString {
         if (headerDescription.isNotEmpty()) {
             appendLine(headerDescription)
@@ -88,22 +105,40 @@ class ExceptionMessageBuilder {
             appendLine(timestamp.toString().prependIndent("\t"))
         }
 
-        if (expected.isNotEmpty() || actual.isNotEmpty()) {
+        if (expected.isNotEmpty() || actual.isNotEmpty() || customSections.isNotEmpty()) {
             appendLine()
             appendLine("What?")
         }
 
         if (expected.isNotEmpty()) {
-            append("Expected: ".prependIndent("\t"))
+            append("$expectedLabel: ".prependIndent("\t"))
             appendLine(expected)
         }
 
         actual
             .filter { it.isNotEmpty() }
             .forEach {
-                append("Actual: ".prependIndent("\t"))
-                appendLine(it)
+                val lines = it.split("\n").flatMap { line -> line.chunked(MAX_LINE_LENGTH) }
+                if (lines.size > 1) {
+                    appendLine("$actualLabel: ".prependIndent("\t"))
+                    lines.forEach { line -> appendLine(line.prependIndent("\t\t")) }
+                } else {
+                    append("$actualLabel: ".prependIndent("\t"))
+                    appendLine(it)
+                }
             }
+
+        customSections.forEach { (title, content) ->
+            if (content.isNotEmpty()) {
+                append("$title: ".prependIndent("\t"))
+                if (content.size == 1 && content.first().length < MAX_LINE_LENGTH) {
+                    appendLine(content.first())
+                } else {
+                    appendLine()
+                    content.forEach { line -> appendLine(line.prependIndent("\t\t")) }
+                }
+            }
+        }
 
         if (extraDescription.isNotEmpty()) {
             appendLine()
@@ -113,5 +148,9 @@ class ExceptionMessageBuilder {
 
         appendLine()
         appendLine("Check the test run artifacts for trace files")
+    }
+
+    companion object {
+        private const val MAX_LINE_LENGTH = 100
     }
 }
