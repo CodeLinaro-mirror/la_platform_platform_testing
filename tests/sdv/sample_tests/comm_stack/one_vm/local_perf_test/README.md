@@ -16,7 +16,7 @@
 ## Sample
 
 This test automates the [CommStack local_perf_test sample](/system/software_defined_vehicle/samples/middleware/sdv_comms/rs/README.md),
-with various quantities for the number of messages, which are defined in the [helper](/platform_testing/tests/sdv/sample_tests/comm_stack/common/helper.py) module:
+with various quantities for the number of messages, which are defined in the [helper](/platform_testing/tests/sdv/sample_tests/core_services/comm_stack/common/helper.py) module:
 
 - 1000, 10000, 100000, and 1000000 messages
 - 1 KB, 3 KB, 10 KB, and 32 KB message sizes

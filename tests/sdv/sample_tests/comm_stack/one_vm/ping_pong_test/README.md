@@ -17,7 +17,7 @@
 
 This test automates the [CommStack ping-pong notifications latency test sample](/system/software_defined_vehicle/samples/middleware/sdv_comms/rs/README.md),
 with various values for the quantity of exchanged messages: 100, 1000, and 10000 messages,
-and message sizes: 1 KB, 3KB, 10KB, and 32KB, which are defined in the [helper](/platform_testing/tests/sdv/sample_tests/comm_stack/common/helper.py) module.
+and message sizes: 1 KB, 3KB, 10KB, and 32KB, which are defined in the [helper](/platform_testing/tests/sdv/sample_tests/core_services/comm_stack/common/helper.py) module.
 
 ## Test Execution
 

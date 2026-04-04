@@ -15,7 +15,7 @@
 
 ## Sample
 
-This test automates the [VSIDL Provider sample](/system/software_defined_vehicle/vsidl/provider/agent/sdv/tests/README.md).
+This test automates the [VSIDL Provider sample](/system/software_defined_vehicle/vsidl/provider/agent/tests/README.md).
 
 ## Test Execution
 

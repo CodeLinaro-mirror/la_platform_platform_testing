@@ -15,7 +15,7 @@
 
 ## Sample
 
-This test automates the [Apex sample](/system/software_defined_vehicle/samples/apex/com.android.sdv.sample.hello.apex/README.md).
+This test automates the [Apex sample](/system/software_defined_vehicle/core_services/samples/apex/README.md).
 
 ## Test Execution
 
