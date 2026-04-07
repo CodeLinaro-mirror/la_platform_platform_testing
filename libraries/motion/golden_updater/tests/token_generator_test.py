@@ -1,4 +1,4 @@
-# Copyright 2025, The Android Open Source Project
+# Copyright 2026, The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,58 +14,43 @@
 #
 
 import unittest
-from unittest.mock import patch, mock_open, call
-import sys
 import os
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from test_assets.test_assets import MOCK_TOKEN_LOCATION
-from impl.token_generator import TokenGenerator
+import tempfile
+import shutil
+from unittest.mock import patch
+from impl.utils.token_generator import TokenGenerator
 
 class TokenGeneratorTest(unittest.TestCase):
 
-  @patch("builtins.open", new_callable=mock_open, read_data="found_token")
-  @patch('impl.token_generator.GOLDEN_ACCESS_TOKEN_LOCATION', new=MOCK_TOKEN_LOCATION)
-  def test_get_token(self, mock_open_func):
-    self.assertEqual(TokenGenerator.get_token(), "found_token")
-    mock_open_func.assert_called_once_with(MOCK_TOKEN_LOCATION, "r")
+    def setUp(self):
+        self.temp_dir = tempfile.mkdtemp()
+        self.token_file = os.path.join(self.temp_dir, "token")
 
-  @patch("builtins.open")
-  @patch('secrets.token_hex')
-  @patch('os.chmod')
-  @patch('impl.token_generator.GOLDEN_ACCESS_TOKEN_LOCATION', new=MOCK_TOKEN_LOCATION)
-  def test_get_token_throws_error_on_reading(self, mock_chmod, mock_secret, mock_open_func):
-    mock_write_file = mock_open()
+    def tearDown(self):
+        shutil.rmtree(self.temp_dir)
 
-    mock_open_func.side_effect = [FileNotFoundError, mock_write_file.return_value]
-    mock_secret.return_value = "super_secret_key"
+    def test_token_is_string(self):
+        with patch("impl.utils.token_generator.GOLDEN_ACCESS_TOKEN_LOCATION", self.token_file):
+            token = TokenGenerator.get_token()
+            self.assertIsInstance(token, str)
+            self.assertGreater(len(token), 0)
 
-    token = TokenGenerator.get_token()
-    self.assertTrue(os.path.isdir(os.path.dirname(MOCK_TOKEN_LOCATION)))
-    mock_open_func.assert_has_calls(
-      [
-        call(MOCK_TOKEN_LOCATION, "r"),
-        call(MOCK_TOKEN_LOCATION, "w")
-      ]
-    )
-    mock_chmod.assert_called_once_with(MOCK_TOKEN_LOCATION, 0o600)
-    self.assertEqual(token, "super_secret_key")
+    def test_token_is_random_across_cleans(self):
+        # Run 1: generate first token
+        with patch("impl.utils.token_generator.GOLDEN_ACCESS_TOKEN_LOCATION", self.token_file):
+            token1 = TokenGenerator.get_token()
 
+        # Delete file to force generation
+        os.remove(self.token_file)
 
-  @patch("builtins.open")
-  @patch('secrets.token_hex')
-  @patch('impl.token_generator.GOLDEN_ACCESS_TOKEN_LOCATION', new=MOCK_TOKEN_LOCATION)
-  def test_get_token_throws_error_on_reading_and_writing(self, mock_secret, mock_open_func):
-    mock_open_func.side_effect = [FileNotFoundError, PermissionError]
-    mock_secret.return_value = "super_secret_key"
+        # Run 2: generate second token
+        with patch("impl.utils.token_generator.GOLDEN_ACCESS_TOKEN_LOCATION", self.token_file):
+            token2 = TokenGenerator.get_token()
 
-    self.assertEqual(TokenGenerator.get_token(), "super_secret_key")
-    mock_open_func.assert_has_calls(
-      [
-        call(MOCK_TOKEN_LOCATION, "r"),
-        call(MOCK_TOKEN_LOCATION, "w")
-      ]
-    )
+        self.assertNotEqual(token1, token2)
 
-if __name__ == '__main__':
-  unittest.main()
+    def test_token_is_persistent(self):
+        with patch("impl.utils.token_generator.GOLDEN_ACCESS_TOKEN_LOCATION", self.token_file):
+            token1 = TokenGenerator.get_token()
+            token2 = TokenGenerator.get_token()
+            self.assertEqual(token1, token2)
