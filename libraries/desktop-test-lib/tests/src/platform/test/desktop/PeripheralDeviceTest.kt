@@ -57,7 +57,7 @@ class PeripheralDeviceTest {
         response.devices.forEach {
             when (it) {
                 is SimulatedDisplayDevice -> {
-                    val display = it.display ?: fail("Missing display info")
+                    val display = it.display
                     val supportedModes = display.supportedModes
                     assertThat(supportedModes).hasLength(2)
                     val mode1 = supportedModes.get(0)
@@ -86,7 +86,7 @@ class PeripheralDeviceTest {
         response.devices.forEach {
             when (it) {
                 is SimulatedDisplayDevice -> {
-                    val display = it.display ?: fail("Missing display info")
+                    val display = it.display
                     val supportedModes = display.supportedModes
                     assertThat(supportedModes).hasLength(2)
                     val mode1 = supportedModes.get(0)
@@ -183,4 +183,8 @@ class PeripheralDeviceTest {
         )
         assertThat(peripheralDeviceRule.getPeripherals().devices).hasSize(0)
     }
+
+    @HostDrivenTest @Test fun testExample_beforeUserSwitch() {}
+
+    @HostDrivenTest @Test fun testExample_afterUserSwitch() {}
 }
