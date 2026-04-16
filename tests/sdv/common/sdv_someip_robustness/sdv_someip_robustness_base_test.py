@@ -47,7 +47,7 @@ class SdvSomeIpRobBaseTestClass(sdv_base_test.SdvBaseTestClass):
         )
 
     def assert_bundle_successful_execution(self, action, service, bundle_instance):
-        SB_PACKAGE = "com.sdv.google.sample.someip"
+        SB_PACKAGE = "com.android.sdv.sample.someip"
         SB_COMMAND = f"sdv_service_bundle {action} local-vm:{SB_PACKAGE}.{service}/{bundle_instance}"
         self.sdv_device2.execute_shell_command(
             shell_command=SB_COMMAND
@@ -70,7 +70,7 @@ class SdvSomeIpRobBaseTestClass(sdv_base_test.SdvBaseTestClass):
         if run_vsomeip_counterpart:
             self.run_vsomeip_counterpart(cuj_num)
 
-        LOGCAT_ARGS = "*:F com_sdv_google_sample_someip_RobustnessChecker_instance:*"
+        LOGCAT_ARGS = "*:F com_android_sdv_sample_someip_RobustnessChecker_instance:*"
         TIMEOUT_IN_SECS = 1800
         POLL_INTERVAL = 1
 
@@ -95,6 +95,10 @@ class SdvSomeIpRobBaseTestClass(sdv_base_test.SdvBaseTestClass):
         )
 
     def run_vsomeip_counterpart(self, cuj_num):
+        """Restart the device to bring sdv_vsomeip_robustness_tester into a consistent state."""
+        self.sdv_device1.reboot_device()
+        self.sdv_device1.wait_for_device_online()
+
         CUJ_NUM_PROP = "ROB_CUJ_NUM=" + str(cuj_num)
         SOMEIP_CONFIG_FILE = (
             "VSOMEIP_CONFIGURATION=/vendor/etc/vsomeip/robustness_tester.json"
