@@ -25,6 +25,8 @@ import android.tools.testutils.TestArtifact
 import android.tools.traces.events.EventLog
 import android.tools.traces.events.FocusEvent
 import org.junit.Assert.assertThrows
+import org.junit.Assume.assumeFalse
+import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Test
 
@@ -32,6 +34,11 @@ import org.junit.Test
  * Contains [EventLogSubject] tests. To run this test: `atest FlickerLibTest:EventLogSubjectTest`
  */
 class EventLogSubjectTest {
+    @Before
+    fun setup() {
+        assumeFalse(android.tracing.Flags.nativeProtoLogging())
+    }
+
     @Test
     fun canDetectFocusChanges() {
         val reader =
@@ -195,35 +202,36 @@ class EventLogSubjectTest {
     companion object {
         @ClassRule @JvmField val ENV_CLEANUP = CleanFlickerEnvironmentRule()
 
-        private val FOCUS_EVENTS_A_B_C =
-            listOf(
-                FocusEvent(
-                    Timestamps.from(unixNanos = 0),
-                    "WinA",
-                    FocusEvent.Type.GAINED,
-                    "test",
-                    0,
-                    "0",
-                    0,
-                ),
-                FocusEvent(
-                    Timestamps.from(unixNanos = 1),
-                    "WinB",
-                    FocusEvent.Type.GAINED,
-                    "test",
-                    0,
-                    "0",
-                    0,
-                ),
-                FocusEvent(
-                    Timestamps.from(unixNanos = 2),
-                    "WinC",
-                    FocusEvent.Type.GAINED,
-                    "test",
-                    0,
-                    "0",
-                    0,
-                ),
-            )
+        private val FOCUS_EVENTS_A_B_C
+            get() =
+                listOf(
+                    FocusEvent(
+                        Timestamps.from(unixNanos = 0),
+                        "WinA",
+                        FocusEvent.Type.GAINED,
+                        "test",
+                        0,
+                        "0",
+                        0,
+                    ),
+                    FocusEvent(
+                        Timestamps.from(unixNanos = 1),
+                        "WinB",
+                        FocusEvent.Type.GAINED,
+                        "test",
+                        0,
+                        "0",
+                        0,
+                    ),
+                    FocusEvent(
+                        Timestamps.from(unixNanos = 2),
+                        "WinC",
+                        FocusEvent.Type.GAINED,
+                        "test",
+                        0,
+                        "0",
+                        0,
+                    ),
+                )
     }
 }

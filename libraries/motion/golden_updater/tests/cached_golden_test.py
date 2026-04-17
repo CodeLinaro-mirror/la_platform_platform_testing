@@ -1,4 +1,4 @@
-# Copyright 2025, The Android Open Source Project
+# Copyright 2026, The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,52 +14,46 @@
 #
 
 import unittest
-from unittest.mock import patch, call, mock_open
-import sys
 import os
+import tempfile
+import shutil
 import json
-import hashlib
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from impl.cached_golden import CachedGolden
-from test_assets.test_assets import *
+from impl.models.cached_golden import CachedGolden
 
 class CachedGoldenTest(unittest.TestCase):
 
-  @patch("json.dump")
-  @patch("json.load")
-  @patch("builtins.open", new_callable=mock_open)
-  def test_init(self, mock_open_func, mock_json_load, mock_json_dump):
-    remote_file = "remote_file"
-    local_file = "local_file"
+    def setUp(self):
+        self.temp_dir = tempfile.mkdtemp()
+        self.local_file = os.path.join(self.temp_dir, "test.json")
+        self.data = {
+            "//metadata": {
+                "result": "PASSED",
+                "goldenRepoPath": "repo/path",
+                "goldenIdentifier": "id",
+                "testClassName": "Class",
+                "testMethodName": "Method",
+                "deviceLocalPath": "/sdcard/path"
+            },
+            "actual_data": "value"
+        }
+        with open(self.local_file, "w") as f:
+            json.dump(self.data, f)
 
-    mock_file = mock_open_func.return_value
-    mock_json_load.return_value = json.loads(remote_file_content)
+    def tearDown(self):
+        shutil.rmtree(self.temp_dir)
 
-    cached_golden = CachedGolden(remote_file, local_file)
-    mock_json_load.assert_called_once()
-    mock_json_dump.assert_called_once_with(local_file_content, mock_file, indent=2)
-    mock_open_func.assert_has_calls(
-      [
-        call(local_file, "r"),
-        call(local_file, "w")
-      ],
-      any_order = True
-    )
+    def test_metadata_extraction(self):
+        cg = CachedGolden("remote/file", self.local_file)
+        self.assertEqual(cg.result, "PASSED")
+        self.assertEqual(cg.golden_repo_path, "repo/path")
+        self.assertEqual(cg.golden_identifier, "id")
+        self.assertEqual(cg.test_class_name, "Class")
+        self.assertEqual(cg.test_method_name, "Method")
+        self.assertEqual(cg.device_local_path, "/sdcard/path")
 
-    metadata = json.loads(remote_file_content)["//metadata"]
-    self.assertEqual(
-      [cached_golden.id, cached_golden.remote_file, cached_golden.local_file,
-       cached_golden.updated, cached_golden.result, cached_golden.golden_repo_path,
-       cached_golden.golden_identifier, cached_golden.test_class_name,
-       cached_golden.test_method_name, cached_golden.device_local_path,
-       cached_golden.video_location],
-
-      [hashlib.sha256(remote_file.encode("utf-8")).hexdigest(), remote_file, local_file,
-       False, metadata["result"], metadata["goldenRepoPath"], metadata["goldenIdentifier"],
-       metadata["testClassName"], metadata["testMethodName"], metadata["deviceLocalPath"],
-       metadata["videoLocation"]]
-    )
-
-if __name__ == '__main__':
-  unittest.main()
+    def test_metadata_removal_from_file(self):
+        CachedGolden("remote/file", self.local_file)
+        with open(self.local_file, "r") as f:
+            updated_data = json.load(f)
+        self.assertNotIn("//metadata", updated_data)
+        self.assertEqual(updated_data["actual_data"], "value")

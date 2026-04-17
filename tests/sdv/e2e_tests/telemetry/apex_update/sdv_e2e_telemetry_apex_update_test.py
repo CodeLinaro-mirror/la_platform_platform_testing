@@ -14,12 +14,12 @@
 
 """SDV Telemetry APEX Update Test"""
 
-from mobly import asserts
 from pathlib import Path
 import re
 from time import sleep
 
-from sdv_telemetry_test_execution import telemetry_base_test
+from mobly import asserts
+from sdv_telemetry_test_execution import expects, telemetry_base_test
 from sdv_telemetry_test_execution.telemetry_utils import shlex_join
 from sdv_test_fw.device import sdv_device
 from sdv_test_fw.test_execution import sdv_test_runner
@@ -29,7 +29,7 @@ from update_manager_client import UpdateManagerClient
 class SdvE2ETelemetryApexUpdateTest(
     telemetry_base_test.SdvTelemetryBaseTestClass
 ):
-    APEX_NAME = 'com.sdv.google.sample.apex.provider'
+    APEX_NAME = 'com.android.sdv.sample.apex.provider'
     APEX_NAME_V2 = f'{APEX_NAME}.v2'
 
     METRICS_CONFIG_UUID = 'aa27883c-96a5-4a67-adad-d15e00c0f12a'
@@ -42,7 +42,7 @@ class SdvE2ETelemetryApexUpdateTest(
     # produces an error when trying to prepare the APEX:
     #
     # Failed to verify signature of
-    # /data/local/tmp/com.sdv.google.sample.apex.provider.v2.apex: Permission
+    # /data/local/tmp/com.android.sdv.sample.apex.provider.v2.apex: Permission
     # denied (os error 13)
     APEX_V2_PATH = Path(f'/data/local/{APEX_NAME_V2}.apex')
     METRICS_CONFIG_PATH = Path(
@@ -103,12 +103,12 @@ class SdvE2ETelemetryApexUpdateTest(
                 r'\s*tire_pressure_fl: \d+'
             )
 
-        asserts.assert_regex(
+        expects.expect_regex(
             dt_result,
             make_report_summary_regex(self.DT_METRICS_CONFIG_REPORT_NAME),
             'Unexpected DT report summary received.',
         )
-        asserts.assert_regex(
+        expects.expect_regex(
             rpc_result,
             make_report_summary_regex(self.RPC_METRICS_CONFIG_REPORT_NAME),
             'Unexpected RPC report summary received.',

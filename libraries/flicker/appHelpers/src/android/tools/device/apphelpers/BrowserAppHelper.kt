@@ -102,7 +102,7 @@ constructor(
 
     /** Clicks new window in the menu to open a new instance of the app in a new window. */
     fun clickNewWindowInMenu() {
-        findObject(By.res(packageName,NEW_WINDOW_ID)).also { it.click() }
+        findObject(By.res(packageName, NEW_WINDOW_ID)).also { it.click() }
     }
 
     /** Clears the Chrome application's storage and data. */
@@ -183,14 +183,14 @@ constructor(
     fun closePopupsIfNeeded(device: UiDevice): Boolean {
         if (device.hasObject(By.text(NOTIFICATION_PERMISSION_TEXT))) {
             val negativeButton = device.findObject(By.res(packageName, NEGATIVE_BUTTON_ID))
-            negativeButton.click()
+            negativeButton?.click()
             Log.d(TAG, "Dismiss grant notification pop-up")
             return true
         }
 
         if (device.hasObject(By.text(AD_PRIVACY_TITLE_TEXT))) {
             val negativeButton = device.findObject(By.res(packageName, NEGATIVE_BUTTON_ID))
-            negativeButton.click()
+            negativeButton?.click()
             Log.d(TAG, "Dismiss ad privacy pop-up")
 
             // Next popup about ad privacy is showed immediately - we need to close it as well
@@ -200,7 +200,7 @@ constructor(
             )
             if (device.hasObject(By.res(packageName, MORE_BUTTON_ID))) {
                 val moreButton = device.findObject(By.res(packageName, MORE_BUTTON_ID))
-                moreButton.click()
+                moreButton?.click()
                 device.waitForIdle()
                 Log.d(TAG, "Click the more button")
             }
@@ -210,7 +210,7 @@ constructor(
                     Until.findObject(By.text(ACKNOWLEDGED_BUTTON_TEXT)),
                     WAIT_TIME_IN_MILLISECONDS,
                 )
-            ackButton.click()
+            ackButton?.click()
             Log.d(TAG, "Dismiss other ad privacy pop-up")
             device.waitForIdle()
             return true
@@ -235,13 +235,25 @@ constructor(
      * This will trigger the permissions dialog if microphone permissions are not yet granted.
      */
     fun clickVoiceButtonInSearchBox() {
-        findObject(By.res(packageName, VOICE_SEARCH_BUTTON_ID)).also { it.click() }
+        // Navigate to NTP where the voice search button is consistently present
+        openThreeDotsMenu()
+        clickNewTabInMenu()
+
+        val selector = By.res(packageName, VOICE_SEARCH_BUTTON_ID)
+        val backupSelector = By.res(packageName, MIC_BUTTON_ID)
+
+        val button =
+            uiDevice.wait(Until.findObject(selector), WAIT_TIME_IN_MILLISECONDS)
+                ?: uiDevice.wait(Until.findObject(backupSelector), WAIT_TIME_IN_MILLISECONDS)
+                ?: error("Can't find voice search button ($selector or $backupSelector)")
+
+        button.click()
         device.waitForIdle()
     }
 
     private fun findObject(selector: BySelector): UiObject2 =
         uiDevice.wait(Until.findObject(selector), WAIT_TIME_IN_MILLISECONDS)
-        ?: error("Can't find object $selector")
+            ?: error("Can't find object $selector")
 
     companion object {
         enum class TabDraggingDirection {
@@ -260,13 +272,14 @@ constructor(
         private const val ACKNOWLEDGED_BUTTON_TEXT = "Got it"
         private const val ADD_TO_HOME_SCREEN_TEXT = "Add to Home screen"
         private const val VOICE_SEARCH_BUTTON_ID = "voice_search_button"
+        private const val MIC_BUTTON_ID = "mic_button"
         private const val MANAGE_WINDOWS_ID = "manage_all_windows_menu_id"
         private const val NEW_WINDOW_ID = "new_window_menu_id"
 
-        private val WAIT_TIME_IN_MILLISECONDS = Duration.ofSeconds(3).toMillis()
+        private val WAIT_TIME_IN_MILLISECONDS = Duration.ofSeconds(10).toMillis()
         private const val MIN_WINDOW_WIDTH_FOR_TAB_TEARING_DP = 475
 
-        /**  Opens a specified web page in the Chrome browser. */
+        /** Opens a specified web page in the Chrome browser. */
         fun getSpecialBrowserIntent(intentString: String): Intent {
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse("http://$intentString"))
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)

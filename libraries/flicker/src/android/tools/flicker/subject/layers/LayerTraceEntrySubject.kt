@@ -177,7 +177,7 @@ constructor(
                         componentMatcher.toLayerIdentifier(),
                         expectElementExists = false,
                     )
-                    .setActual(foundElements.map { Fact("Found", it) })
+                    .setActual(foundElements.map { Fact("Found", it.debugName) })
             throw InvalidElementException(errorMsgBuilder)
         }
     }
@@ -190,17 +190,35 @@ constructor(
         val visibleLayers = matchedLayers.filter { it.isVisible }
 
         if (visibleLayers.isEmpty()) {
+            val lastVisibleTimestamp = trace?.getLastVisibleTimestamp(componentMatcher, timestamp)
+            val lastVisibleTimestampStr = lastVisibleTimestamp?.toString() ?: "never"
+
             val failedEntries =
                 matchedLayers
                     .filterNot { it.isVisible }
-                    .map { Fact(it.name, it.visibilityReason.joinToString()) }
+                    .filterNot { it.isAnimationLeash }
+                    .map {
+                        "${it.debugName} (${it.visibilityReason.joinToString()}) " +
+                            "Last visible at: $lastVisibleTimestampStr"
+                    }
+
+            val actuallyVisible =
+                subjects
+                    .map { it.layer }
+                    .filter { it.isVisible && !componentMatcher.layerMatchesAnyOf(it) }
+                    .map { it.debugName }
+
             val errorMsgBuilder =
                 errorMsgBuilder()
                     .forIncorrectVisibility(
                         componentMatcher.toLayerIdentifier(),
                         expectElementVisible = true,
                     )
-                    .setActual(failedEntries)
+                    .addSection(
+                        "Occurrences of ${componentMatcher.toLayerIdentifier()}",
+                        failedEntries,
+                    )
+                    .addSection("Actually visible", actuallyVisible)
             throw IncorrectVisibilityException(errorMsgBuilder)
         }
     }
@@ -225,18 +243,32 @@ constructor(
             return@apply
         }
 
+        val lastInvisibleTimestamp = trace?.getLastInvisibleTimestamp(componentMatcher, timestamp)
+        val lastInvisibleTimestampStr = lastInvisibleTimestamp?.toString() ?: "never"
+
         val failedEntries =
             componentMatcher
                 .filterLayers(layers)
                 .filter { it.isVisible }
-                .map { Fact("Is visible", it.name) }
+                .filterNot { it.isAnimationLeash }
+                .map {
+                    "${it.debugName} (${it.visibilityReason.joinToString()}) " +
+                        "Last invisible at: $lastInvisibleTimestampStr"
+                }
+
+        val actuallyVisible =
+            layers
+                .filter { it.isVisible && !componentMatcher.layerMatchesAnyOf(it) }
+                .map { it.debugName }
+
         val errorMsgBuilder =
             errorMsgBuilder()
                 .forIncorrectVisibility(
                     componentMatcher.toLayerIdentifier(),
                     expectElementVisible = false,
                 )
-                .setActual(failedEntries)
+                .addSection("Occurrences of ${componentMatcher.toLayerIdentifier()}", failedEntries)
+                .addSection("Actually visible", actuallyVisible)
         throw IncorrectVisibilityException(errorMsgBuilder)
     }
 
@@ -255,7 +287,11 @@ constructor(
             return@apply
         }
 
-        val failedEntries = componentMatcher.filterLayers(layers)
+        val failedEntries =
+            componentMatcher
+                .filterLayers(layers)
+                .filterNot { it.isAnimationLeash }
+                .map { it.debugName }
         val errorMsgBuilder =
             errorMsgBuilder()
                 .forIncorrectOcclusion(
@@ -282,6 +318,9 @@ constructor(
                     expectElementExists = true,
                 )
             } else {
+                val lastVisibleTimestamp =
+                    trace?.getLastVisibleTimestamp(splashScreenMatcher, timestamp)
+                val lastVisibleTimestampStr = lastVisibleTimestamp?.toString() ?: "never"
                 errorMsgBuilder
                     .forIncorrectVisibility(
                         "Splash screen for ${componentMatcher.toLayerIdentifier()}",
@@ -290,7 +329,14 @@ constructor(
                     .setActual(
                         matchingSubjects
                             .filter { it.isInvisible }
-                            .map { Fact(it.name, it.visibilityReason.joinToString()) }
+                            .filterNot { it.layer.isAnimationLeash }
+                            .map {
+                                Fact(
+                                    it.layer.debugName,
+                                    "${it.visibilityReason.joinToString()} " +
+                                        "Last visible at: $lastVisibleTimestampStr",
+                                )
+                            }
                     )
             }
 
@@ -310,7 +356,7 @@ constructor(
                 errorMsgBuilder()
                     .forInvalidProperty("Color")
                     .setExpected("Not empty")
-                    .setActual(targets.map { Fact(it.name, it.color) })
+                    .setActual(targets.map { Fact(it.debugName, it.color) })
             throw InvalidPropertyException(errorMsgBuilder)
         }
     }
@@ -325,7 +371,7 @@ constructor(
                 errorMsgBuilder()
                     .forInvalidProperty("Color")
                     .setExpected(emptyColor().toString())
-                    .setActual(targets.map { Fact(it.name, it.color) })
+                    .setActual(targets.map { Fact(it.debugName, it.color) })
             throw InvalidPropertyException(errorMsgBuilder)
         }
     }

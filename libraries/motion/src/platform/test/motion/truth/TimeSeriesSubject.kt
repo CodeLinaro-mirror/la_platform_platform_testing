@@ -16,15 +16,21 @@
 
 package platform.test.motion.truth
 
+import com.google.common.truth.BooleanSubject
 import com.google.common.truth.Fact
 import com.google.common.truth.Fact.fact
 import com.google.common.truth.Fact.simpleFact
 import com.google.common.truth.FailureMetadata
+import com.google.common.truth.IntegerSubject
+import com.google.common.truth.IterableSubject
 import com.google.common.truth.Subject
 import com.google.common.truth.Subject.Factory
 import com.google.common.truth.Truth
-import platform.test.motion.MotionTestRule
+import platform.test.motion.golden.Feature
+import platform.test.motion.golden.SupplementalFrameId
 import platform.test.motion.golden.TimeSeries
+import platform.test.motion.golden.TimestampFrameId
+import platform.test.motion.golden.ValueDataPoint
 
 /** Subject on [TimeSeries] to produce meaningful failure diffs. */
 class TimeSeriesSubject
@@ -41,6 +47,30 @@ private constructor(failureMetadata: FailureMetadata, private val actual: TimeSe
         } else {
             super.isEqualTo(expected)
         }
+    }
+
+    fun containsBeforeFrame(): BooleanSubject {
+        return check("containsBeforeFrame")
+            .that(actual?.frameIds?.contains(SupplementalFrameId.Before))
+    }
+
+    fun containsAfterFrame(): BooleanSubject {
+        return check("containsAfterFrame")
+            .that(actual?.frameIds?.contains(SupplementalFrameId.After))
+    }
+
+    fun frameCount(): IntegerSubject {
+        return check("containsExactlyFrameCount")
+            .that(actual?.frameIds?.filter { it is TimestampFrameId }?.size)
+    }
+
+    fun dataPointValues(featureName: String): IterableSubject {
+        val feature = actual?.features[featureName] as Feature<*>
+
+        check("dataPoints[$featureName]").that(feature).isNotNull()
+
+        return check("dataPoints[$featureName].values")
+            .that(feature.dataPoints.map { (it as? ValueDataPoint)?.value })
     }
 
     private fun compareTimeSeries(expected: TimeSeries, actual: TimeSeries) =
@@ -96,14 +126,9 @@ private constructor(failureMetadata: FailureMetadata, private val actual: TimeSe
 
                 val mismatchingDataPointIndices =
                     actualToExpectedDataPointIndices.filter { (actualIndex, expectedIndex) ->
-                        if(MotionTestRule.isRobolectricRuntime()){
-                            actualFeature.dataPoints[actualIndex].isApproximatelyEqual(
-                                expectedFeature.dataPoints[expectedIndex]
-                            ).not()
-                        } else {
-                            actualFeature.dataPoints[actualIndex] !=
-                                    expectedFeature.dataPoints[expectedIndex]
-                        }
+                        !actualFeature.dataPoints[actualIndex].isEqualTo(
+                            expectedFeature.dataPoints[expectedIndex]
+                        )
                     }
 
                 if (mismatchingDataPointIndices.isNotEmpty()) {

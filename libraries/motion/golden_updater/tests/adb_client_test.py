@@ -1,4 +1,4 @@
-# Copyright 2025, The Android Open Source Project
+# Copyright 2026, The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,58 +14,60 @@
 #
 
 import unittest
-import sys
-import os
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from impl.adb_client import AdbClient
-from test_assets.fake_subprocess import FakeSubprocessRun
-
-fake_subprocess_run = FakeSubprocessRun(return_stdout=b"test output")
-adb_client = AdbClient("adb_serial", fake_subprocess_run)
-command_prefix = ["adb","-s","adb_serial"]
+from unittest.mock import MagicMock
+from impl.utils.adb_client import AdbClient
 
 class AdbClientTest(unittest.TestCase):
 
-  def test_init(self):
-    self.assertEqual(adb_client.adb_serial, "adb_serial")
+    def test_run_adb_command(self):
+        mock_run = MagicMock()
+        mock_run.return_value.stdout = b"some output\n"
 
-  def test_run_as_root_restarting_adb(self):
-    fake_subprocess_run.return_stdout = b"restarting adbd as root"
-    fake_subprocess_run.calls = []
+        client = AdbClient("serial123", subprocess_run_func=mock_run)
+        result = client.run_adb_command(["shell", "ls"])
 
-    self.assertTrue(adb_client.run_as_root())
+        self.assertEqual(result, "some output\n")
+        mock_run.assert_called_with(
+            ["adb", "-s", "serial123", "shell", "ls"],
+            check=True,
+            capture_output=True
+        )
 
-    self.assertEqual(
-       fake_subprocess_run.calls,
-        [
-          (command_prefix + ["root"]),
-          (command_prefix + ["wait-for-device"]),
-        ]
-    )
+    def test_run_as_root_restarting(self):
+        mock_run = MagicMock()
+        # First call for 'root', second for 'wait-for-device'
+        mock_run.return_value.stdout = b"restarting adbd as root\n"
 
-  def test_run_as_root_adb_already_running(self):
-    fake_subprocess_run.return_stdout = b"adbd is already running as root"
-    fake_subprocess_run.calls = []
+        client = AdbClient("serial123", subprocess_run_func=mock_run)
+        self.assertTrue(client.run_as_root())
 
-    self.assertTrue(adb_client.run_as_root())
-    self.assertEqual(fake_subprocess_run.calls, [(command_prefix + ["root"])])
+        self.assertEqual(mock_run.call_count, 2)
+        mock_run.assert_any_call(
+            ["adb", "-s", "serial123", "root"],
+            check=True,
+            capture_output=True
+        )
+        mock_run.assert_any_call(
+            ["adb", "-s", "serial123", "wait-for-device"],
+            check=True,
+            capture_output=True
+        )
 
-  def test_run_as_root_failed(self):
-    fake_subprocess_run.return_stdout = b"permission denied"
-    fake_subprocess_run.calls = []
+    def test_run_as_root_already_root(self):
+        mock_run = MagicMock()
+        mock_run.return_value.stdout = b"adbd is already running as root\n"
 
-    self.assertFalse(adb_client.run_as_root())
-    self.assertEqual(fake_subprocess_run.calls, [(command_prefix + ["root"])])
+        client = AdbClient("serial123", subprocess_run_func=mock_run)
+        self.assertTrue(client.run_as_root())
 
-  def test_run_adb_command(self):
-    fake_subprocess_run.return_stdout = b"results returned"
-    fake_subprocess_run.calls = []
+        self.assertEqual(mock_run.call_count, 1)
 
-    result = adb_client.run_adb_command(["wait-for-device"])
+    def test_run_as_root_failure(self):
+        mock_run = MagicMock()
+        mock_run.return_value.stdout = b"error: device not found\n"
 
-    self.assertEqual(fake_subprocess_run.calls, [(command_prefix + ["wait-for-device"])])
-    self.assertEqual(result, "results returned")
+        client = AdbClient("serial123", subprocess_run_func=mock_run)
+        self.assertFalse(client.run_as_root())
 
-if __name__ == '__main__':
-  unittest.main()
+if __name__ == "__main__":
+    unittest.main()

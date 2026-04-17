@@ -54,7 +54,8 @@ fun <T> TimeSeriesCaptureScope<SemanticsNodeInteractionsProvider>.animatedVisibi
 ) {
     on({
         try {
-            it.onNode(matcher).fetchSemanticsNode().config[transitionValueKey.semanticsPropertyKey]
+            it.fetchSemanticsNodeMaybeCached(matcher)
+                .config[transitionValueKey.semanticsPropertyKey]
         } catch (e: AssertionError) {
             null
         }
@@ -134,7 +135,7 @@ internal data class AnimatedVisibilityValues(
 
 internal object TransitionFeatureCapture {
     val animatedVisibilityTransitions: DataPointType<AnimatedVisibilityTransitions> =
-        DataPointType(
+        DataPointType.create(
             "animatedVisibilityTransitions",
             jsonToValue = {
                 with(it as? JSONObject ?: throw UnknownTypeException()) {
@@ -151,7 +152,7 @@ internal object TransitionFeatureCapture {
         )
 
     val animatedVisibilityValues: DataPointType<AnimatedVisibilityValues> =
-        DataPointType(
+        DataPointType.create(
             "animatedVisibilityValues",
             jsonToValue = { json ->
                 with(json as? JSONObject ?: throw UnknownTypeException()) {
@@ -191,7 +192,8 @@ internal object TransitionFeatureCapture {
 
     val animatedVisibility =
         FeatureCapture<Transition<EnterExitState>, AnimatedVisibilityValues>(
-            "Animated Visibility"
+            "Animated Visibility",
+            animatedVisibilityValues,
         ) { transition ->
             var alpha = DataPoint.notFound<Float>()
             var slide = DataPoint.notFound<IntOffset>()
@@ -211,10 +213,7 @@ internal object TransitionFeatureCapture {
                 }
             }
 
-            DataPoint.of(
-                AnimatedVisibilityValues(alpha, slide, scale, size),
-                animatedVisibilityValues,
-            )
+            AnimatedVisibilityValues(alpha, slide, scale, size)
         }
 
     private const val alphaProperty = "alpha"
